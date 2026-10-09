@@ -114,7 +114,8 @@ def stage_project(root, closure, package_id, editor_version):
 def run_tests(editor, project_root, mode, output_dir):
     results_path = output_dir / f"results-{mode}.xml"
     log_path = output_dir / f"editor-{mode}.log"
-    command = [str(editor), "-batchmode", "-nographics", "-projectPath", str(project_root),
+    # No -nographics: editor UI tests need a graphics device (headless CI may add it; such tests self-skip).
+    command = [str(editor), "-batchmode", "-projectPath", str(project_root),
                "-runTests", "-testPlatform", mode, "-testResults", str(results_path), "-logFile", str(log_path)]
     print(f"  running {mode} tests (this can take a few minutes)...")
     completed = subprocess.run(command, timeout=EDITOR_TIMEOUT_SECONDS, check=False)

@@ -60,7 +60,8 @@ Sem Editor aberto (CI/batch): `unity test` (ver `unity test --help`).
 - Todos os testes EditMode e PlayMode do package verdes.
 - `python Docs/Framework/tools/check_dependencies.py --package <id>` sem erros (falha se o package não for encontrado).
 - QG12: `python Docs/Framework/tools/verify_isolated_install.py <id>` verde (projeto Unity vazio e descartável,
-  só o package + dependências obrigatórias + test framework).
+  só o package + dependências obrigatórias + test framework). Roda sem `-nographics` porque há testes de UI do
+  Editor; em CI headless esses testes se marcam como ignorados.
 
 ## Testes das ferramentas de governança
 `python -m unittest discover -s Docs/Framework/tools/tests -v` — regressão do verificador de dependências

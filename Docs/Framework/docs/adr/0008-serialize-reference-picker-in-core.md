@@ -22,6 +22,9 @@ HFSM) e outros três previstos: cumpre a regra de entrada no Core.
   independentemente do package.
 - O Core não conhece nenhum tipo concreto de outro package; os tipos vêm de `TypeCache` em tempo de Editor.
 
+**Identidade das opções:** por tipo/índice (`ImplementationChoices`), nunca pelo texto do rótulo. Rótulos são únicos:
+nomes repetidos recebem o namespace e, se ainda empatarem, a assembly.
+
 ## Limitação conhecida (verificada no Unity 6000.6.5f1)
 Quando o tipo de um valor `[SerializeReference]` deixa de existir, a Unity mantém os dados no asset, mas o campo é lido
 como nulo (`managedReferenceId = -2`) e nenhuma API indica **qual** campo guardava o valor (nem

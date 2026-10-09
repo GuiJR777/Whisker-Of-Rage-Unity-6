@@ -8,5 +8,6 @@ Conjuntos de versões validados juntos no projeto host (Whisker-Of-Rage-Unity-6)
 | 2026-10-09 | 6000.6.5f1 | 0.1.0 (`main` 56a4ecd, submodule no host) | — | — | — | — | — | — | — | No Whisker-Of-Rage-Unity-6: compila sem warnings; 14/14 testes |
 | 2026-10-09 | 6000.6.5f1 | **v0.1.0** (`f2c3522`) | — | — | — | — | — | — | — | Host: 0 erros/warnings, 14/14 testes; QG12 (projeto vazio): 0 erros/warnings, 14/14; `check_dependencies --package core` OK |
 | 2026-10-09 | 6000.6.5f1 | 0.2.0 (sem tag) | 0.1.0 (sem tag) | — | — | — | — | — | — | Host: 0 erros/warnings; Core 22/22, Stats 111 EditMode + 4 PlayMode; QG12 Core e Stats OK — aguardando revisão do M1 |
+| 2026-10-09 | 6000.6.5f1 | 0.2.0 (`d679181`, sem tag) | 0.1.0 (`cfc42db`, sem tag) | — | — | — | — | — | — | Após auditoria: host 0 erros/warnings; Core 27/27, Stats 125 EditMode + 4 PlayMode; QG12 Core e Stats OK; check_dependencies + 17 testes OK |
 
 Ao publicar uma tag de package, adicione uma linha com as tags efetivamente testadas.
