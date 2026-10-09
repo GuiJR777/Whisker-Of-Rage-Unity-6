@@ -36,4 +36,4 @@ _Regras que os consumidores podem assumir (cada uma tem teste)._
 -
 
 ## Política de mudanças
-Ver `ramirestech-framework/docs/06-versioning-and-publishing.md`.
+Ver `Docs/Framework/docs/06-versioning-and-publishing.md` do host.

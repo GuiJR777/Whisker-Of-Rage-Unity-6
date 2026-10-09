@@ -31,7 +31,7 @@ BT comandando personagens), mas cada package deve funcionar sozinho e o grafo n�
 - O jogo recebe adapters prontos ao instalar os packages juntos (Editor-first).
 - Risco R2 (explosão de adapters): adapters só com caso de uso concreto.
 
-## Verificação (M0, Unity 6000.6.5f1, Sandbox)
+## Verificação (M0, Unity 6000.6.5f1, projeto RamiresTech-Sandbox da época)
 Três assemblies de prova com código propositalmente inválido quando a condição não é atendida:
 
 | Caso | Configuração | Resultado |

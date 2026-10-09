@@ -1,16 +1,25 @@
 # 03 — Estrutura padrão de repositório
 
-## Workspace local
+## Projeto host
 
-Todos os repositórios ficam lado a lado. A Sandbox referencia os packages irmãos por caminho relativo.
+Todo o desenvolvimento acontece no `Whisker-Of-Rage-Unity-6` ([ADR-0007](adr/0007-develop-inside-game-host.md)).
 
 ```
-Games/Framework/
-  ramirestech-framework/          <- este repo: governança, ADRs, template, ferramentas
-  com.ramirestechgames.core/      <- um repo Git por package
-  com.ramirestechgames.stats/
-  ...
-  RamiresTech-Sandbox/            <- projeto Unity de desenvolvimento e integração
+Whisker-Of-Rage-Unity-6/                 <- repo do jogo e host do framework
+  CLAUDE.md  AGENTS.md
+  Docs/Framework/                        <- governança: grafo, convenções, ADRs, template, ferramentas
+  Packages/
+    manifest.json                        <- "testables": ["com.ramirestechgames.<id>", ...]
+    com.ramirestechgames.core/           <- submodule (repo próprio no GitHub)
+    com.ramirestechgames.<id>/           <- um submodule por package
+  Assets/
+    _FrameworkSandbox/                   <- Integration Sandbox do framework (não é conteúdo do jogo)
+      Scenes/Sandbox_Main.unity          <- arena: chão 30×12, Spawns/PlayerSpawn, Spawns/AISpawn, Systems, Actors
+      Scripts/                           <- glue de integração (RamiresTechGames.FrameworkSandbox.*)
+      Data/  Prefabs/  Materials/
+      Tests/Integration/                 <- testes cross-package (M8)
+    Dev/Unity6_Development_Rules.md      <- cópia sincronizada de Docs/Framework/docs/CONVENTIONS.md
+    ...                                  <- conteúdo do jogo (ver CONVENTIONS §11.2)
 ```
 
 ## Estrutura de um package
@@ -48,7 +57,7 @@ com.ramirestechgames.<id>/
   Tests/
     Editor/                          # EditMode: domínio + validações (obrigatório)
       RamiresTechGames.<Sistema>.Tests.Editor.asmdef
-    Runtime/                         # PlayMode: física, MonoBehaviours (quando necessário)
+    Runtime/                         # PlayMode + Fixtures/ (MonoBehaviours de teste)
       RamiresTechGames.<Sistema>.Tests.Runtime.asmdef
   Samples~/
     <NomeDoSample>/                  # importável pelo Package Manager
@@ -57,34 +66,18 @@ com.ramirestechgames.<id>/
 ### Regras
 
 - **Assemblies referenciadas por nome**, nunca por GUID (o verificador rejeita GUID).
-- `Runtime` referencia apenas dependências **hard**.
+- `Runtime` referencia apenas dependências **hard**; nunca assemblies do jogo.
 - Cada `Integration/<Outro>` tem `defineConstraints` com o símbolo do outro package e `versionDefines` que o define.
 - `Editor` e `Tests` seguem as mesmas regras de dependência que o `Runtime` correspondente.
 - Pastas terminadas em `~` são ignoradas pelo importador da Unity (`Samples~`, `Documentation~`).
 - **`.meta` são versionados**, gerados pela Unity no primeiro import (o template não traz `.meta` para não
-  duplicar GUIDs entre packages).
+  duplicar GUIDs entre packages). Os `.meta` de `Samples~` são escritos à mão (a Unity não importa essa pasta).
+- Pastas vazias versionadas levam `.gitkeep` (senão o `.meta` da pasta fica órfão em outro clone).
 
-## Estrutura da Sandbox
-
-```
-RamiresTech-Sandbox/
-  CLAUDE.md  README.md
-  Packages/manifest.json             # "com.ramirestechgames.<id>": "file:../../com.ramirestechgames.<id>"
-                                     # + "testables": [...] para rodar testes dos packages
-  Assets/
-    Sandbox/
-      Scenes/                        # Sandbox_Main (arena de integração)
-      Scripts/                       # glue code da sandbox (RamiresTechGames.Sandbox.*)
-      Data/                          # definições de exemplo (stats, ataques, BTs)
-      Prefabs/
-    Tests/
-      Integration/                   # testes cross-package (RamiresTechGames.Sandbox.Tests)
-```
-
-## Estrutura do repo de governança (este)
+## Estrutura de `Docs/Framework`
 
 ```
-ramirestech-framework/
+Docs/Framework/
   README.md  CLAUDE.md  AGENTS.md  COMPATIBILITY.md
   dependency-graph.json
   docs/  01..08 + CONVENTIONS.md + adr/

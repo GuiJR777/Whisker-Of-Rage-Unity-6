@@ -8,14 +8,12 @@
 
 **Como submodule (jogos):**
 ```bash
-git submodule add <url-do-repo> Packages/{{PACKAGE_ID}}
+git submodule add https://github.com/GuiJR777/{{PACKAGE_ID}}.git Packages/{{PACKAGE_ID}}
 cd Packages/{{PACKAGE_ID}} && git checkout vX.Y.Z
 ```
 
-**Como referência local (desenvolvimento):** em `Packages/manifest.json`
-```json
-"{{PACKAGE_ID}}": "file:../../{{PACKAGE_ID}}"
-```
+Packages em `Packages/` são *embedded packages*: não precisam de entrada em `dependencies` do `manifest.json`.
+Para rodar os testes, adicione `"{{PACKAGE_ID}}"` a `testables`.
 
 Dependências obrigatórias que também precisam estar no projeto: {{HARD_DEPS_MD}}
 

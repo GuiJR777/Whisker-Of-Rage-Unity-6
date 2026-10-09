@@ -213,7 +213,7 @@ Ordem (omitir regions vazias):
 ### 11.1 Packages
 Definida pelo template: [03-repository-structure.md](03-repository-structure.md).
 
-### 11.2 Projetos de jogo (WOR, Sandbox)
+### 11.2 Projetos de jogo (WOR e futuros)
 Padrão RamiresTech, com `RTG_Unity_Modules` substituído por packages UPM:
 
 ```
@@ -227,8 +227,9 @@ Assets/
   Graphics/Textures/  Graphics/Sprites/Characters/Player/
   Scenes/
   Dev/            <- documentação de desenvolvimento
+  _FrameworkSandbox/  <- Integration Sandbox do framework (somente no host de desenvolvimento)
 Packages/
-  com.ramirestechgames.*   <- submodules (WOR) ou referências file: (Sandbox)
+  com.ramirestechgames.*   <- submodules (um repo por package)
 ```
 
 ---

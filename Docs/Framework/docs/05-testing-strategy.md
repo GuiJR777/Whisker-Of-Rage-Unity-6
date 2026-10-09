@@ -13,7 +13,7 @@ domínio contra regressão, não para guiar o design linha a linha.
 | **1. Domínio** | `Tests/Editor` do package | NUnit (EditMode) | Classes puras: fórmulas de stats, stacking, transições da HFSM, travessia de combo, nós de BT, regras de slot. | Sim, para todo contrato público com lógica. |
 | **2. Integração Unity** | `Tests/Runtime` do package | Unity Test Framework (PlayMode, `[UnityTest]`) | MonoBehaviours, física (hitbox/hurtbox, chão, altura exata de pulo com tolerância), ciclo de vida. | Sim, quando há física ou ciclo de vida relevante. |
 | **3. Integration assemblies** | `Tests/Editor/Integration/<Outro>` com as mesmas `defineConstraints` | NUnit/UTF | Adapters entre packages (ex.: Combat→Character knockback). | Sim, por adapter. |
-| **4. Cross-package** | Sandbox `Assets/Tests/Integration` | UTF PlayMode | Fluxos completos (BT → HFSM → Combat → Stats). | A partir do M8; smoke tests antes. |
+| **4. Cross-package** | `Assets/_FrameworkSandbox/Tests/Integration` do host | UTF PlayMode | Fluxos completos (BT → HFSM → Combat → Stats). | A partir do M8; smoke tests antes. |
 | **5. Validação de dados** | Validator (Core) + testes de validators | NUnit | Definições inválidas são detectadas no Editor. | Sim. |
 | **6. Alocação/performance** | Testes de hot path | `Is.Not.AllocatingGCMemory()` (UTF) | Tick de StatCollection, HFSM, BT, overlap de hitbox sem GC. | Sim para hot paths. |
 
@@ -26,27 +26,29 @@ domínio contra regressão, não para guiar o design linha a linha.
    `InternalsVisibleTo` (nunca reflexão sobre campos privados).
 4. **Nome:** `Metodo_Condicao_ResultadoEsperado`. Uma razão de falha por teste.
 5. **Sem % mínimo de cobertura.** A régua é: toda regra documentada em `CONTRACTS.md` tem teste.
-6. Testes de package rodam na Sandbox através de `testables`.
+6. Testes de package rodam no projeto host (Whisker-Of-Rage-Unity-6) através de `testables`.
+   Testes de package não usam cenas, assets ou código do jogo.
 7. **MonoBehaviours de teste (fixtures) ficam em `Tests/Runtime/Fixtures/`** (assembly não-Editor).
    A Unity recusa `AddComponent` de MonoBehaviour definido em assembly Editor-only
    ("Can't add script behaviour ... because it is an editor script") e isso aparece só como log,
    fazendo o teste falhar por motivo enganoso. A assembly `Tests.Editor` referencia `Tests.Runtime`.
 
-## Como rodar (Unity CLI com Editor aberto na Sandbox)
+## Como rodar (Unity CLI com o Editor do host aberto)
 
 Comandos validados no M0 com Unity CLI 1.0.0-beta.8 e `com.unity.pipeline` 0.8.0-exp.1:
 
 ```bash
-SANDBOX="<caminho>/RamiresTech-Sandbox"
-unity status                                                     # Editor da Sandbox em "ready"
-unity command recompile        --project-path "$SANDBOX"         # força refresh + compilação
-unity command recompile_status --project-path "$SANDBOX"         # até "completed"
-unity command console_status   --project-path "$SANDBOX" --format json   # groundTruth: erros/warnings
-unity command console          --project-path "$SANDBOX" --format json   # mensagens completas
-unity command run_tests        --project-path "$SANDBOX" --mode all \
+HOST="<caminho>/Whisker-Of-Rage-Unity-6"   # a partir de um package: HOST="../.."
+unity status                                                     # Editor do host em "ready"
+unity command recompile        --project-path "$HOST"         # força refresh + compilação
+unity command recompile_status --project-path "$HOST"         # até "completed"
+unity command console_status   --project-path "$HOST"    --format json   # groundTruth: erros/warnings
+unity command console          --project-path "$HOST"    --format json   # mensagens completas
+unity command run_tests        --project-path "$HOST"    --mode all \
     --filter RamiresTechGames.<Sistema> --filter_type assembly --format json
 ```
 
+> Package novo em `Packages/` (submodule recém-adicionado) só é detectado após `unity command package_resolve`.
 > Arquivos de package editados fora da Unity só são compilados após `recompile`. Confira o horário de
 > `Library/ScriptAssemblies/RamiresTechGames.<Sistema>*.dll` em caso de dúvida.
 
@@ -54,7 +56,7 @@ Sem Editor aberto (CI/batch): `unity test` (ver `unity test --help`).
 
 ## Gate por milestone
 
-- 0 erros de compilação e 0 warnings novos no console da Sandbox.
+- 0 erros de compilação e 0 warnings novos no console do host.
 - Todos os testes EditMode e PlayMode do package verdes.
 - `python tools/check_dependencies.py` sem erros.
 - Validator sem erros nas definições do Sample.

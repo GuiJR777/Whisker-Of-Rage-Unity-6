@@ -1,6 +1,6 @@
 # ADR-0006 — Sandbox com referências `file:`; jogos com submodules
 
-- **Status:** Aceita (M0)
+- **Status:** Substituída por [ADR-0007](0007-develop-inside-game-host.md)
 
 ## Contexto
 O Master Prompt define submodules em `Packages/` para o WOR. Durante o desenvolvimento do framework,

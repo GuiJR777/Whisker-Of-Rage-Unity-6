@@ -1,7 +1,6 @@
 <!--
-CÓPIA SINCRONIZADA. Fonte única de verdade: ramirestech-framework/docs/CONVENTIONS.md
-Não edite aqui: altere no repo de framework e copie novamente. Links relativos abaixo apontam para
-arquivos daquele repositório (Games/Framework/ramirestech-framework/docs/).
+CÓPIA SINCRONIZADA. Fonte única de verdade: Docs/Framework/docs/CONVENTIONS.md
+Não edite aqui: altere a fonte e copie novamente. Links relativos abaixo apontam para Docs/Framework/docs/.
 -->
 
 # RamiresTech Games — Convenções de Desenvolvimento Unity 6
@@ -219,7 +218,7 @@ Ordem (omitir regions vazias):
 ### 11.1 Packages
 Definida pelo template: [03-repository-structure.md](03-repository-structure.md).
 
-### 11.2 Projetos de jogo (WOR, Sandbox)
+### 11.2 Projetos de jogo (WOR e futuros)
 Padrão RamiresTech, com `RTG_Unity_Modules` substituído por packages UPM:
 
 ```
@@ -233,8 +232,9 @@ Assets/
   Graphics/Textures/  Graphics/Sprites/Characters/Player/
   Scenes/
   Dev/            <- documentação de desenvolvimento
+  _FrameworkSandbox/  <- Integration Sandbox do framework (somente no host de desenvolvimento)
 Packages/
-  com.ramirestechgames.*   <- submodules (WOR) ou referências file: (Sandbox)
+  com.ramirestechgames.*   <- submodules (um repo por package)
 ```
 
 ---

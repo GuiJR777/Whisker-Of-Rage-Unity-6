@@ -6,10 +6,10 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 
 | # | Gate | Como verificar |
 |---|---|---|
-| QG1 | Compila em Unity **6000.6.5f1** sem erros e sem warnings novos | `unity command recompile` + `console` na Sandbox |
-| QG2 | Funciona sem qualquer jogo consumidor (WOR incluso) | Sandbox não contém código nem assets de jogo |
+| QG1 | Compila em Unity **6000.6.5f1** sem erros e sem warnings novos | `unity command recompile` + `console_status` no host |
+| QG2 | Funciona sem qualquer jogo consumidor (WOR incluso) | `check_dependencies.py` (sem referência a assemblies do jogo) + testes do package sem cenas/assets do jogo |
 | QG3 | Testes de domínio e integração adequados, verdes | `run_tests` (ver [05](05-testing-strategy.md)) |
-| QG4 | Sample funcional importável pelo Package Manager | Importar sample na Sandbox e dar Play |
+| QG4 | Sample funcional importável pelo Package Manager | Importar sample no host, validar e remover |
 | QG5 | Documentação atualizada (README, CLAUDE, ARCHITECTURE, CONTRACTS, TESTING, ROADMAP, CHANGELOG) | Revisão |
 | QG6 | API pública compreensível e listada em CONTRACTS.md com estabilidade | Revisão |
 | QG7 | Editor UX adequada (Inspectors com Header/Tooltip, menus de criação, ferramentas visuais necessárias) | Revisão no Editor |
@@ -41,7 +41,7 @@ para os integration assemblies opcionais.
 
 | Milestone | Depende de | Entregas | Critérios de aprovação (além dos QGs) |
 |---|---|---|---|
-| **M0 Foundation** | — | Dependency graph, contratos, convenções, template, ferramentas, Core 0.1.0 (ExecutionOrder + Validator), Sandbox | Template gera package que compila e passa testes na Sandbox; `check_dependencies` verde; revisão de arquitetura aprovada pelo owner. |
+| **M0 Foundation** | — | Dependency graph, contratos, convenções, template, ferramentas, Core 0.1.0 (ExecutionOrder + Validator), Integration Sandbox em `Assets/_FrameworkSandbox` do host | Template gera package que compila e passa testes no host; `check_dependencies` verde; revisão de arquitetura aprovada pelo owner. |
 | **M1 Stats** | M0 | Stat/Resource/StatSet definitions, modificadores, derivadas, regen/consumo, eventos, Runtime Stat Inspector | Fórmula de modificadores em ADR; recálculo de derivadas ordenado e sem ciclo (validator detecta ciclo); tick sem GC; sample "Stats Playground". |
 | **M2 HFSM** | M0 | Definição de grafo, estados SR, guards, prioridade/interrupção, contexto, runner, visualização e debugger | **Spike de tecnologia de graph editor** (Graph Toolkit × GraphView × UI Toolkit próprio) com ADR, reaproveitável em M4/M6; sample com estados compartilhados por 2 atores. |
 | **M3 Character** | M0 (+M1/M2 opcionais) | Motor, profile, pulo exato/variável, coyote, buffer, air control, dash, forças externas, facing, chão; integrações HFSM/Stats/InputSystem | Teste PlayMode: altura do pulo dentro de tolerância; mesmo prefab controlado por Player e por script de comandos; funciona com sprite e com modelo 3D. |
@@ -49,7 +49,7 @@ para os integration assemblies opcionais.
 | **M5 Abilities** | M1, M4 (opcional) | Abilities ativas/passivas, effects, tags, custos, cooldowns, targeting, stacking, cancelamento, concessão, composição, debugger | Composição de 2 abilities sem código novo; adapter Combat via `IHitEffect`; nenhum nome de jogo no código. |
 | **M6 Behaviour Tree** | M3, M4, M5 (opcionais) | BT, Blackboard, composites, decorators, sensores, interrupções, target selection, graph editor, debugger | Inimigo de exemplo faz Patrol/Chase/Attack/Retreat só com assets; nenhuma chamada direta a motor/combat fora dos adapters. |
 | **M7 Equipment** | M1, M5 (opcional) | Slots, restrições, equip/unequip, modificadores, ability grants, passivos, loadouts, editor | Equipar/desequipar restaura stats exatamente (teste); grants revogados ao desequipar. |
-| **M8 Integration Sandbox** | M1–M7 | Cena com Player + AI usando todos os packages; testes cross-package; perf básica | 60 FPS com N atores definidos no ADR de perf; zero GC por frame no loop de simulação; todos os packages → 1.0.0. |
+| **M8 Integration Sandbox** | M1–M7 | Cena `Assets/_FrameworkSandbox/Scenes/Sandbox_Main` com Player + AI usando todos os packages; testes cross-package; perf básica | 60 FPS com N atores definidos no ADR de perf; zero GC por frame no loop de simulação; todos os packages → 1.0.0. |
 | **M9 Novo WOR** | M8 | Montagem do novo WOR do zero sobre o projeto base `Projetos/Whisker Of Rage` (repo `Whisker-Of-Rage-Unity-6`, Unity 6000.6.5f1): packages como submodules em `Packages/`, prefabs, conteúdo e glue do jogo | Nenhum código do WOR antigo; nenhuma alteração em código de package para montar o jogo (somente issues/PRs nos repos de package). |
 
 ## Revisão de arquitetura

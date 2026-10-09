@@ -1,7 +1,7 @@
 # RamiresTech Games — Gameplay Framework (governança)
 
-Repositório de **governança** do framework de gameplay Unity 6 da RamiresTech Games.
-Não é um Unity package e não é consumido pelos jogos.
+**Governança** do framework de gameplay Unity 6 da RamiresTech Games, mantida em `Docs/Framework/` do projeto host
+`Whisker-Of-Rage-Unity-6` ([ADR-0007](docs/adr/0007-develop-inside-game-host.md)). Não é um Unity package.
 
 ## O que há aqui
 
@@ -27,7 +27,7 @@ Não é um Unity package e não é consumido pelos jogos.
 
 | Package | Camada | Milestone | Estado |
 |---|---|---|---|
-| `com.ramirestechgames.core` | L0 | M0 | 0.1.0 implementado, aguardando revisão |
+| `com.ramirestechgames.core` | L0 | M0 | 0.1.0 implementado (submodule), aguardando revisão |
 | `com.ramirestechgames.stats` | L1 | M1 | — |
 | `com.ramirestechgames.hfsm` | L1 | M2 | — |
 | `com.ramirestechgames.character` | L2 | M3 | — |
@@ -36,17 +36,17 @@ Não é um Unity package e não é consumido pelos jogos.
 | `com.ramirestechgames.ai` | L5 | M6 | — |
 | `com.ramirestechgames.equipment` | L5 | M7 | — |
 
-## Workspace
+## Layout no host
 ```
-Games/Framework/
-  ramirestech-framework/   <- este repo
-  com.ramirestechgames.*/  <- um repo por package
-  RamiresTech-Sandbox/     <- projeto Unity host (file: references)
+Whisker-Of-Rage-Unity-6/
+  Docs/Framework/                 <- esta pasta
+  Packages/com.ramirestechgames.*  <- um submodule por package (repo privado no GitHub)
+  Assets/_FrameworkSandbox/       <- Integration Sandbox
 ```
 
 ## Uso rápido
 ```bash
-python tools/new_package.py stats --description "Generic attributes, resources and modifiers." --milestone M1
-python tools/check_dependencies.py
+python Docs/Framework/tools/new_package.py stats --description "Generic attributes, resources and modifiers." --milestone M1
+python Docs/Framework/tools/check_dependencies.py
 ```
 Requer Python 3.10+.

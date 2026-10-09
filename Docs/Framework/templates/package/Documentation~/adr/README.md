@@ -1,7 +1,7 @@
 # ADRs — {{PACKAGE_ID}}
 
 Decisões de arquitetura específicas deste package. Decisões transversais ficam em
-`ramirestech-framework/docs/adr/`.
+`Docs/Framework/docs/adr/` do projeto host.
 
 | # | Título | Status |
 |---|---|---|

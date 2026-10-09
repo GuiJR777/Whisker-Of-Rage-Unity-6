@@ -36,7 +36,7 @@ sem depender do histórico de conversas. Cada documento tem um leitor e uma perg
 3. Limites: o que este package NÃO faz
 4. Dependências permitidas (hard / optional) — fonte: dependency-graph.json
 5. Regras essenciais (resumo de CONVENTIONS.md)
-6. Comandos: compilar, testar, validar dependências (Unity CLI + Sandbox)
+6. Comandos: compilar, testar, validar dependências (Unity CLI + projeto host)
 7. Definition of Done (Quality Gates)
 8. Armadilhas conhecidas
 ```
@@ -45,7 +45,7 @@ sem depender do histórico de conversas. Cada documento tem um leitor e uma perg
 
 Formato curto (template em `Documentation~/adr/0000-template.md`):
 `Status · Contexto · Decisão · Alternativas consideradas · Consequências`.
-ADRs do framework (transversais) vivem em `ramirestech-framework/docs/adr/`;
+ADRs do framework (transversais) vivem em `Docs/Framework/docs/adr/` do host;
 ADRs de um package vivem no próprio package.
 
 ## Template

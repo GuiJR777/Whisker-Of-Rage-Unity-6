@@ -1,6 +1,6 @@
 # Testes — {{PACKAGE_ID}}
 
-Estratégia do framework: `ramirestech-framework/docs/05-testing-strategy.md` (sem TDD; testes obrigatórios
+Estratégia do framework: `Docs/Framework/docs/05-testing-strategy.md` do host (sem TDD; testes obrigatórios
 antes de fechar o milestone).
 
 ## Assemblies de teste
@@ -17,9 +17,9 @@ MonoBehaviours de teste ficam em `Tests/Runtime/Fixtures/` (em assembly Editor-o
 Exemplo pronto: `com.ramirestechgames.core/Tests/Runtime`.
 
 ## Como rodar
-Na Sandbox (`../RamiresTech-Sandbox`, package listado em `testables`):
+No projeto host (package listado em `testables`), com o Editor aberto:
 ```bash
-unity command run_tests --project-path ../RamiresTech-Sandbox --mode all \
+unity command run_tests --project-path ../.. --mode all \
     --filter {{ASSEMBLY_ROOT}} --filter_type assembly --format json
 ```
 Ou: Window > General > Test Runner.

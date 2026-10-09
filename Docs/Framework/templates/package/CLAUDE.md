@@ -12,18 +12,20 @@ consumidor (WOR ou outros) e não pode conter nomes, assets ou regras específic
 3. `ROADMAP.md` — milestone atual e o que está fora de escopo.
 4. `TESTING.md` — como testar e o que precisa de teste.
 5. `Documentation~/adr/` — decisões já tomadas (não reabra sem novo ADR).
-6. Framework (repo irmão `../ramirestech-framework/`): `docs/CONVENTIONS.md`, `docs/01-dependency-graph.md`.
+6. Governança do framework (no projeto host, `../../Docs/Framework/`): `docs/CONVENTIONS.md`,
+   `docs/01-dependency-graph.md`.
 
 ## 3. Limites — este package NÃO faz
-- _Preencha no início do milestone (copie de `ramirestech-framework/docs/02-package-boundaries-and-contracts.md`)._
+- _Preencha no início do milestone (copie de `Docs/Framework/docs/02-package-boundaries-and-contracts.md` do host)._
 - Não lê Input System, Animator ou SpriteRenderer fora de integration/presentation assemblies.
+- Não referencia código, cenas ou assets do jogo host.
 - Não adiciona nada ao Core.
 
 ## 4. Dependências permitidas (fonte: `dependency-graph.json`)
 - **Hard:** {{HARD_DEPS_MD}}
 - **Opcionais (somente em `Runtime/Integration/<Outro>/` com asmdef própria):** {{OPTIONAL_DEPS_MD}}
 - Qualquer outra referência é proibida. Verifique com:
-  `python ../ramirestech-framework/tools/check_dependencies.py`
+  `python ../../Docs/Framework/tools/check_dependencies.py`
 
 ## 5. Regras essenciais (resumo de CONVENTIONS.md)
 - Namespace = `{{ASSEMBLY_ROOT}}` + caminho de pastas a partir de `Runtime/` ou `Editor/`.
@@ -43,20 +45,22 @@ consumidor (WOR ou outros) e não pode conter nomes, assets ou regras específic
 - Testes depois da implementação (sem TDD), obrigatórios antes de fechar o milestone.
 
 ## 6. Comandos
-O package é compilado e testado dentro da Sandbox (`../RamiresTech-Sandbox`), que o referencia via `file:`.
-Com o Editor da Sandbox aberto (Unity CLI / plugin Unity):
+Este repo é um submodule em `Packages/{{PACKAGE_ID}}` do projeto host (Whisker-Of-Rage-Unity-6).
+Compile e teste com o Editor do host aberto (Unity CLI / plugin Unity); `HOST` = raiz do projeto:
 
 ```bash
-SANDBOX="../RamiresTech-Sandbox"
+HOST="../.."
 unity status                                                                  # Editor "ready"?
-unity command recompile        --project-path "$SANDBOX"
-unity command recompile_status --project-path "$SANDBOX"
-unity command console_status   --project-path "$SANDBOX" --format json      # erros/warnings
-unity command run_tests        --project-path "$SANDBOX" --mode all \
+unity command recompile        --project-path "$HOST"
+unity command recompile_status --project-path "$HOST"
+unity command console_status   --project-path "$HOST" --format json      # erros/warnings
+unity command run_tests        --project-path "$HOST" --mode all \
     --filter {{ASSEMBLY_ROOT}} --filter_type assembly --format json
-python ../ramirestech-framework/tools/check_dependencies.py
+python ../../Docs/Framework/tools/check_dependencies.py
 ```
 Arquivos editados fora da Unity só compilam após `recompile`.
+Fluxo de commit: commit/push neste repo (em `main`, não em detached HEAD) e depois commit do ponteiro do
+submodule no host.
 
 ## 7. Definition of Done (Quality Gates)
 - [ ] Compila em Unity 6000.6.5f1 sem erros/warnings novos (QG1)

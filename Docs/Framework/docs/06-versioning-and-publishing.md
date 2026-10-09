@@ -11,7 +11,7 @@
 | Correção sem mudança de API | PATCH | PATCH |
 
 - `0.1.0` é publicado quando o milestone do package passa nos Quality Gates.
-- `1.0.0` é publicado após o **M8** validar o package integrado na Sandbox.
+- `1.0.0` é publicado após o **M8** validar o package integrado na Integration Sandbox (`Assets/_FrameworkSandbox`).
 
 ## Publicação
 
@@ -21,7 +21,7 @@
 3. Atualizar versões mínimas em `dependencies` (só se o package passou a exigir algo novo).
 4. Commit `chore(release): vX.Y.Z` e **tag anotada** `vX.Y.Z`.
 5. Push de `main` e da tag.
-6. Registrar o conjunto testado em `ramirestech-framework/COMPATIBILITY.md`.
+6. Registrar o conjunto testado em `Docs/Framework/COMPATIBILITY.md` do host.
 
 ## Dependências entre packages
 
@@ -29,14 +29,14 @@
 - Dependências opcionais **não** vão no `package.json`. Os integration assemblies usam `versionDefines`
   com faixa mínima (ex.: `[0.2.0,1.0.0)`), então não compilam com versão incompatível em vez de quebrar.
 - UPM não resolve dependências por URL Git: o projeto consumidor precisa incluir cada package requerido
-  (submodule ou `file:`). Se faltar um, a Unity reporta o package ausente de forma explícita.
+  (submodule em `Packages/`). Se faltar um, a Unity reporta o package ausente de forma explícita.
 
 ## Consumo
 
 | Consumidor | Mecanismo | Versão |
 |---|---|---|
-| **Sandbox** (desenvolvimento) | `"com.ramirestechgames.<id>": "file:../../com.ramirestechgames.<id>"` | Working copy (HEAD de cada repo) |
-| **WOR e futuros jogos** | Git submodule em `Packages/com.ramirestechgames.<id>` | Tag `vX.Y.Z` conhecida |
+| **Whisker-Of-Rage-Unity-6** (host de desenvolvimento) | Git submodule em `Packages/com.ramirestechgames.<id>` | `main` do package durante o desenvolvimento; tag `vX.Y.Z` em releases do jogo |
+| **Futuros jogos** | Git submodule em `Packages/com.ramirestechgames.<id>` | Tag `vX.Y.Z` conhecida |
 
 Atualizar um package no jogo:
 ```bash
@@ -53,9 +53,9 @@ git commit -m "chore(deps): stats v0.2.0"
 2. Remover API `Stable`: marcar `[Obsolete("Use X. Será removido em vN.0.0")]` por pelo menos um MINOR antes.
 3. Mover/renomear tipos serializados por `[SerializeReference]`: usar `[MovedFrom]` (obrigatório).
 4. Renomear campos serializados: `[FormerlySerializedAs]` (obrigatório).
-5. O `COMPATIBILITY.md` registra conjuntos de versões validados juntos na Sandbox.
+5. O `COMPATIBILITY.md` registra conjuntos de versões validados juntos no host.
 
-## Remotos (pendente de decisão do owner)
+## Remotos
 
-Proposta: um repositório GitHub privado por package (`ramirestech-games/com.ramirestechgames.<id>`)
-e um para governança. Os repositórios locais já estão inicializados; criar os remotos é ação do owner.
+Um repositório GitHub **privado** por package: `https://github.com/GuiJR777/com.ramirestechgames.<id>.git`.
+A governança não tem repo próprio: vive em `Docs/Framework` do host ([ADR-0007](adr/0007-develop-inside-game-host.md)).

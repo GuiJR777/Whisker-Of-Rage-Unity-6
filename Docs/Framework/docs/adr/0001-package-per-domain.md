@@ -1,6 +1,6 @@
 # ADR-0001 — Um Unity Package por domínio, um repositório por package
 
-- **Status:** Aceita (M0)
+- **Status:** Aceita (M0) · itens de governança e Sandbox **substituídos por [ADR-0007](0007-develop-inside-game-host.md)**
 
 ## Contexto
 O framework precisa servir o novo WOR (construído do zero) e jogos futuros. O padrão anterior (`RTG_Unity_Modules` dentro de cada projeto)

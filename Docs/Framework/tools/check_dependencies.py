@@ -5,10 +5,11 @@ Checks:
   * The graph itself: known packages only, strictly lower layers, hard and optional do not overlap.
   * package.json: name, SemVer version, unity field, RamiresTech dependencies == hard dependencies.
   * asmdef: references by name (no GUID), only allowed packages, optional packages only inside
-    Integration assemblies guarded by defineConstraints + versionDefines.
+    Integration assemblies guarded by defineConstraints + versionDefines, and no reference to any
+    assembly outside the framework or Unity (protects packages from depending on game code).
 
 Usage:
-    python tools/check_dependencies.py [--workspace <folder with package repositories>]
+    python Docs/Framework/tools/check_dependencies.py [--workspace <folder with package repositories>]
 Exit code 0 when no errors are found, 1 otherwise.
 """
 import argparse
@@ -18,6 +19,9 @@ import sys
 from pathlib import Path
 
 FRAMEWORK_ROOT = Path(__file__).resolve().parent.parent
+HOST_ROOT = FRAMEWORK_ROOT.parent.parent
+PACKAGES_ROOT = HOST_ROOT / "Packages"
+UNITY_ASSEMBLY_PREFIXES = ("Unity.", "UnityEngine", "UnityEditor")
 GRAPH_PATH = FRAMEWORK_ROOT / "dependency-graph.json"
 PACKAGE_PREFIX = "com.ramirestechgames."
 GUID_REFERENCE_PREFIX = "GUID:"
@@ -133,7 +137,12 @@ class DependencyChecker:
                 self._error(f"{label}: reference '{reference}' uses a GUID; reference assemblies by name")
                 continue
             owner = self._owner_of(reference)
-            if owner is None or owner == package_id or owner in entry["hard"]:
+            if owner is None:
+                if not reference.startswith(UNITY_ASSEMBLY_PREFIXES):
+                    self._error(f"{label}: references '{reference}', which is neither a framework nor a Unity "
+                                f"assembly (packages must not depend on game code)")
+                continue
+            if owner == package_id or owner in entry["hard"]:
                 continue
             if owner not in entry["optional"]:
                 self._error(f"{label}: references {reference} ({owner}), which is not allowed by the graph")
@@ -153,8 +162,8 @@ class DependencyChecker:
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Validate RamiresTech package dependencies.")
-    parser.add_argument("--workspace", type=Path, default=FRAMEWORK_ROOT.parent,
-                        help="Folder that contains the package repositories.")
+    parser.add_argument("--workspace", type=Path, default=PACKAGES_ROOT,
+                        help="Folder that contains the package repositories (default: <host>/Packages).")
     return parser.parse_args()
 
 

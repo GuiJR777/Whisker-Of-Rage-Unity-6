@@ -5,7 +5,7 @@ The package must already be declared in dependency-graph.json (adding a package 
 decision and requires an ADR). Dependencies, assembly names and defines are read from the graph.
 
 Usage:
-    python tools/new_package.py stats --description "Generic attributes, resources and modifiers." --milestone M1
+    python Docs/Framework/tools/new_package.py stats --description "Generic attributes, resources and modifiers." --milestone M1
 """
 import argparse
 import datetime
@@ -16,6 +16,8 @@ import sys
 from pathlib import Path
 
 FRAMEWORK_ROOT = Path(__file__).resolve().parent.parent
+HOST_ROOT = FRAMEWORK_ROOT.parent.parent
+PACKAGES_ROOT = HOST_ROOT / "Packages"
 TEMPLATE_DIR = FRAMEWORK_ROOT / "templates" / "package"
 GRAPH_PATH = FRAMEWORK_ROOT / "dependency-graph.json"
 PACKAGE_PREFIX = "com.ramirestechgames."
@@ -137,8 +139,8 @@ def parse_arguments():
     parser.add_argument("--description", required=True, help="One-sentence package description (English).")
     parser.add_argument("--display-name", help="Menu display name. Defaults to the spaced system name.")
     parser.add_argument("--milestone", default="M?", help="Milestone that implements the package, e.g. M1.")
-    parser.add_argument("--output-root", type=Path, default=FRAMEWORK_ROOT.parent,
-                        help="Workspace folder that holds the package repositories.")
+    parser.add_argument("--output-root", type=Path, default=PACKAGES_ROOT,
+                        help="Folder that holds the package repositories (default: <host>/Packages).")
     parser.add_argument("--no-git", action="store_true", help="Do not run git init.")
     return parser.parse_args()
 
@@ -168,10 +170,12 @@ def main():
 
     print(f"Created {target_dir}")
     print("Next steps:")
-    print(f"  1. Add \"{package_id}\": \"file:../../{package_id}\" and testables entry to the Sandbox manifest.")
-    print("  2. Let Unity import the package (generates .meta files), then commit everything.")
-    print("  3. Fill CLAUDE.md section 3 (limits) and ROADMAP.md for the milestone.")
-    print("  4. Run python tools/check_dependencies.py")
+    print(f"  1. Let Unity import it: add \"{package_id}\" to testables, run 'unity command package_resolve'")
+    print("     (generates .meta files), then commit inside the package repository.")
+    print(f"  2. gh repo create GuiJR777/{package_id} --private --source Packages/{package_id} --push")
+    print(f"  3. git submodule add https://github.com/GuiJR777/{package_id}.git Packages/{package_id}")
+    print("  4. Fill CLAUDE.md section 3 (limits) and ROADMAP.md for the milestone.")
+    print("  5. Run python Docs/Framework/tools/check_dependencies.py")
     return 0
 
 

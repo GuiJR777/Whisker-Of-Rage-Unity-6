@@ -1,6 +1,6 @@
 # Roadmap — {{PACKAGE_ID}}
 
-Roadmap geral: `ramirestech-framework/docs/07-roadmap.md`.
+Roadmap geral: `Docs/Framework/docs/07-roadmap.md` do host.
 
 ## Estado atual
 **Milestone:** {{MILESTONE}} · **Versão:** 0.1.0 (em desenvolvimento)
