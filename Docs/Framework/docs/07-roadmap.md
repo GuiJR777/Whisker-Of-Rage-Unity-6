@@ -21,7 +21,7 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 
 ## Milestones
 
-**Estado:** M0 concluído em 2026-10-09 (Core `v0.1.0`). M1 em fase de design — implementação só após aprovação do design.
+**Estado:** M0 concluído em 2026-10-09 (Core `v0.1.0`). M1 implementado (Stats 0.1.0, Core 0.2.0), aguardando revisão final — sem tags até a aprovação.
 
 ```mermaid
 flowchart LR
