@@ -6,7 +6,7 @@ Probabilidade (P) e Impacto (I): A = alto, M = médio, B = baixo.
 
 | # | Risco | P | I | Mitigação | Quando |
 |---|---|---|---|---|---|
-| R1 | **Tecnologia de graph editor.** Três editores de grafo (HFSM, Combo, BT). `GraphView` é experimental e sem evolução; o Graph Toolkit da Unity ainda está amadurecendo. Escolha errada = 3× retrabalho. | A | A | Spike no M2 com ADR; uma infraestrutura de grafo compartilhada só se as três usarem a mesma tecnologia (aí sim candidata a package `graph` ou ao Core.Editor, com ADR). | M2 |
+| R1 | **Tecnologia de graph editor.** Três editores de grafo (HFSM, Combo, BT). `GraphView` é experimental e sem evolução; o Graph Toolkit da Unity ainda está amadurecendo. Escolha errada = 3× retrabalho. | A | A | Spike no M2 com ADR; uma infraestrutura de grafo compartilhada só se as três usarem a mesma tecnologia (aí sim candidata a package `graph` ou ao Core.Editor, com ADR). | M2 ✔ spike: GraphView agora, reavaliar Graph Toolkit no M4/M6 ([spike](design/m2-graph-editor-spike.md)) |
 | R2 | **Explosão de integration assemblies.** Cada par de packages pode gerar adapters; manutenção combinatória. | M | M | Integração só com caso de uso concreto no Sample/Sandbox; cada adapter com teste; grafo limita os pares possíveis. | Contínuo |
 | R3 | **Version skew entre 8 repositórios.** Combinações não testadas no jogo. | A | M | `Assets/_FrameworkSandbox` é a verdade de integração; `COMPATIBILITY.md` com conjuntos validados; `versionDefines` com faixas. | M1+ |
 | R4 | **Fragilidade de `[SerializeReference]`.** Renomear/mover classe apaga dados silenciosamente. | A | A | `[MovedFrom]` obrigatório; tipos SR `sealed` com nomes estáveis; teste que carrega assets de sample; nota no CHANGELOG. | M2+ |

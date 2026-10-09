@@ -34,6 +34,8 @@ Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 git clone --recurse-submodules https://github.com/GuiJR777/Whisker-Of-Rage-Unity-6.git
 git submodule update --init            # em um clone existente
 ```
+No Windows, clone em um caminho curto ou habilite `git config --global core.longpaths true`: caminhos longos quebram
+os objetos dos submodules ("Filename too long").
 Alterar um package: `cd Packages/<id>`, `git switch main`, commit + push no package, depois
 `git add Packages/<id>` e commit no host.
 
