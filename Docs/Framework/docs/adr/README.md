@@ -11,5 +11,7 @@ Decisões transversais. ADRs específicas de um package ficam em `Documentation~
 | [0005](0005-naming-namespaces-assemblies.md) | Nomes de packages, namespaces e assemblies | Aceita |
 | [0006](0006-sandbox-file-references.md) | Sandbox com referências `file:`; jogos com submodules | Substituída por 0007 |
 | [0007](0007-develop-inside-game-host.md) | Desenvolvimento do framework dentro do Whisker-Of-Rage-Unity-6 | Aceita |
+| [0008](0008-serialize-reference-picker-in-core.md) | Seletor genérico de `[SerializeReference]` no Core | Aceita |
+| [0009](0009-ai-optional-stats.md) | AI → Stats como dependência opcional | Aceita |
 
 Template: [`templates/package/Documentation~/adr/0000-template.md`](../../templates/package/Documentation~/adr/0000-template.md).

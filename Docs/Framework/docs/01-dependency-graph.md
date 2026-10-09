@@ -43,6 +43,7 @@ flowchart BT
     abilities -.-> hfsm
     abilities -.-> character
     abilities -.-> combat
+    ai -.-> stats
     ai -.-> character
     ai -.-> combat
     ai -.-> abilities
@@ -61,7 +62,7 @@ Linha cheia = hard. Linha tracejada = integração opcional. Setas apontam para 
 | `character` | L2 | core | hfsm, stats | com.unity.inputsystem |
 | `combat` | L3 | core, stats | hfsm, character | com.unity.inputsystem |
 | `abilities` | L4 | core, stats | hfsm, character, combat | com.unity.inputsystem |
-| `ai` | L5 | core | character, combat, abilities | — |
+| `ai` | L5 | core | stats ([ADR-0009](adr/0009-ai-optional-stats.md)), character, combat, abilities | — |
 | `equipment` | L5 | core, stats | abilities | — |
 
 ## Regras

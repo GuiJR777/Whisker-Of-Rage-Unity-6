@@ -1,9 +1,17 @@
-# M1 — Stats System · Especificação técnica (design para revisão)
+# M1 — Stats System · Especificação técnica
 
 - **Package:** `com.ramirestechgames.stats` · assembly/namespace raiz `RamiresTechGames.Stats` · camada L1
-- **Dependência hard:** `com.ramirestechgames.core` · **Opcionais:** nenhuma
-- **Status:** **Design em revisão — não implementar antes da aprovação.**
+- **Dependência hard:** `com.ramirestechgames.core` (≥ 0.2.0, por causa do seletor de `[SerializeReference]`) · **Opcionais:** nenhuma
+- **Status:** **v2 — aprovada com correções; implementação autorizada.** M1 só é declarado concluído após revisão final.
 - **Requisitos de origem:** Master Prompt §4.1; contratos em [02](../02-package-boundaries-and-contracts.md) (seção stats).
+- **ADRs relacionadas:** [ADR-0008](../adr/0008-serialize-reference-picker-in-core.md) (seletor no Core.Editor),
+  [ADR-0009](../adr/0009-ai-optional-stats.md) (AI → Stats opcional).
+
+### Histórico
+| Versão | Mudança |
+|---|---|
+| v1 | Design inicial (decisões D1–D11 em aberto). |
+| v2 | D1–D11 aprovadas (D10 = `Clamp`). Correções da revisão: consumo atômico de múltiplos recursos (§5.3), integridade numérica (§6), cache e isolamento (§7), eventos/identidade/lotes (§8), regeneração × decaimento (§5.5), contrato de falhas (§9), AC3 reescrito e testes adicionais (§13). |
 
 ---
 
@@ -13,92 +21,80 @@ Sistema genérico de **atributos numéricos** e **recursos consumíveis**, confi
 modificadores rastreáveis por fonte, stats derivadas por fórmula, regeneração/consumo, eventos e ferramentas de
 inspeção em runtime. É a base numérica de Combat (dano), Abilities (custos e efeitos) e Equipment (bônus).
 
-### Dentro do escopo (lista fechada, Master Prompt §4.1)
-Stat Definitions · Stat Sets reutilizáveis · Base/Current/Max · modificadores Flat/Additive/Multiplicative ·
-temporários e permanentes · fontes identificáveis · regeneração e consumo de recursos · stats derivadas por
-fórmula · recálculo e gerenciamento de dependências · Runtime Stat Inspector/debugger · eventos de mudança ·
-API para Combat, Abilities e Equipment.
+**Dentro do escopo (lista fechada, Master Prompt §4.1):** Stat Definitions · Stat Sets reutilizáveis ·
+Base/Current/Max · modificadores Flat/Additive/Multiplicative · temporários e permanentes · fontes identificáveis ·
+regeneração e consumo de recursos · stats derivadas por fórmula · recálculo e dependências · Runtime Stat
+Inspector/debugger · eventos de mudança · API para Combat, Abilities e Equipment.
 
-### Fora do escopo
-Dano e defesa (Combat) · durações/stacking de efeitos complexos (Abilities) · equipar (Equipment) · save/load
-(o modelo já traz `StableId` para isso) · rede/replicação · nomes de stats de qualquer jogo · UI de jogo (HUD).
+**Fora do escopo:** dano/defesa (Combat) · durações e stacking de efeitos (Abilities) · equipar (Equipment) ·
+operação `Override` (D4) · parser de fórmulas em texto (D9) · save/load (o modelo já traz `StableId`) · rede ·
+nomes de stats de qualquer jogo · HUD.
 
 ---
 
 ## 2. Conceitos
 
-| Conceito | O que é | "Base / Current / Max" |
+| Conceito | O que é | Base / Current / Max |
 |---|---|---|
-| **Stat** | Atributo numérico calculado: valor base + modificadores. Ex.: força, velocidade, vida máxima, chance de crítico. | **Base** = valor base (constante ou fórmula) · **Value** = valor final após modificadores |
-| **Resource** | Quantidade consumível limitada entre um mínimo e um máximo dado por uma stat. Ex.: vida atual, energia. | **Current** = quantidade atual · **Max** = valor final da stat de máximo · **Min** = piso |
-| **Derived stat** | Stat cuja **base** vem de fórmula sobre outras stats. Modificadores ainda se aplicam sobre o resultado. | Base = fórmula(valores finais das dependências) |
-| **Modifier** | Alteração de uma stat com operação, valor, prioridade, **fonte** e duração opcional. | — |
-| **Source** | Quem aplicou o modificador (instância de equipamento, efeito de ability, debug). Permite remover tudo de uma fonte. | — |
-| **Stat Set** | Conjunto reutilizável de stats + valores base + fórmulas + recursos; suporta herança (arquétipos). | — |
+| **Stat** | Atributo numérico: valor base + modificadores. | **Base** = constante ou fórmula · **Value** = final |
+| **Resource** | Quantidade consumível entre um mínimo e um máximo dado por uma stat. | **Current** · **Max** = stat de máximo · **Min** = piso |
+| **Derived stat** | Stat cuja base vem de fórmula sobre valores **finais** de outras stats. | Base = fórmula(dependências) |
+| **Modifier** | Operação + valor + fonte + duração opcional + prioridade. | — |
+| **Source** | Quem aplicou o modificador; permite remover tudo dela. Identidade **por referência**. | — |
+| **Stat Set** | Conjunto reutilizável com herança (arquétipos). | — |
 
-Os nomes de exemplo usados neste documento e no sample (Vitality, Health, Energy, MoveSpeed) são **genéricos**
-e vivem apenas em `Samples~`. O código do package não contém nenhum nome de stat.
+Nomes como Vitality, Health, Energy existem **apenas** no sample.
 
 ---
 
-## 3. Modelo de dados (definições — ScriptableObjects imutáveis em runtime)
+## 3. Modelo de dados (ScriptableObjects imutáveis em runtime)
 
-### 3.1 `StatDefinition` (SO)
+### 3.1 `StatDefinition`
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `StableId` | string (GUID, somente leitura) | Gerado na criação; identidade estável para save/debug. Duplicatas são erro no Validator. |
-| `DisplayName`, `Description`, `Category` | string | Nome no debugger/inspectors; categoria agrupa no inspector do set. |
-| `DefaultBaseValue` | float | Base usada quando o set não define outra. |
-| `HasMinValue` / `MinValue`, `HasMaxValue` / `MaxValue` | bool/float | Limites aplicados ao valor final (ex.: chance de crítico em [0, 1]). |
-| `Rounding` | `StatRounding` { `None`, `Round`, `Floor`, `Ceil` } | Para stats inteiras. Aplicado antes do clamp. |
+| `StableId` | string (somente leitura) | Espelha o GUID do asset (atualizado no Editor; corrige duplicação de asset). |
+| `DisplayName`, `Description`, `Category` | string | Exibição e agrupamento. |
+| `DefaultBaseValue` | float | Base quando o set não define outra. |
+| `HasMinValue`/`MinValue`, `HasMaxValue`/`MaxValue` | bool/float | Limites do valor final. |
+| `Rounding` | `None`, `Round`, `Floor`, `Ceil` | Aplicado antes do clamp (D11). |
 
-### 3.2 `ResourceDefinition` (SO)
+### 3.2 `ResourceDefinition`
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `StableId`, `DisplayName`, `Description` | — | Como em `StatDefinition`. |
-| `MaxStat` | `StatDefinition` (obrigatório) | Stat que define o máximo. Deve existir no set. |
+| `StableId`, `DisplayName`, `Description` | — | Como acima. |
+| `MaxStat` | `StatDefinition` (obrigatório) | Stat do máximo; deve existir no set. |
 | `MinValue` | float (padrão 0) | Piso. |
-| `InitialFill` | `ResourceInitialFill` { `Full`, `Empty`, `Fraction` } + `InitialFraction` [0..1] | Valor inicial. |
-| `RegenerationSource` | { `None`, `Constant`, `Stat` } | Origem da taxa (unidades/s). `Stat` permite regen modificável por buffs. |
-| `RegenerationPerSecond` / `RegenerationStat` | float / `StatDefinition` | Taxa; **negativa = decaimento** (ex.: barra que esvazia sozinha). |
-| `RegenerationDelayAfterDecrease` | float (s) | Pausa a regen após qualquer redução (ex.: stamina). |
-| `RegenerateWhileDepleted` | bool | Se recupera estando no mínimo (vida: não; stamina: sim). |
-| `MaxChangePolicy` | `ResourceMaxChangePolicy` { `Clamp`, `PreserveRatio`, `AddDifference` } | O que acontece com `Current` quando `Max` muda (ver §5.4). |
+| `InitialFill` + `InitialFraction` | `Full`/`Empty`/`Fraction`, [0, 1] | Valor inicial. |
+| `RegenerationSource` | `None`/`Constant`/`Stat` | Origem da taxa (unidades/s). |
+| `RegenerationPerSecond` / `RegenerationStat` | float / `StatDefinition` | Positiva = recuperação; **negativa = decaimento**. |
+| `RegenerationDelayAfterDecrease` | float (s) | Pausa **apenas a recuperação** após redução **externa** (§5.5). |
+| `RegenerateWhileDepleted` | bool | Recupera estando no mínimo? |
+| `MaxChangePolicy` | `Clamp` (**padrão**, D10), `PreserveRatio`, `AddDifference` | Efeito de mudança do máximo em `Current`. |
 
-### 3.3 `StatSetDefinition` (SO)
+### 3.3 `StatSetDefinition`
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `ParentSet` | `StatSetDefinition` (opcional) | Herança de arquétipo: o filho herda entradas e sobrescreve as que declarar. |
-| `Stats` | `List<StatEntry>` | `Stat`, `BaseSource` { `Default`, `Constant`, `Formula` }, `BaseValue`, `[SerializeReference] StatFormula Formula`. |
+| `ParentSet` | `StatSetDefinition` | Herança: filho herda e sobrescreve. |
+| `Stats` | `List<StatEntry>` | `Stat`, `BaseSource` (`Default`/`Constant`/`Formula`), `BaseValue`, `[SerializeReference, SelectImplementation] StatFormula Formula` (D3). |
 | `Resources` | `List<ResourceEntry>` | `Resource` + override opcional de `InitialFill`. |
 
-O conjunto efetivo é calculado **uma vez** (pai → filho, entradas do filho vencem) e cacheado por set.
-
-### 3.4 Fórmulas (`[SerializeReference]`, classes puras sem estado)
+### 3.4 Fórmulas
 ```csharp
 [Serializable]
 public abstract class StatFormula
 {
-    /// Adds every stat this formula reads (used for dependency ordering and cycle detection).
     public abstract void CollectDependencies(List<StatDefinition> dependencies);
-
-    /// Evaluates using FINAL values of the dependencies.
-    public abstract float Evaluate(IStatValueSource source);
+    public abstract float Evaluate(IStatValueSource source);           // valores FINAIS das dependências
+    public virtual void Validate(ValidationReport report, UnityEngine.Object context) { }
 }
 ```
-| Fórmula incluída | Expressão | Exemplo |
-|---|---|---|
-| `LinearFormula` | `Constant + Σ(Coefficient_i × stat_i)` | MaxHealth = 50 + 10 × Vitality |
-| `CurveFormula` | `Scale × Curve.Evaluate(stat)` | Retornos decrescentes de Agility → crítico |
-
-O jogo pode criar fórmulas próprias herdando `StatFormula` (aparecem no seletor de tipo do inspector).
-**Sem parser de expressões em texto** (ver §11, alternativas).
+Incluídas: `LinearFormula` (`Constant + Σ Coefficient_i × stat_i`) e `CurveFormula` (`Scale × Curve(stat)`).
+O jogo pode criar as suas (aparecem no seletor do Core). Sem parser textual (D9).
 
 ---
 
 ## 4. Modificadores
 
-### 4.1 Estrutura
 ```csharp
 public enum StatModifierOperation { Flat, Additive, Multiplicative }
 
@@ -106,242 +102,299 @@ public readonly struct StatModifier
 {
     public StatModifier(StatModifierOperation operation, float value, IModifierSource source,
                         float duration = 0f, int priority = 0);
-    public StatModifierOperation Operation { get; }
-    public float Value { get; }          // Flat: unidades · Additive: fração somada (0.1 = +10%) · Multiplicative: fator (1.5 = ×1.5)
-    public IModifierSource Source { get; } // obrigatório
-    public float Duration { get; }       // 0 = permanente (até ser removido)
-    public int Priority { get; }         // apenas ordenação de exibição/estabilidade; não altera a matemática
+    // Flat: unidades · Additive: fração (0.1 = +10%) · Multiplicative: fator (1.5 = ×1.5)   (D2)
 }
-
-public interface IModifierSource { string DisplayName { get; } }   // implementado por equipamentos, efeitos, etc.
-public sealed class ModifierSource : IModifierSource { ... }       // fonte simples nomeada (debug, scripts, testes)
-public readonly struct ModifierHandle { ... }                       // retorno de AddModifier; remoção individual
+public interface IModifierSource { string DisplayName { get; } }
+public sealed class ModifierSource : IModifierSource { public ModifierSource(string displayName); }
+public readonly struct ModifierHandle { public static readonly ModifierHandle Invalid; public bool IsValid { get; } }
 ```
 
-### 4.2 Fórmula do valor final
+**Valor final (D1):**
 ```
-base     = Constant | DefaultBaseValue | Formula(final values of dependencies)
-raw      = (base + Σ Flat) × (1 + Σ Additive) × Π Multiplicative
-final    = Clamp(Round(raw), Min, Max)          // Round/Clamp conforme a StatDefinition
+base     = Constant | DefaultBaseValue | Formula(...)
+additive = Max(0, 1 + Σ Additive)                     // total abaixo de -100% satura em zero
+raw      = (base + Σ Flat) × additive × Π Multiplicative
+final    = Clamp(Round(raw), Min, Max)
 ```
-
-| Base | Modificadores | Final | Leitura |
-|---|---|---|---|
-| 100 | — | 100 | — |
-| 100 | Flat +20 | 120 | |
-| 100 | Flat +20, Additive +0.10, Additive +0.15 | 150 | (120) × 1.25 |
-| 100 | Flat +20, Additive +0.25, Multiplicative ×2 | 300 | 150 × 2 |
-| 100 | Multiplicative ×1.5, Multiplicative ×0.5 | 75 | multiplicativos se compõem |
-| 5 (MoveSpeed) | Multiplicative ×0 | 0 | "enraizado" |
-| 0.9 (Crit, Max 1) | Additive +0.5 | 1 | clamp |
-
-### 4.3 Temporários × permanentes × base
-| Tipo | Como | Quem usa |
+| Base | Modificadores | Final |
 |---|---|---|
-| **Temporário** | `Duration > 0`; `StatCollection.Tick` expira e remove. | Buffs simples sem Abilities, testes, debug. |
-| **Permanente** | `Duration = 0`; vive até `RemoveModifier`/`RemoveModifiersFromSource`. | Equipment (enquanto equipado); Abilities (o efeito controla a própria duração e remove por fonte). |
-| **Mudança de base** | `TrySetBaseValue` / `TryAddToBaseValue`. | Progressão (level up, upgrades permanentes). Proibido em stats derivadas. |
+| 100 | — | 100 |
+| 100 | Flat +20 | 120 |
+| 100 | Flat +20, Additive +0.10, Additive +0.15 | 150 |
+| 100 | Flat +20, Additive +0.25, Multiplicative ×2 | 300 |
+| 100 | Multiplicative ×1.5, ×0.5 | 75 |
+| 5 | Multiplicative ×0 | 0 |
+| 0.9 (Max 1) | Additive +0.5 | 1 |
+| 100 | Additive −1.5 | 0 (saturação) |
 
-Regra para Abilities: **uma única fonte da verdade de tempo** — efeitos com duração/stacking adicionam modificadores
-permanentes e os removem pela fonte quando acabam; não usam `Duration` do Stats.
+**Ordem canônica:** a agregação percorre os modificadores de cada stat ordenados por
+`(Operation, Priority, Value)`. O resultado depende só do **conjunto** de modificadores ativos, não da ordem em
+que foram adicionados ou removidos (§13, AC3).
+
+**Temporários × permanentes × base:** `Duration > 0` expira em `Tick` (buffs simples); `Duration = 0` vive até
+ser removido (Equipment; efeitos do Abilities, que controla duração/stacking e remove por fonte — D8);
+progressão permanente usa `TrySetBaseValue`/`TryAddToBaseValue` (proibido em derivadas).
 
 ---
 
 ## 5. Runtime
 
-### 5.1 `StatCollection` (Pure) — a API central
+### 5.1 `StatCollection` (Pure, uma por ator)
 ```csharp
 public sealed class StatCollection : IStatValueSource
 {
     public StatCollection(StatSetDefinition set, IReadOnlyList<BaseValueOverride> overrides = null);
 
-    // Leitura
+    // Leitura — obrigatória lança; opcional usa Try (§9)
     public bool Has(StatDefinition stat);
-    public float GetValue(StatDefinition stat);                 // final; erro logado 1x e 0 se ausente
+    public float GetValue(StatDefinition stat);                      // StatNotFoundException se ausente
     public bool TryGetValue(StatDefinition stat, out float value);
     public float GetBaseValue(StatDefinition stat);
 
     // Base
-    public bool TrySetBaseValue(StatDefinition stat, float value);     // false em stat derivada/ausente
+    public bool TrySetBaseValue(StatDefinition stat, float value);   // false: ausente, derivada ou não finito
     public bool TryAddToBaseValue(StatDefinition stat, float delta);
 
     // Modificadores
-    public ModifierHandle AddModifier(StatDefinition stat, in StatModifier modifier);
-    public bool RemoveModifier(ModifierHandle handle);
-    public int RemoveModifiersFromSource(IModifierSource source);       // todas as stats
-    public void GetModifiers(StatDefinition stat, List<ActiveModifierInfo> results); // sem alocar (lista do chamador)
-
-    // Lote: recalcula e emite eventos uma vez ao final (ex.: equipar item com 5 bônus)
-    public StatBatchScope BeginBatch();                                 // using (stats.BeginBatch()) { ... }
+    public ModifierHandle AddModifier(StatDefinition stat, in StatModifier modifier);           // lança (§9)
+    public bool TryAddModifier(StatDefinition stat, in StatModifier modifier, out ModifierHandle handle);
+    public bool RemoveModifier(ModifierHandle handle);                // false: inválido, antigo ou de outra coleção
+    public int RemoveModifiersFromSource(IModifierSource source);
+    public bool IsActive(ModifierHandle handle);
+    public void GetModifiers(StatDefinition stat, List<ActiveModifierInfo> results);
+    public void GetAllModifiers(List<ActiveModifierInfo> results);
 
     // Recursos
+    public ResourcePool GetResource(ResourceDefinition resource);    // ResourceNotFoundException se ausente
     public bool TryGetResource(ResourceDefinition resource, out ResourcePool pool);
-    public ResourcePool GetResource(ResourceDefinition resource);
+    public bool CanAfford(IReadOnlyList<ResourceCost> costs);
+    public ResourceTransactionResult TryConsumeResources(IReadOnlyList<ResourceCost> costs, object instigator = null);
 
-    // Tempo (chamado pelo StatsComponent; domínio não lê Time.*)
-    public void Tick(float deltaTime);                                   // expira temporários + regen
+    // Lote e tempo
+    public StatBatchScope BeginBatch();
+    public void Tick(float deltaTime);
 
-    public event Action<StatChangedArgs> StatChanged;                   // readonly struct: Stat, OldValue, NewValue
+    public event Action<StatChangedArgs> StatChanged;               // Stat, OldValue, NewValue
+    public event Action<ResourceChangedArgs> ResourceChanged;       // espelho de todos os pools (debugger/log)
+    public IReadOnlyList<string> Diagnostics { get; }               // problemas de configuração detectados
 }
 ```
 
-### 5.2 `ResourcePool` (Pure)
+### 5.2 `ResourcePool` (Pure, pertence a uma `StatCollection`)
 ```csharp
 public sealed class ResourcePool
 {
     public ResourceDefinition Definition { get; }
-    public float Current { get; }  public float Max { get; }  public float Min { get; }
-    public float Normalized { get; }  public bool IsDepleted { get; }   // Current <= Min
+    public float Current { get; } public float Max { get; } public float Min { get; }
+    public float Normalized { get; } public bool IsDepleted { get; }     // Current <= Min
 
-    public bool CanAfford(float amount);                                  // Current - amount >= Min
-    public bool TryConsume(float amount, object instigator = null);       // custo: tudo ou nada
-    public float Decrease(float amount, object instigator = null);        // dano: aplica o possível, retorna aplicado
-    public float Increase(float amount, object instigator = null);        // cura/restauração, retorna aplicado
+    public bool CanAfford(float amount);
+    public bool TryConsume(float amount, object instigator = null);      // custo: tudo ou nada
+    public float Decrease(float amount, object instigator = null);       // dano: retorna aplicado
+    public float Increase(float amount, object instigator = null);       // cura: retorna aplicado
     public void SetCurrent(float value, object instigator = null);
-    public void Fill();  public void Deplete();
+    public void Fill(object instigator = null); public void Deplete(object instigator = null);
 
-    public event Action<ResourceChangedArgs> Changed;     // Resource, Old, New, Delta, Reason, Instigator
-    public event Action<ResourcePool> Depleted;           // uma vez por transição para o mínimo
-    public event Action<ResourcePool> Replenished;        // uma vez por saída do mínimo
+    public event Action<ResourceChangedArgs> Changed;   // Resource, Old, New, Delta, Reason, Instigator
+    public event Action<ResourcePool> Depleted;          // uma vez por transição para o mínimo
+    public event Action<ResourcePool> Replenished;       // uma vez por saída do mínimo
 }
-public enum ResourceChangeReason { Consume, Decrease, Increase, Regeneration, MaxChanged, Set }
+public enum ResourceChangeReason { Consume, Decrease, Increase, Regeneration, Decay, MaxChanged, Set }
 ```
-Custos múltiplos (Abilities): checar `CanAfford` de todos e só então `TryConsume` de cada um (documentado como
-padrão; não há transação implícita entre pools).
 
-### 5.3 Recálculo e dependências
-1. Na construção, o set efetivo vira arrays indexados (`StatDefinition` → índice via dicionário construído **uma vez**).
-2. As dependências das fórmulas formam um grafo; calcula-se a **ordem topológica** e a lista de dependentes de cada
-   stat. **Ciclos** são erro do Validator (antes do Play) e, se chegarem ao runtime, a fórmula é ignorada
-   (base = `DefaultBaseValue`) com um único `LogError` com contexto.
-3. **Recálculo ansioso e completo:** ao mudar base/modificador de S, recalcula S e seus dependentes na ordem
-   topológica, **sempre a partir de base + lista de modificadores** (nunca por deltas incrementais). Isso garante
-   restauração exata ao remover modificadores (sem drift de float).
-4. **Eventos depois do lote:** `StatChanged` só dispara depois que todo o subgrafo foi recalculado (listeners veem
-   estado consistente), uma vez por stat cujo valor mudou. `BeginBatch` estende o lote para várias operações.
-5. Mudança de uma stat que é `MaxStat` de um recurso aplica a `MaxChangePolicy` (§5.4) e emite `Changed` com
-   `Reason = MaxChanged`.
+### 5.3 Consumo atômico de múltiplos recursos (correção 1)
+API mínima para o futuro GAS pagar custos compostos (ex.: 20 de energia + 5 de vida) — **não** é um sistema de
+transações genérico.
+```csharp
+public readonly struct ResourceCost { public ResourceCost(ResourceDefinition resource, float amount); }
+public enum ResourceTransactionStatus { Success, InvalidCost, MissingResource, InsufficientResource }
+public readonly struct ResourceTransactionResult
+{
+    public ResourceTransactionStatus Status { get; }
+    public ResourceDefinition FailedResource { get; }   // null em Success
+    public bool Succeeded => Status == ResourceTransactionStatus.Success;
+}
+```
+Algoritmo de `TryConsumeResources(costs)`:
+1. **Validar** todas as entradas: recurso não nulo e presente; quantia finita e ≥ 0. Falha → retorna o status, nada muda.
+2. **Consolidar** custos do mesmo recurso (somados em buffer interno pré-alocado, sem GC).
+3. **Verificar** `CanAfford` de cada recurso com o total consolidado. Falha → `InsufficientResource`, nada muda.
+4. **Aplicar** todas as reduções (reason `Consume`; reinicia o atraso de recuperação de cada recurso afetado).
+5. **Notificar** só depois do passo 4: um `Changed` por recurso (na ordem do set), seguido de `Depleted` quando houver.
+`CanAfford(costs)` executa os passos 1–3 sem aplicar. Custos de valor 0 são válidos e não geram eventos.
 
-### 5.4 Política de mudança do máximo
-| Política | Max 100 → 150 (Current 80) | Max 100 → 50 (Current 80) | Uso típico |
-|---|---|---|---|
-| `Clamp` | 80 | 50 | Energia, munição |
-| `PreserveRatio` | 120 | 40 | Escalas proporcionais |
-| `AddDifference` | 130 | 50 (só clamp ao reduzir) | Vida ao equipar bônus de vida máxima |
+### 5.4 Recálculo e dependências
+1. O set efetivo é compilado em um **layout imutável** (§7): stats em ordem topológica, índices, dependentes,
+   recursos e mapeamento stat de máximo → recursos.
+2. Ciclos de fórmula: erro no Validator; em runtime a fórmula do ciclo é desativada (base = `DefaultBaseValue`) e
+   registrada em `Diagnostics` + um `LogError`.
+3. **Recálculo ansioso e completo:** mudou base/modificador de S → recalcula S e dependentes em ordem topológica,
+   sempre a partir de base + conjunto de modificadores (nunca por deltas).
+4. Política de máximo dos recursos aplicada **uma vez ao fim do lote** (§8.3), do máximo inicial ao final do lote.
 
-### 5.5 Regeneração (em `Tick`)
-Aplica `rate × deltaTime` quando: taxa ≠ 0, atraso pós-redução vencido, e (`!IsDepleted` ou
-`RegenerateWhileDepleted`). Limita a [Min, Max]. Taxa negativa = decaimento. Emite `Changed` com
-`Reason = Regeneration` apenas quando o valor muda.
+### 5.5 Regeneração × decaimento (correção 5)
+| | Recuperação (taxa > 0) | Decaimento (taxa < 0) |
+|---|---|---|
+| Atraso `RegenerationDelayAfterDecrease` | Aplica-se | **Não** se aplica |
+| O que reinicia o atraso | Somente reduções **externas**: `TryConsume`, `TryConsumeResources`, `Decrease`, `SetCurrent` para baixo, `Deplete` | — |
+| O que **não** reinicia | `Decay`, `MaxChanged` (clamp), `Regeneration` | Decaimento nunca reinicia o atraso |
+| Em `IsDepleted` | Só se `RegenerateWhileDepleted` | Para no mínimo (`Depleted` ao atingir) |
+| Reason do evento | `Regeneration` | `Decay` |
+O atraso é consumido com precisão de sub-tick: se vencer no meio de um `Tick`, só o restante do delta regenera.
+Taxa vinda de stat não finita é tratada como 0 (§6).
 
 ### 5.6 Componentes Unity
 | Componente | Banda | Responsabilidade |
 |---|---|---|
-| `StatsComponent` | `ExecutionOrder.STATS` (`Update`) | `[SerializeField] StatSetDefinition`, overrides de base por instância (variações na cena sem novo asset). Cria a `StatCollection` em `Awake`; tica com `Time.deltaTime`. Expõe `Stats`. |
-| `ResourceEventsComponent` | `PRESENTATION` | Glue sem código: escolhe um recurso e expõe `UnityEvent`s (`OnDepleted`, `OnReplenished`, `OnChanged(float normalized)`) para designers ligarem animação/SFX/UI. |
-
-`Update` com tempo escalado: regen e durações respeitam `timeScale`. Hitstop/time scale local é decisão do M4
-(ADR-0003); o Stats só recebe o delta que lhe passarem.
+| `StatsComponent` | `STATS` (`Update`) | Set + overrides de base por instância; cria a `StatCollection` (no `Awake` ou no primeiro acesso); `Tick(Time.deltaTime)` (D7); `Rebuild()` para aplicar edições de asset em Play Mode. |
+| `ResourceEventsComponent` | `PRESENTATION` | `UnityEvent`s `OnDepleted`, `OnReplenished`, `OnNormalizedChanged(float)` para designers ligarem feedback sem código. |
 
 ---
 
-## 6. Integração com outros packages
-Stats é L1 e não conhece ninguém acima. Quem integra depende dele (hard) ou tem integration assembly.
+## 6. Integridade numérica (correção 2)
+| Situação | Comportamento |
+|---|---|
+| NaN/±Infinity em valor de modificador, duração, base, quantia de recurso, custo | Rejeitado: métodos obrigatórios lançam `ArgumentException`; `Try*` retornam `false`/status `InvalidCost`. Estado inalterado. |
+| Quantia negativa em `TryConsume`/`Decrease`/`Increase`/custo | Rejeitada como acima (use a operação inversa). |
+| Fator `Multiplicative` < 0 | Rejeitado. `0` é válido (zera). |
+| Σ `Additive` < −1 | Fator aditivo satura em 0. |
+| `Duration` < 0 | Rejeitado. |
+| `StatDefinition` com `Min > Max` | Erro no Validator; em runtime `Min` prevalece (resultado = `Min`). |
+| Fórmula retorna NaN/Infinity (ex.: divisão por zero em fórmula do jogo) ou lança exceção | Base = `DefaultBaseValue` da stat; um `LogError`/`LogException` por stat e por coleção; registrado em `Diagnostics`. Próximas avaliações seguem tentando (o erro não é logado de novo). |
+| Valor final não finito (overflow) | Final = valor limitado de `DefaultBaseValue`; diagnóstico como acima. |
+| `MaxStat` final abaixo do `MinValue` do recurso | Máximo efetivo = `MinValue` (intervalo colapsa; recurso fica esgotado); diagnóstico; aviso do Validator quando os limites da stat permitem isso. |
+| Taxa de regeneração não finita | Tratada como 0; diagnóstico. |
+| `Tick` com delta negativo ou não finito | Ignorado; diagnóstico. |
+| `InitialFraction` fora de [0, 1] | Erro no Validator; em runtime é limitado a [0, 1]. |
 
-| Package | Como usa o Stats | Onde fica o código |
+---
+
+## 7. Cache e isolamento (correção 3)
+- **Layout compilado (`StatSetLayout`, interno, imutável):** criado a partir do set efetivo e **compartilhado** por
+  todas as coleções do mesmo set. Só contém dados somente leitura (arrays nunca expostos).
+- **Invalidação no Editor:** um contador global de versão (`StatsDefinitionVersion`) é incrementado no `OnValidate`
+  de qualquer `StatDefinition`, `ResourceDefinition` ou `StatSetDefinition` (edição no Inspector, Undo/Redo,
+  reimport) e por um `AssetPostprocessor` quando assets desses tipos são importados, movidos ou apagados. O set
+  guarda a versão com que compilou; versão diferente → recompila no próximo uso. Em builds a versão nunca muda.
+  O cache é `[NonSerialized]`, então recarga de domínio também o descarta.
+- **Coleções existentes não são alteradas** por edições de asset em Play Mode (elas seguram o layout antigo).
+  Para aplicar: `StatsComponent.Rebuild()` (botão no inspector/Runtime Inspector) ou sair e entrar no Play Mode.
+- **Isolamento:** todo estado mutável (bases, valores, modificadores, recursos, filas de eventos, buffers) pertence a
+  uma única `StatCollection`. Duas coleções do mesmo set não compartilham nada mutável. Definições nunca são escritas
+  em runtime (teste de snapshot).
+
+---
+
+## 8. Eventos, identidade e lotes (correção 4)
+
+### 8.1 Identidade
+- **`IModifierSource`:** identidade **por referência** (`ReferenceEquals`), ignorando `Equals`/`GetHashCode`
+  sobrescritos. `null` é rejeitado. Um componente Unity destruído continua sendo a mesma referência: quem aplica
+  é responsável por remover (`RemoveModifiersFromSource`) ao desequipar/terminar/destruir.
+- **`ModifierHandle`:** `(id da coleção, slot, geração)`. Válido somente para a coleção que o criou e enquanto o
+  modificador estiver ativo. Após remoção ou expiração, o slot muda de geração: handles antigos nunca removem um
+  modificador novo. `RemoveModifier` com handle inválido/antigo/de outra coleção retorna `false` sem efeito.
+
+### 8.2 Ordem das notificações
+Ao final de cada operação (ou do lote externo):
+1. `StatChanged` para cada stat cujo valor mudou, em **ordem topológica** (dependências antes de dependentes);
+2. eventos de recurso na ordem em que ocorreram; para cada mudança: `Changed` (pool) → `ResourceChanged`
+   (coleção) → `Depleted`/`Replenished` quando houver transição.
+Valores nos argumentos são os do momento da mudança.
+
+### 8.3 Lotes (`BeginBatch`)
+- **Leituras sempre atuais:** valores são recalculados imediatamente a cada operação dentro do lote.
+- **Notificações adiadas e coalescidas:** um `StatChanged` por stat com `Old` = valor no início do lote e
+  `New` = valor no fim (omitido se iguais). Eventos de recurso são enfileirados e emitidos no fim.
+- **Máximo dos recursos** reflete a stat de máximo ao fim do lote: `ResourcePool.Max` e a política são aplicados
+  uma única vez, do máximo inicial ao final (evita resultado dependente do caminho, ex.: Clamp em 100→50→150).
+- Lotes aninham; o flush acontece no `Dispose` do mais externo. `Dispose` duplicado é ignorado.
+
+### 8.4 Reentrância
+Listeners podem chamar a API (ex.: ao esgotar vida, aplicar um efeito). A mutação acontece imediatamente; suas
+notificações vão para o **fim da fila** e são entregues depois das atuais (FIFO, sem recursão). Uma exceção em um
+listener é logada (`LogException`) e não impede os demais. Proteção contra laço: mais de 10 000 notificações em um
+único despacho → `LogError` e a fila é descartada.
+
+---
+
+## 9. Contrato de falhas (correção 6)
+| Chamada | Stat/recurso ausente | Argumento inválido (§6) |
 |---|---|---|
-| **Combat** (M4, hard) | Etapas de dano (`IDamageStep`) leem `IStatValueSource` do atacante/defensor; aplicam `ResourcePool.Decrease(amount, instigator)` no recurso de vida escolhido no `DamageProfile`; reagem a `Depleted`. | Combat |
-| **Abilities** (M5, hard) | Custos: `CanAfford`/`TryConsume`. Gameplay Effects: modificadores permanentes com a instância do efeito como `IModifierSource`, removidos por fonte; efeitos periódicos usam `Increase`/`Decrease`. Duração e stacking ficam no Abilities. | Abilities |
-| **Equipment** (M7, hard) | Equipar: `BeginBatch` + `AddModifier` com a instância equipada como fonte. Desequipar: `RemoveModifiersFromSource`. | Equipment |
-| **Character** (M3, opcional) | `StatDrivenMovement`: lê uma stat escolhida no inspector (ex.: velocidade) e reage a `StatChanged`. | `Character.Integration.Stats` |
-| **AI** (M6) | Condições como "recurso < 30%". **Requer mudança no grafo** (ver §11, D6). | `AI.Integration.Stats` (se aprovado) |
-| **Core** | Definições e `StatsComponent` implementam `IValidatable`; componentes usam `ExecutionOrder`. | Stats |
+| `GetValue`, `GetBaseValue`, `GetResource`, `AddModifier` | `StatNotFoundException` / `ResourceNotFoundException` (mensagem com stat e set) | `ArgumentException` |
+| `TryGetValue`, `TryGetResource`, `TryAddModifier`, `TrySetBaseValue`, `TryAddToBaseValue` | `false` | `false` |
+| `TryConsumeResources`, `CanAfford(costs)` | `MissingResource` / `false` | `InvalidCost` / `false` |
+| `ResourcePool.Decrease/Increase/SetCurrent` | — | `ArgumentException` |
+| `ResourcePool.TryConsume/CanAfford` | — | `false` |
+| Argumento `null` (stat, recurso, fonte) | `ArgumentNullException` em todos os métodos | |
+Nenhuma consulta obrigatória retorna 0 silenciosamente. Consumidores com dados opcionais (ex.: item que dá bônus a
+uma stat que o ator pode não ter) usam as variantes `Try*`.
 
 ---
 
-## 7. Ferramentas de Unity Editor
-
-| Ferramenta | Tipo | Conteúdo |
+## 10. Integração com outros packages
+| Package | Como usa | Onde fica o código |
 |---|---|---|
-| Menus de criação | `Assets/Create/RamiresTech Games/Stats/` | Stat Definition, Resource Definition, Stat Set Definition. |
-| Inspector de `StatSetDefinition` | Custom Inspector (UI Toolkit) | Tabela por categoria: stat, origem da base (herdada/sobrescrita/fórmula), valor base, **coluna de prévia** (fórmulas avaliadas com valores base), avisos inline; lista de recursos com máximo previsto; botão "Add missing Max stats"; resumo do Validator no topo. |
-| Seletor de fórmula | Property Drawer para `[SerializeReference] StatFormula` | Dropdown com todos os tipos concretos (`TypeCache`), inclusive fórmulas do jogo. |
-| Inspector de `StatsComponent` | Custom Inspector | Em Edit Mode: set e overrides com prévia. Em Play Mode: valores ao vivo e barras de recursos. |
-| **Runtime Stat Inspector** | `Tools/RamiresTech Games/Stats/Runtime Inspector` | Ator selecionado (ou lista de atores com `StatsComponent`): por stat, base → modificadores (fonte, operação, valor, tempo restante) → final; recursos com current/max/regen/atraso; log das últimas N mudanças; ações de debug (adicionar modificador de teste, encher/esvaziar recurso, remover por fonte). |
-| Validators (`IValidatable`) | Core Validator | Ver §8. |
-
-Não haverá editor de grafo de dependências: a ordem e os ciclos aparecem como lista/aviso no inspector do set.
+| Combat (M4, hard) | `IStatValueSource` nas etapas de dano; `ResourcePool.Decrease(amount, instigator)`; `Depleted`. | Combat |
+| Abilities (M5, hard) | `CanAfford`/`TryConsumeResources` para custos compostos; efeitos aplicam modificadores permanentes com a instância do efeito como `IModifierSource` e removem por fonte (D8). | Abilities |
+| Equipment (M7, hard) | `BeginBatch` + `AddModifier`/`TryAddModifier` com a instância equipada como fonte; `RemoveModifiersFromSource` ao desequipar. | Equipment |
+| Character (M3, opcional) | Velocidade a partir de uma stat + `StatChanged`. | `Character.Integration.Stats` |
+| AI (M6, opcional — ADR-0009) | Condições sobre stats/recursos. | `AI.Integration.Stats` |
+| Core | `IValidatable`, `ExecutionOrder`, seletor `[SelectImplementation]` (ADR-0008). | Stats |
 
 ---
 
-## 8. Validações (Validator do Core)
+## 11. Ferramentas de Unity Editor
+| Ferramenta | Conteúdo |
+|---|---|
+| Menus `Assets/Create/RamiresTech Games/Stats/` | Stat Definition, Resource Definition, Stat Set Definition. |
+| Inspector de `StatDefinition`/`ResourceDefinition` | Campos com Header/Tooltip, `StableId` somente leitura, resumo do Validator. |
+| Inspector de `StatSetDefinition` | Lista editável (fórmulas pelo seletor do Core); **prévia** do set efetivo (origem herdada/própria, base, valor sem modificadores, ordem de cálculo); máximo previsto dos recursos; botão "Add missing Max stats"; resumo do Validator. |
+| Inspector de `StatsComponent` | Edit Mode: set, overrides e prévia. Play Mode: valores e recursos ao vivo; botões Rebuild e Runtime Inspector. |
+| **Runtime Stat Inspector** (`Tools/RamiresTech Games/Stats/Runtime Inspector`) | Lista de atores ativos; por stat: base → modificadores (fonte, operação, valor, tempo restante) → final; recursos (barra, regen/atraso); diagnósticos; log das últimas mudanças; ações de debug (adicionar modificador, remover por fonte, encher/esvaziar/alterar recurso). |
+| Validators | §12. |
+
+## 12. Validações
 | Objeto | Erro | Aviso |
 |---|---|---|
-| `StatDefinition` | `StableId` vazio/duplicado; `Min > Max`; base padrão fora dos limites | Sem `DisplayName` |
-| `ResourceDefinition` | `MaxStat` ausente; regen por stat sem stat; fração inicial fora de [0, 1] | `MinValue` negativo |
-| `StatSetDefinition` | Stat duplicada; ciclo de herança; ciclo entre fórmulas; fórmula lendo stat fora do set; `MaxStat` de recurso fora do set; fórmula nula com origem `Formula` | Base fora dos limites da stat |
-| `StatsComponent` | Sem set | Override de stat que não existe no set |
+| `StatDefinition` | `StableId` vazio ou diferente do GUID do asset; `Min > Max`; limites não finitos; base padrão não finita | Base padrão fora dos limites; sem `DisplayName` |
+| `ResourceDefinition` | `MaxStat` ausente; regen por stat sem stat; `InitialFraction` fora de [0, 1]; valores não finitos | Limites da `MaxStat` permitem máximo abaixo do `MinValue` |
+| `StatSetDefinition` | Stat duplicada; ciclo de herança; ciclo entre fórmulas; fórmula ausente com origem `Formula`; fórmula lendo stat fora do set; fórmula com tipo ausente (`[SerializeReference]` órfão); `MaxStat`/stat de regen fora do set; base não finita | Base fora dos limites da stat |
+| `StatsComponent` | Sem set | Override para stat fora do set ou derivada |
 
 ---
 
-## 9. Estrutura do package (proposta)
-```
-Runtime/
-  Definitions/   StatDefinition, ResourceDefinition, StatSetDefinition, StatEntry, ResourceEntry, enums
-  Formulas/      StatFormula, LinearFormula, CurveFormula, IStatValueSource
-  Modifiers/     StatModifier, StatModifierOperation, ModifierHandle, IModifierSource, ModifierSource, ActiveModifierInfo
-  Values/        StatCollection, ResourcePool, StatBatchScope, StatChangedArgs, ResourceChangedArgs (+ internos)
-  Components/    StatsComponent, ResourceEventsComponent
-Editor/
-  Inspectors/    StatSetDefinitionEditor, StatsComponentEditor
-  Drawers/       StatFormulaDrawer (ou picker do Core, ver D5)
-  Windows/       RuntimeStatInspectorWindow
-Tests/
-  Editor/        domínio (matemática, dependências, recursos, lotes, alocação, validators)
-  Runtime/       StatsComponent em Play Mode; Fixtures/
-Samples~/
-  StatsPlayground/  stats genéricas (Vitality, MaxHealth, Health, Energy, MoveSpeed), cena com ator e ações por ContextMenu
-```
-
----
-
-## 10. Critérios de aceite do M1
+## 13. Critérios de aceite do M1
 Além de QG1–QG12:
 
 | # | Critério | Verificação |
 |---|---|---|
-| AC1 | Designer cria stats, recurso e set (com herança e fórmula) **só pelo Inspector** e vê a prévia dos valores. | Sample + revisão |
-| AC2 | A matemática da §4.2 reproduz todos os exemplos da tabela. | Testes paramétricos |
-| AC3 | `RemoveModifiersFromSource` restaura **exatamente** (igualdade bit a bit) todas as stats e o `Max` dos recursos afetados. | Testes |
-| AC4 | Derivadas recalculam em ordem topológica; `StatChanged` dispara uma vez por stat alterada por lote; ciclos detectados pelo Validator e neutralizados em runtime com um único erro. | Testes |
-| AC5 | Recursos: `TryConsume` tudo-ou-nada; `Decrease`/`Increase` com clamp; regen com atraso e decaimento; `Depleted`/`Replenished` exatamente uma vez por transição; as 3 políticas de máximo. | Testes |
-| AC6 | Runtime Stat Inspector mostra base → modificadores (fonte, operação, tempo restante) → final ao vivo e executa ações de debug. | Revisão em Play Mode |
-| AC7 | Zero alocação de GC em regime: `GetValue`, `Tick` com 50 coleções, `AddModifier`/`RemoveModifier` após aquecimento. | `Is.Not.AllocatingGCMemory()` |
-| AC8 | Nenhum nome de stat no código do package. | Revisão + busca |
-| AC9 | ScriptableObjects inalterados após uma sessão de Play com modificadores e consumo. | Teste |
-| AC10 | Sample "Stats Playground" funciona sem escrever código. | QG4/QG11 |
-| AC11 | `CONTRACTS.md` lista a API com estabilidade e as garantias AC2–AC5. | QG6 |
+| AC1 | Designer cria stats, recurso e set (com herança e fórmula) só pelo Inspector e vê a prévia. | Sample + revisão |
+| AC2 | A matemática da §4 reproduz todos os exemplos da tabela. | Testes paramétricos |
+| AC3 | **Recálculo determinístico sem drift:** para o mesmo base e o mesmo conjunto de modificadores ativos, o valor final é **bit a bit idêntico** independentemente da ordem e do histórico de adições/remoções; remover todos os modificadores de uma fonte devolve stats e `Max` dos recursos ao valor de uma coleção que nunca os recebeu. **Não** se promete restaurar `Current` de recursos que sofreram consumo, regeneração ou clamp. | Testes, incl. sequências aleatórias com seed |
+| AC4 | Derivadas em ordem topológica; um `StatChanged` por stat alterada por lote; ciclos detectados pelo Validator e neutralizados em runtime com diagnóstico. | Testes |
+| AC5 | Recursos: `TryConsume` tudo-ou-nada; `Decrease`/`Increase` com clamp; recuperação com atraso só após redução externa; decaimento sem atraso e sem reiniciar atraso; `Depleted`/`Replenished` uma vez por transição; 3 políticas de máximo. | Testes |
+| AC6 | `TryConsumeResources`: consolida duplicados, tudo-ou-nada, nenhuma mudança nem evento em falha, eventos só após aplicar. | Testes |
+| AC7 | Integridade numérica (§6) e contrato de falhas (§9) cobertos caso a caso. | Testes |
+| AC8 | Eventos: ordem (§8.2), coalescência e leituras atuais em lote, reentrância FIFO, isolamento de exceções, proteção de laço; handles antigos/de outra coleção. | Testes |
+| AC9 | Cache: layout compartilhado entre coleções; invalidado por mudança de versão; coleções existentes intactas; isolamento entre atores; SOs inalterados após uso. | Testes |
+| AC10 | Runtime Stat Inspector mostra base → modificadores → final ao vivo e executa ações de debug. | Revisão em Play Mode |
+| AC11 | Zero GC em regime: `GetValue`, `Tick` com 50 coleções, `AddModifier`/`RemoveModifier` e `TryConsumeResources` após aquecimento. | `Is.Not.AllocatingGCMemory()` |
+| AC12 | Nenhum nome de stat no código do package; sample "Stats Playground" funciona sem código. | Revisão + QG4/QG11 |
+| AC13 | Seletor `[SelectImplementation]` do Core: lista tipos válidos; atribuição com Undo/Redo; serialização preservada após salvar/recarregar e após recarga de domínio; tipo ausente detectado, exibido e removível; sem dependência de Stats no Core. | Testes do Core |
 
----
-
-## 11. Decisões para a revisão
-| # | Decisão | Proposta | Alternativas descartadas |
-|---|---|---|---|
-| D1 | Fórmula de agregação | `(base + ΣFlat) × (1 + ΣAdditive) × ΠMultiplicative`, depois round e clamp | Todos percentuais somados (perde composição); ordem configurável por modificador (complexo de depurar) |
-| D2 | Representação do multiplicativo | Fator (`1.5` = ×1.5); Additive em fração (`0.1` = +10%); inspector mostra `×` e `%` | Tudo em porcentagem |
-| D3 | Onde ficam as fórmulas | Na entrada do `StatSetDefinition`, com herança de sets para reaproveitar | Na `StatDefinition` (global, impede arquétipos diferentes) |
-| D4 | Operação `Override` | **Fora** do M1 (lista fechada do Master Prompt); `Multiplicative ×0` cobre "zerar" | Incluir já |
-| D5 | Seletor de tipos `[SerializeReference]` | **Mover para o Core.Editor** (atributo + drawer genéricos), pois Stats (M1) e HFSM (M2) já precisam, e Combat/Abilities/AI virão; exige ADR | Drawer específico em cada package (duplicação) |
-| D6 | AI precisa ler stats | **Adicionar `stats` às dependências opcionais de `ai`** no grafo (ADR); camadas continuam válidas (L5 → L1) | Ler stats só via integração Abilities (indireto, frágil) |
-| D7 | Tempo do Stats | `Update`, banda `STATS`, tempo escalado; hitstop decidido no M4 | Tickar em `FixedUpdate` (regen não depende de física) |
-| D8 | Durações | Stats só para buffs simples; Abilities é dono de durações/stacking dos seus efeitos | Stats controlar todas as durações (acopla regras de stacking ao Stats) |
-| D9 | Parser de expressões ("10*VIT+50") | Não no M1; fórmulas como classes serializadas | Parser em runtime (custo, erros só em Play, difícil de validar) |
-| D10 | Política padrão de máximo | `Clamp` como padrão da `ResourceDefinition`; designers escolhem por recurso | `AddDifference` como padrão |
-| D11 | Valores inteiros | Tudo `float` internamente; inteiros via `Rounding` da definição | Tipos separados int/float |
-
-## 12. Plano de implementação (após aprovação)
-1. `new_package.py stats` → repo privado + submodule + `testables`.
-2. Definições + validators → `StatCollection` (modificadores, recálculo, lotes) → `ResourcePool` → componentes.
-3. Inspectors, seletor de fórmula (conforme D5), Runtime Stat Inspector.
-4. Sample "Stats Playground".
-5. Testes (EditMode + PlayMode + alocação), docs do package, QG1–QG12, tag `v0.1.0`.
+## 14. Estrutura do package
+```
+Runtime/
+  Definitions/   StatsDefinitionAsset, StatDefinition, ResourceDefinition, StatSetDefinition, StatEntry, ResourceEntry, enums,
+                 StatsDefinitionVersion, StatSetLayout (internal)
+  Formulas/      StatFormula, LinearFormula, CurveFormula, IStatValueSource
+  Modifiers/     StatModifier, StatModifierOperation, ModifierHandle, IModifierSource, ModifierSource, ActiveModifierInfo
+  Values/        StatCollection, ResourcePool, ResourceCost, ResourceTransactionResult, StatBatchScope, event args,
+                 StatNotFoundException, ResourceNotFoundException, BaseValueOverride
+  Components/    StatsComponent, ResourceEventsComponent
+Editor/          inspectors, Runtime Stat Inspector, AssetPostprocessor de versão
+Tests/Editor     domínio, eventos, recursos, integridade, cache, alocação, validators
+Tests/Runtime    StatsComponent/ResourceEventsComponent em Play Mode; Fixtures/
+Samples~/StatsPlayground
+```

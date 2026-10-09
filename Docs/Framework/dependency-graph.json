@@ -12,7 +12,7 @@
     },
     "com.ramirestechgames.stats": {
       "layer": 1,
-      "status": "planned",
+      "status": "implemented",
       "assemblyRoot": "RamiresTechGames.Stats",
       "define": "RAMIRESTECHGAMES_STATS",
       "hard": [
@@ -84,6 +84,7 @@
         "com.ramirestechgames.core"
       ],
       "optional": [
+        "com.ramirestechgames.stats",
         "com.ramirestechgames.character",
         "com.ramirestechgames.combat",
         "com.ramirestechgames.abilities"

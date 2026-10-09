@@ -29,6 +29,7 @@
 | `IValidatable` | interface | M0 | `void Validate(ValidationReport report)` para definições e componentes. |
 | `ValidationReport`, `ValidationIssue`, `ValidationSeverity` | Pure | M0 | Coleta de problemas de configuração com contexto (`UnityEngine.Object`). |
 | Validator (Editor) | EditorWindow + runner | M0 | `Tools/RamiresTech Games/Validator`: valida assets, prefabs e cenas abertas. |
+| `Serialization.SelectImplementationAttribute` + seletor no Editor | atributo + drawer | M1 (ADR-0008) | Escolha de implementação de campos `[SerializeReference]` no Inspector; Validator acusa tipos ausentes. |
 | `GameplayTag`, `GameplayTagContainer`, `GameplayTagQuery` | struct/Pure + SO de registro | **M4/M5** (sob demanda) | Tags hierárquicas usadas por Combat, Abilities, AI e Equipment. Entram no Core quando o 2º consumidor existir. |
 
 **Não faz:** event bus global, service locator, singletons, pool genérico, extensões utilitárias "porque sim",
@@ -39,6 +40,9 @@ qualquer conceito de gameplay (vida, dano, time).
 ## stats — `RamiresTechGames.Stats` (L1) · M1
 
 **Responsabilidade:** atributos numéricos, recursos, modificadores e stats derivadas.
+
+> Contrato detalhado e vigente: especificação v2 ([design/m1-stats-design.md](design/m1-stats-design.md)) e
+> `CONTRACTS.md` do package. A tabela abaixo é o resumo de M0.
 
 | Contrato | Tipo | Descrição |
 |---|---|---|
@@ -164,7 +168,7 @@ agarrões, reações). Nenhuma implementação existente é migrada.
 | `ISensor` | SR | Visão, alcance, ruído → escrevem no Blackboard. |
 | `ITargetSelector` | SR | Seleção de alvo por pontuação. |
 | `BehaviourTreeRunner` | MB | Tica em `DECISION` com intervalo configurável. |
-| Integrações opcionais | `Integration/Character` (MoveTo, Strafe, Flee → `CharacterCommandBuffer`), `Integration/Combat` (Attack, Defend → `CombatCommandBuffer`), `Integration/Abilities` (UseAbility → `AbilityCommandBuffer`). |
+| Integrações opcionais | `Integration/Stats` (condições sobre stats/recursos, ADR-0009), `Integration/Character` (MoveTo, Strafe, Flee → `CharacterCommandBuffer`), `Integration/Combat` (Attack, Defend → `CombatCommandBuffer`), `Integration/Abilities` (UseAbility → `AbilityCommandBuffer`). |
 
 **Não faz:** mover, atacar ou animar diretamente.
 **Editor:** Behaviour Tree Graph Editor, Runtime Blackboard Debugger, status de nós ao vivo.
