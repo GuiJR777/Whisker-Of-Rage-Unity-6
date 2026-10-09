@@ -2,6 +2,8 @@
 
 > Fonte de máquina: [`dependency-graph.json`](../dependency-graph.json), validada por
 > `tools/check_dependencies.py`. Alterar o grafo exige ADR.
+> Cada package tem `status`: `planned` (pode estar ausente) ou `implemented` (precisa existir em `Packages/` e é
+> sempre verificado). `tools/new_package.py` muda o status para `implemented` ao gerar o package.
 
 ## Dois tipos de dependência
 

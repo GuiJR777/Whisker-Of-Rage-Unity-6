@@ -196,8 +196,13 @@ Ordem (omitir regions vazias):
 
 ## 9. Ordem de execução e eventos
 
-- **Simulação** roda em ticks explícitos com ordem definida pelas bandas de `ExecutionOrder` (Core):
+- **Simulação** roda nos callbacks da Unity com prioridade definida pelas bandas de `ExecutionOrder` (Core):
   `COMMAND_SOURCES → DECISION → STATE_MACHINE → ABILITIES → COMBAT → CHARACTER → STATS → PRESENTATION → DEBUG`.
+  As bandas ordenam componentes **dentro de cada loop** (`Update` ou `FixedUpdate`); não são um scheduler.
+  Garantias e limitações: [ADR-0003](adr/0003-execution-order-bands.md).
+- Física e queries de hit em `FixedUpdate`; amostragem de input, decisão e apresentação em `Update`/`LateUpdate`.
+- Comandos atravessam loops apenas por command buffers: estado = último valor; borda = latched até consumo pelo
+  único dono ou expiração ([ADR-0004](adr/0004-command-buffers.md)). Nunca `WasPressedThisFrame()` em `FixedUpdate`.
 - **Eventos** servem para *notificar* (apresentação, UI, debug, áudio, glue code).
   Não construa cadeias de regras de gameplay disparadas por eventos entre packages: o fluxo de simulação
   deve ser legível seguindo chamadas de método.

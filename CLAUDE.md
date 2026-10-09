@@ -18,7 +18,8 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 | Restante de `Assets/` | Conteúdo do jogo (a partir do M9) | Estrutura em CONVENTIONS §11.2 |
 
 ## Estado atual
-Milestone **M0 Foundation** concluído e em revisão de arquitetura com o owner. **Não iniciar o M1 sem aprovação.**
+**M0 Foundation concluído** (Core `v0.1.0`). **M1 (Stats) em fase de design:** não implementar antes da aprovação do
+design (`Docs/Framework/docs/design/m1-stats-design.md`).
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras

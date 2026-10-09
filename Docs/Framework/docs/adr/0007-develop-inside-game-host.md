@@ -24,6 +24,9 @@ do novo WOR.
      pelo grafo e assemblies da Unity. Qualquer outra referência (ex.: código do jogo) é erro.
    - Código do jogo nunca dentro de `Packages/com.ramirestechgames.*`; código de package nunca em `Assets/`.
    - Testes de cada package não usam cenas nem assets do jogo.
+   - **QG12:** `tools/verify_isolated_install.py` instala o package e apenas suas dependências obrigatórias em um
+     projeto Unity vazio e descartável (temporário, apagado ao final), compila e roda os testes. Não há segunda
+     Sandbox permanente.
 
 ## Fluxo de trabalho com submodules
 ```bash

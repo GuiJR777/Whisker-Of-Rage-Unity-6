@@ -20,15 +20,17 @@
 | [`dependency-graph.json`](dependency-graph.json) | Grafo em formato de máquina |
 | [`templates/package/`](templates/package/) | Package Template |
 | [`tools/new_package.py`](tools/new_package.py) | Gera um package a partir do template |
-| [`tools/check_dependencies.py`](tools/check_dependencies.py) | Valida grafo, `package.json` e asmdefs |
+| [`tools/check_dependencies.py`](tools/check_dependencies.py) | Valida grafo, presença dos packages esperados, `package.json` e asmdefs |
+| [`tools/verify_isolated_install.py`](tools/verify_isolated_install.py) | QG12: instala um package em projeto Unity vazio e descartável, compila e testa |
+| [`tools/tests/`](tools/tests/) | Testes de regressão das ferramentas (`python -m unittest discover -s Docs/Framework/tools/tests`) |
 | [`COMPATIBILITY.md`](COMPATIBILITY.md) | Conjuntos de versões validados juntos |
 
 ## Packages
 
 | Package | Camada | Milestone | Estado |
 |---|---|---|---|
-| `com.ramirestechgames.core` | L0 | M0 | 0.1.0 implementado (submodule), aguardando revisão |
-| `com.ramirestechgames.stats` | L1 | M1 | — |
+| `com.ramirestechgames.core` | L0 | M0 | **v0.1.0** (submodule) |
+| `com.ramirestechgames.stats` | L1 | M1 | Design em revisão |
 | `com.ramirestechgames.hfsm` | L1 | M2 | — |
 | `com.ramirestechgames.character` | L2 | M3 | — |
 | `com.ramirestechgames.combat` | L3 | M4 | — |

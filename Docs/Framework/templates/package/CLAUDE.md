@@ -74,6 +74,7 @@ submodule no host.
 - [ ] Debug de runtime (QG9)
 - [ ] `check_dependencies.py` verde (QG10)
 - [ ] Caso comum montado só pelo Inspector (QG11)
+- [ ] Instalação isolada: `python ../../Docs/Framework/tools/verify_isolated_install.py {{PACKAGE_SHORT_ID}}` (QG12)
 
 ## 8. Armadilhas conhecidas
 - Dentro de `namespace {{ASSEMBLY_ROOT}}.Editor`, o nome `Editor` resolve para o namespace:

@@ -10,8 +10,21 @@
 | Nova feature compatível, mudança em API `Experimental` | MINOR ou PATCH | MINOR |
 | Correção sem mudança de API | PATCH | PATCH |
 
-- `0.1.0` é publicado quando o milestone do package passa nos Quality Gates.
-- `1.0.0` é publicado após o **M8** validar o package integrado na Integration Sandbox (`Assets/_FrameworkSandbox`).
+- `0.1.0` é publicado quando o milestone do package passa nos Quality Gates (QG1–QG12).
+- Cada package chega a `1.0.0` **individualmente**, quando cumpre os critérios abaixo. Nenhum milestone (inclusive o
+  M8) promove versões em bloco. Packages diferentes podem estar em majors diferentes.
+
+### Critérios para 1.0.0
+Um package só recebe `1.0.0` quando todos os itens valem e estão registrados no seu `ROADMAP.md`:
+
+| # | Critério | Evidência |
+|---|---|---|
+| V1 | **API pública estável:** toda API pública revisada e marcada `Stable` ou explicitamente `Experimental` em `CONTRACTS.md`; nenhuma mudança incompatível na API `Stable` nos dois últimos MINOR. | Diff de `CONTRACTS.md` entre versões; revisão do owner. |
+| V2 | **Serialização estável:** assets criados com a versão anterior carregam sem perda de dados; renomeações cobertas por `[FormerlySerializedAs]`/`[MovedFrom]`; nenhum dado de `[SerializeReference]` perdido. | Teste que carrega os assets do sample gerados pela versão anterior. |
+| V3 | **Integração validada:** o package funciona com cada integration assembly que fornece e foi exercitado na Integration Sandbox (`Assets/_FrameworkSandbox`) com os packages com que integra. | Testes de integração verdes; cena de integração. |
+| V4 | **Instalação isolada:** QG12 verde na versão candidata. | Saída de `verify_isolated_install.py`. |
+| V5 | **Documentação de migração:** `CHANGELOG.md` com todas as quebras desde `0.1.0` e passos de migração. | Revisão. |
+| V6 | **Aprovação do owner** na revisão de arquitetura. | Registro no `ROADMAP.md` do package. |
 
 ## Publicação
 

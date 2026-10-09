@@ -15,10 +15,13 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 | QG7 | Editor UX adequada (Inspectors com Header/Tooltip, menus de criação, ferramentas visuais necessárias) | Revisão no Editor |
 | QG8 | Validações de configuração (IValidatable + OnValidate) | Validator sem falsos negativos nos testes |
 | QG9 | Debug apropriado (runtime inspector/debugger/gizmos) | Revisão em Play Mode |
-| QG10 | Sem dependências circulares / fora do grafo | `python tools/check_dependencies.py` |
+| QG10 | Sem dependências circulares / fora do grafo; todos os packages esperados verificados | `python Docs/Framework/tools/check_dependencies.py --package <id>` (+ `python -m unittest discover -s Docs/Framework/tools/tests` quando a ferramenta mudar) |
 | QG11 | Casos de uso comuns sem editar o código do package | Sample montado só com Inspector |
+| QG12 | **Instalação isolada:** o package e somente suas dependências obrigatórias instalam, compilam sem erros/warnings e passam nos testes em um projeto Unity mínimo e descartável, sem código ou assets do WOR | `python Docs/Framework/tools/verify_isolated_install.py <id>` (cria o projeto temporário, roda EditMode/PlayMode em batchmode e apaga) |
 
 ## Milestones
+
+**Estado:** M0 concluído em 2026-10-09 (Core `v0.1.0`). M1 em fase de design — implementação só após aprovação do design.
 
 ```mermaid
 flowchart LR
@@ -49,7 +52,7 @@ para os integration assemblies opcionais.
 | **M5 Abilities** | M1, M4 (opcional) | Abilities ativas/passivas, effects, tags, custos, cooldowns, targeting, stacking, cancelamento, concessão, composição, debugger | Composição de 2 abilities sem código novo; adapter Combat via `IHitEffect`; nenhum nome de jogo no código. |
 | **M6 Behaviour Tree** | M3, M4, M5 (opcionais) | BT, Blackboard, composites, decorators, sensores, interrupções, target selection, graph editor, debugger | Inimigo de exemplo faz Patrol/Chase/Attack/Retreat só com assets; nenhuma chamada direta a motor/combat fora dos adapters. |
 | **M7 Equipment** | M1, M5 (opcional) | Slots, restrições, equip/unequip, modificadores, ability grants, passivos, loadouts, editor | Equipar/desequipar restaura stats exatamente (teste); grants revogados ao desequipar. |
-| **M8 Integration Sandbox** | M1–M7 | Cena `Assets/_FrameworkSandbox/Scenes/Sandbox_Main` com Player + AI usando todos os packages; testes cross-package; perf básica | 60 FPS com N atores definidos no ADR de perf; zero GC por frame no loop de simulação; todos os packages → 1.0.0. |
+| **M8 Integration Sandbox** | M1–M7 | Cena `Assets/_FrameworkSandbox/Scenes/Sandbox_Main` com Player + AI usando todos os packages; testes cross-package; perf básica | 60 FPS com N atores definidos no ADR de perf; zero GC por frame no loop de simulação. O M8 é gate de integração: **não** promove versões automaticamente; cada package chega a 1.0.0 pelos critérios próprios de [06](06-versioning-and-publishing.md#critérios-para-100). |
 | **M9 Novo WOR** | M8 | Montagem do novo WOR do zero sobre o projeto base `Projetos/Whisker Of Rage` (repo `Whisker-Of-Rage-Unity-6`, Unity 6000.6.5f1): packages como submodules em `Packages/`, prefabs, conteúdo e glue do jogo | Nenhum código do WOR antigo; nenhuma alteração em código de package para montar o jogo (somente issues/PRs nos repos de package). |
 
 ## Revisão de arquitetura

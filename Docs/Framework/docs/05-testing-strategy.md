@@ -58,5 +58,11 @@ Sem Editor aberto (CI/batch): `unity test` (ver `unity test --help`).
 
 - 0 erros de compilação e 0 warnings novos no console do host.
 - Todos os testes EditMode e PlayMode do package verdes.
-- `python tools/check_dependencies.py` sem erros.
+- `python Docs/Framework/tools/check_dependencies.py --package <id>` sem erros (falha se o package não for encontrado).
+- QG12: `python Docs/Framework/tools/verify_isolated_install.py <id>` verde (projeto Unity vazio e descartável,
+  só o package + dependências obrigatórias + test framework).
+
+## Testes das ferramentas de governança
+`python -m unittest discover -s Docs/Framework/tools/tests -v` — regressão do verificador de dependências
+(inclui o falso positivo de workspace vazio). Obrigatório ao alterar `tools/`.
 - Validator sem erros nas definições do Sample.
