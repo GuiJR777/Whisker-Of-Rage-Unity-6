@@ -50,7 +50,7 @@ para os integration assemblies opcionais.
 | **M6 Behaviour Tree** | M3, M4, M5 (opcionais) | BT, Blackboard, composites, decorators, sensores, interrupções, target selection, graph editor, debugger | Inimigo de exemplo faz Patrol/Chase/Attack/Retreat só com assets; nenhuma chamada direta a motor/combat fora dos adapters. |
 | **M7 Equipment** | M1, M5 (opcional) | Slots, restrições, equip/unequip, modificadores, ability grants, passivos, loadouts, editor | Equipar/desequipar restaura stats exatamente (teste); grants revogados ao desequipar. |
 | **M8 Integration Sandbox** | M1–M7 | Cena com Player + AI usando todos os packages; testes cross-package; perf básica | 60 FPS com N atores definidos no ADR de perf; zero GC por frame no loop de simulação; todos os packages → 1.0.0. |
-| **M9 Novo WOR** | M8 | Criação do novo projeto WOR do zero (Unity 6000.6.5f1) com os packages como submodules; prefabs, conteúdo e glue do jogo | Nenhum código do WOR antigo; nenhuma alteração em código de package para montar o jogo (somente issues/PRs nos repos de package). |
+| **M9 Novo WOR** | M8 | Montagem do novo WOR do zero sobre o projeto base `Projetos/Whisker Of Rage` (repo `Whisker-Of-Rage-Unity-6`, Unity 6000.6.5f1): packages como submodules em `Packages/`, prefabs, conteúdo e glue do jogo | Nenhum código do WOR antigo; nenhuma alteração em código de package para montar o jogo (somente issues/PRs nos repos de package). |
 
 ## Revisão de arquitetura
 

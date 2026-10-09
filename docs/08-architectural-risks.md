@@ -22,7 +22,7 @@ Probabilidade (P) e Impacto (I): A = alto, M = médio, B = baixo.
 | R14 | **Determinismo/rede** não é objetivo. Se um jogo consumidor precisar de multiplayer, a simulação baseada em Rigidbody não é determinística. | B | A | Declarado como não-objetivo; domínio puro facilita evolução futura. | — |
 | R15 | **Overhead operacional** de muitos repos para um time pequeno. | A | M | Scripts (`new_package`, `check_dependencies`), Sandbox única, convenções idênticas, CLAUDE.md por repo. | Contínuo |
 | R16 | **Debuggers em build de release.** | B | M | Código de debug em assemblies Editor ou sob `UNITY_EDITOR \|\| DEVELOPMENT_BUILD`. | Contínuo |
-| R17 | **Validação só na Sandbox até o M9.** O novo WOR ainda não existe; a Sandbox pode não exercitar casos reais de um beat'em up 2.5D. | M | M | Cena do M8 reproduz o caso alvo (2.5D, sprites em mundo 3D, combos, agarrões, Player + AI); requisitos do jogo entram como casos de uso dos samples, nunca como código específico. | M8 |
+| R17 | **Validação só na Sandbox até o M9.** O projeto base do novo WOR (`Whisker-Of-Rage-Unity-6`) ainda não tem gameplay; a Sandbox pode não exercitar casos reais de um beat'em up 2.5D. | M | M | Cena do M8 reproduz o caso alvo (2.5D, sprites em mundo 3D, combos, agarrões, Player + AI); requisitos do jogo entram como casos de uso dos samples, nunca como código específico. | M8 |
 | R18 | **Arquitetura sem legado = escopo aberto.** Sem código anterior para limitar decisões, cada sistema pode crescer além do necessário. | M | M | Requisitos do Master Prompt são a lista fechada de cada milestone; extras vão para "Futuro" no ROADMAP do package. | Contínuo |
 
 ## Referência de mecânicas (inspiração, não migração)
