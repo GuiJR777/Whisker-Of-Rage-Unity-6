@@ -26,6 +26,7 @@ DEFAULT_DEPENDENCY_VERSION = "0.1.0"
 CORE_PACKAGE_ID = "com.ramirestechgames.core"
 CORE_EDITOR_ASSEMBLY = "RamiresTechGames.Core.Editor"
 JSON_KEY_INDENT = 2
+STATUS_IMPLEMENTED = "implemented"
 UNRESOLVED_TOKEN_PATTERN = re.compile(r"\{\{[A-Z_]+\}\}")
 
 
@@ -133,6 +134,12 @@ def initialize_git(target_dir):
     subprocess.run(["git", "init", "--initial-branch=main"], cwd=target_dir, check=True)
 
 
+def mark_implemented(graph, package_id):
+    """Marks the package as implemented so check_dependencies.py expects it from now on."""
+    graph["packages"][package_id]["status"] = STATUS_IMPLEMENTED
+    GRAPH_PATH.write_text(json.dumps(graph, indent=JSON_KEY_INDENT) + "\n", encoding="utf-8", newline="\n")
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Scaffold a RamiresTech Games Unity package.")
     parser.add_argument("short_id", help="Package short id, e.g. 'stats' for com.ramirestechgames.stats")
@@ -167,6 +174,10 @@ def main():
 
     if not args.no_git:
         initialize_git(target_dir)
+
+    if args.output_root.resolve() == PACKAGES_ROOT.resolve():
+        mark_implemented(graph, package_id)
+        print(f"Marked {package_id} as '{STATUS_IMPLEMENTED}' in {GRAPH_PATH.name}.")
 
     print(f"Created {target_dir}")
     print("Next steps:")

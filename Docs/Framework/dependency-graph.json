@@ -4,6 +4,7 @@
   "packages": {
     "com.ramirestechgames.core": {
       "layer": 0,
+      "status": "implemented",
       "assemblyRoot": "RamiresTechGames.Core",
       "define": "RAMIRESTECHGAMES_CORE",
       "hard": [],
@@ -11,37 +12,62 @@
     },
     "com.ramirestechgames.stats": {
       "layer": 1,
+      "status": "planned",
       "assemblyRoot": "RamiresTechGames.Stats",
       "define": "RAMIRESTECHGAMES_STATS",
-      "hard": ["com.ramirestechgames.core"],
+      "hard": [
+        "com.ramirestechgames.core"
+      ],
       "optional": []
     },
     "com.ramirestechgames.hfsm": {
       "layer": 1,
+      "status": "planned",
       "assemblyRoot": "RamiresTechGames.HierarchicalStateMachine",
       "define": "RAMIRESTECHGAMES_HFSM",
-      "hard": ["com.ramirestechgames.core"],
+      "hard": [
+        "com.ramirestechgames.core"
+      ],
       "optional": []
     },
     "com.ramirestechgames.character": {
       "layer": 2,
+      "status": "planned",
       "assemblyRoot": "RamiresTechGames.Character",
       "define": "RAMIRESTECHGAMES_CHARACTER",
-      "hard": ["com.ramirestechgames.core"],
-      "optional": ["com.ramirestechgames.hfsm", "com.ramirestechgames.stats", "com.unity.inputsystem"]
+      "hard": [
+        "com.ramirestechgames.core"
+      ],
+      "optional": [
+        "com.ramirestechgames.hfsm",
+        "com.ramirestechgames.stats",
+        "com.unity.inputsystem"
+      ]
     },
     "com.ramirestechgames.combat": {
       "layer": 3,
+      "status": "planned",
       "assemblyRoot": "RamiresTechGames.Combat",
       "define": "RAMIRESTECHGAMES_COMBAT",
-      "hard": ["com.ramirestechgames.core", "com.ramirestechgames.stats"],
-      "optional": ["com.ramirestechgames.hfsm", "com.ramirestechgames.character", "com.unity.inputsystem"]
+      "hard": [
+        "com.ramirestechgames.core",
+        "com.ramirestechgames.stats"
+      ],
+      "optional": [
+        "com.ramirestechgames.hfsm",
+        "com.ramirestechgames.character",
+        "com.unity.inputsystem"
+      ]
     },
     "com.ramirestechgames.abilities": {
       "layer": 4,
+      "status": "planned",
       "assemblyRoot": "RamiresTechGames.Abilities",
       "define": "RAMIRESTECHGAMES_ABILITIES",
-      "hard": ["com.ramirestechgames.core", "com.ramirestechgames.stats"],
+      "hard": [
+        "com.ramirestechgames.core",
+        "com.ramirestechgames.stats"
+      ],
       "optional": [
         "com.ramirestechgames.hfsm",
         "com.ramirestechgames.character",
@@ -51,17 +77,30 @@
     },
     "com.ramirestechgames.ai": {
       "layer": 5,
+      "status": "planned",
       "assemblyRoot": "RamiresTechGames.AI",
       "define": "RAMIRESTECHGAMES_AI",
-      "hard": ["com.ramirestechgames.core"],
-      "optional": ["com.ramirestechgames.character", "com.ramirestechgames.combat", "com.ramirestechgames.abilities"]
+      "hard": [
+        "com.ramirestechgames.core"
+      ],
+      "optional": [
+        "com.ramirestechgames.character",
+        "com.ramirestechgames.combat",
+        "com.ramirestechgames.abilities"
+      ]
     },
     "com.ramirestechgames.equipment": {
       "layer": 5,
+      "status": "planned",
       "assemblyRoot": "RamiresTechGames.Equipment",
       "define": "RAMIRESTECHGAMES_EQUIPMENT",
-      "hard": ["com.ramirestechgames.core", "com.ramirestechgames.stats"],
-      "optional": ["com.ramirestechgames.abilities"]
+      "hard": [
+        "com.ramirestechgames.core",
+        "com.ramirestechgames.stats"
+      ],
+      "optional": [
+        "com.ramirestechgames.abilities"
+      ]
     }
   },
   "externalPackages": {

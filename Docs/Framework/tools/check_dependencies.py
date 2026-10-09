@@ -2,17 +2,23 @@
 """Purpose: Validate the framework dependency graph and every package manifest and asmdef against it.
 
 Checks:
-  * The graph itself: known packages only, strictly lower layers, hard and optional do not overlap.
+  * The graph itself: known packages only, strictly lower layers, hard and optional do not overlap,
+    valid status ("planned" or "implemented").
+  * Presence: every expected package must be found and verified. A package is expected when it is
+    marked "implemented" in the graph, declared by the host (Packages/manifest.json dependencies or
+    testables, .gitmodules) or requested with --package. "planned" packages may be absent.
+    The run fails when no package could be verified at all.
   * package.json: name, SemVer version, unity field, RamiresTech dependencies == hard dependencies.
   * asmdef: references by name (no GUID), only allowed packages, optional packages only inside
     Integration assemblies guarded by defineConstraints + versionDefines, and no reference to any
     assembly outside the framework or Unity (protects packages from depending on game code).
 
 Usage:
-    python Docs/Framework/tools/check_dependencies.py [--workspace <folder with package repositories>]
-Exit code 0 when no errors are found, 1 otherwise.
+    python Docs/Framework/tools/check_dependencies.py [--package core] [--workspace <dir>] [--host-root <dir>]
+Exit code 0 when every expected package was verified without errors, 1 otherwise.
 """
 import argparse
+import configparser
 import json
 import re
 import sys
@@ -20,13 +26,16 @@ from pathlib import Path
 
 FRAMEWORK_ROOT = Path(__file__).resolve().parent.parent
 HOST_ROOT = FRAMEWORK_ROOT.parent.parent
-PACKAGES_ROOT = HOST_ROOT / "Packages"
-UNITY_ASSEMBLY_PREFIXES = ("Unity.", "UnityEngine", "UnityEditor")
 GRAPH_PATH = FRAMEWORK_ROOT / "dependency-graph.json"
+PACKAGES_FOLDER = "Packages"
+UNITY_ASSEMBLY_PREFIXES = ("Unity.", "UnityEngine", "UnityEditor")
 PACKAGE_PREFIX = "com.ramirestechgames."
 GUID_REFERENCE_PREFIX = "GUID:"
 INTEGRATION_FOLDER = "Integration"
 SAMPLES_FOLDER = "Samples~"
+STATUS_IMPLEMENTED = "implemented"
+STATUS_PLANNED = "planned"
+VALID_STATUSES = (STATUS_IMPLEMENTED, STATUS_PLANNED)
 SEMANTIC_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$")
 
 
@@ -35,18 +44,54 @@ def load_json(path):
         return json.load(json_file)
 
 
+def normalize_package_id(name):
+    return name if name.startswith(PACKAGE_PREFIX) else PACKAGE_PREFIX + name
+
+
+def read_host_declarations(host_root):
+    """Returns {package_id: reason} for framework packages the host project declares."""
+    declared = {}
+    if host_root is None:
+        return declared
+
+    manifest_path = host_root / PACKAGES_FOLDER / "manifest.json"
+    if manifest_path.exists():
+        manifest = load_json(manifest_path)
+        for name in manifest.get("dependencies", {}):
+            if name.startswith(PACKAGE_PREFIX):
+                declared[name] = "Packages/manifest.json dependencies"
+        for name in manifest.get("testables", []):
+            if name.startswith(PACKAGE_PREFIX):
+                declared.setdefault(name, "Packages/manifest.json testables")
+
+    gitmodules_path = host_root / ".gitmodules"
+    if gitmodules_path.exists():
+        parser = configparser.ConfigParser()
+        parser.read(gitmodules_path, encoding="utf-8")
+        for section in parser.sections():
+            submodule_path = parser[section].get("path", "")
+            name = Path(submodule_path).name
+            if submodule_path.startswith(PACKAGES_FOLDER + "/") and name.startswith(PACKAGE_PREFIX):
+                declared.setdefault(name, ".gitmodules")
+    return declared
+
+
 class DependencyChecker:
     def __init__(self, graph, workspace):
-        self._graph = graph
         self._workspace = workspace
         self._packages = graph["packages"]
         self._externals = graph.get("externalPackages", {})
         self._errors = []
+        self._verified = []
         self._assembly_owners = self._build_assembly_owners()
 
     @property
     def errors(self):
         return self._errors
+
+    @property
+    def verified(self):
+        return self._verified
 
     def _error(self, message):
         self._errors.append(message)
@@ -72,6 +117,9 @@ class DependencyChecker:
 
     def check_graph(self):
         for package_id, entry in self._packages.items():
+            if entry.get("status") not in VALID_STATUSES:
+                self._error(f"graph: {package_id} has status '{entry.get('status')}'; "
+                            f"expected one of {list(VALID_STATUSES)}")
             overlap = set(entry["hard"]) & set(entry["optional"])
             if overlap:
                 self._error(f"graph: {package_id} lists {sorted(overlap)} as both hard and optional")
@@ -85,24 +133,59 @@ class DependencyChecker:
                     self._error(f"graph: {package_id} (L{entry['layer']}) depends on {dependency} "
                                 f"(L{self._packages[dependency]['layer']}); dependencies must be on lower layers")
 
-    def check_workspace(self):
-        found = []
-        for package_id in self._packages:
-            package_dir = self._workspace / package_id
-            if not package_dir.is_dir():
+    def expected_packages(self, host_declarations, requested):
+        """Returns {package_id: reason} for packages that must be found and verified."""
+        expected = {}
+        for package_id, entry in self._packages.items():
+            if entry.get("status") == STATUS_IMPLEMENTED:
+                expected[package_id] = "marked implemented in dependency-graph.json"
+        for package_id, reason in host_declarations.items():
+            expected.setdefault(package_id, "declared by the host in " + reason)
+        for package_id in requested:
+            expected[package_id] = "requested with --package"
+        return expected
+
+    def check_presence(self, expected, requested):
+        """Reports unknown, missing and uninitialized packages. Returns the ids that can be verified."""
+        for package_id in sorted(expected):
+            if package_id not in self._packages:
+                self._error(f"{package_id}: expected ({expected[package_id]}) but not declared in the graph")
+
+        for package_dir in sorted(self._workspace.glob(PACKAGE_PREFIX + "*")):
+            if package_dir.is_dir() and package_dir.name not in self._packages:
+                self._error(f"{package_dir.name}: found in the workspace but not declared in the graph")
+
+        candidates = requested if requested else list(self._packages)
+        to_verify = []
+        for package_id in candidates:
+            if package_id not in self._packages:
                 continue
-            found.append(package_id)
-            self._check_manifest(package_id, package_dir)
-            for asmdef_path in sorted(package_dir.rglob("*.asmdef")):
-                self._check_asmdef(package_id, package_dir, asmdef_path)
-        return found
+            package_dir = self._workspace / package_id
+            is_expected = package_id in expected
+            if not package_dir.is_dir():
+                if is_expected:
+                    self._error(f"{package_id}: expected ({expected[package_id]}) but not found in {self._workspace}")
+                continue
+            if not (package_dir / "package.json").exists():
+                self._error(f"{package_id}: folder exists but has no package.json "
+                            f"(uninitialized submodule? run 'git submodule update --init')")
+                continue
+            if self._packages[package_id].get("status") != STATUS_IMPLEMENTED:
+                self._error(f"{package_id}: found in the workspace but marked "
+                            f"'{self._packages[package_id].get('status')}' in the graph; set status to "
+                            f"'{STATUS_IMPLEMENTED}'")
+            to_verify.append(package_id)
+        return to_verify
+
+    def verify_package(self, package_id):
+        package_dir = self._workspace / package_id
+        self._check_manifest(package_id, package_dir)
+        for asmdef_path in sorted(package_dir.rglob("*.asmdef")):
+            self._check_asmdef(package_id, package_dir, asmdef_path)
+        self._verified.append(package_id)
 
     def _check_manifest(self, package_id, package_dir):
-        manifest_path = package_dir / "package.json"
-        if not manifest_path.exists():
-            self._error(f"{package_id}: package.json not found")
-            return
-        manifest = load_json(manifest_path)
+        manifest = load_json(package_dir / "package.json")
         if manifest.get("name") != package_id:
             self._error(f"{package_id}: package.json name is '{manifest.get('name')}'")
         if not SEMANTIC_VERSION_PATTERN.match(manifest.get("version", "")):
@@ -160,20 +243,36 @@ class DependencyChecker:
                 self._error(f"{label}: missing versionDefines entry name='{owner}' define='{define}'")
 
 
-def parse_arguments():
+def parse_arguments(argv):
     parser = argparse.ArgumentParser(description="Validate RamiresTech package dependencies.")
-    parser.add_argument("--workspace", type=Path, default=PACKAGES_ROOT,
-                        help="Folder that contains the package repositories (default: <host>/Packages).")
-    return parser.parse_args()
+    parser.add_argument("--package", action="append", default=[],
+                        help="Package to verify (short or full id). Repeatable. Must be found.")
+    parser.add_argument("--graph", type=Path, default=GRAPH_PATH, help="Path to dependency-graph.json.")
+    parser.add_argument("--workspace", type=Path, default=None,
+                        help="Folder that contains the package repositories (default: <host-root>/Packages).")
+    parser.add_argument("--host-root", type=Path, default=HOST_ROOT,
+                        help="Unity project whose manifest.json/.gitmodules declare expected packages.")
+    parser.add_argument("--no-host", action="store_true",
+                        help="Ignore host declarations (only graph status and --package define expectations).")
+    return parser.parse_args(argv)
 
 
-def main():
-    args = parse_arguments()
-    checker = DependencyChecker(load_json(GRAPH_PATH), args.workspace.resolve())
+def run(argv=None):
+    args = parse_arguments(argv)
+    host_root = None if args.no_host else args.host_root.resolve()
+    workspace = args.workspace.resolve() if args.workspace else args.host_root.resolve() / PACKAGES_FOLDER
+
+    checker = DependencyChecker(load_json(args.graph), workspace)
     checker.check_graph()
-    found = checker.check_workspace()
+    requested = [normalize_package_id(name) for name in args.package]
+    expected = checker.expected_packages(read_host_declarations(host_root), requested)
+    for package_id in checker.check_presence(expected, requested):
+        checker.verify_package(package_id)
 
-    print(f"Packages checked: {', '.join(found) if found else 'none found'}")
+    if not checker.verified:
+        checker.errors.append(f"no package was verified in {workspace}; nothing to report as consistent")
+
+    print(f"Packages verified: {', '.join(checker.verified) if checker.verified else 'none'}")
     if checker.errors:
         print(f"{len(checker.errors)} error(s):")
         for message in checker.errors:
@@ -184,4 +283,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())
