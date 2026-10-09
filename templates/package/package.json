@@ -1,0 +1,23 @@
+{
+  "name": "{{PACKAGE_ID}}",
+  "version": "0.1.0",
+  "displayName": "RamiresTech Games - {{DISPLAY_NAME}}",
+  "description": "{{DESCRIPTION}}",
+  "unity": "{{UNITY_VERSION}}",
+  "author": {
+    "name": "RamiresTech Games"
+  },
+  "keywords": [
+    "ramirestech",
+    "gameplay",
+    "{{PACKAGE_SHORT_ID}}"
+  ],
+  "dependencies": {{HARD_DEPENDENCIES_JSON}},
+  "samples": [
+    {
+      "displayName": "Getting Started",
+      "description": "Minimal setup of the {{DISPLAY_NAME}} package.",
+      "path": "Samples~/GettingStarted"
+    }
+  ]
+}

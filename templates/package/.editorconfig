@@ -1,0 +1,63 @@
+# RamiresTech Games - shared editor configuration (see ramirestech-framework/docs/CONVENTIONS.md)
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,asmdef,asmref,yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+max_line_length = 120
+
+# Layout
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_style_namespace_declarations = block_scoped:warning
+csharp_prefer_braces = true:warning
+
+# Usings: System first, groups separated by a blank line
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# Explicit types
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Naming: constants UPPER_SNAKE_CASE
+dotnet_naming_rule.constants_upper_snake.symbols = constant_fields
+dotnet_naming_rule.constants_upper_snake.style = upper_snake_case
+dotnet_naming_rule.constants_upper_snake.severity = warning
+dotnet_naming_symbols.constant_fields.applicable_kinds = field
+dotnet_naming_symbols.constant_fields.applicable_accessibilities = *
+dotnet_naming_symbols.constant_fields.required_modifiers = const
+dotnet_naming_style.upper_snake_case.capitalization = all_upper
+dotnet_naming_style.upper_snake_case.word_separator = _
+
+# Naming: private/protected fields _camelCase
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel_case
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private, protected, private_protected
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+
+# Naming: interfaces start with I
+dotnet_naming_rule.interfaces_prefix.symbols = interfaces
+dotnet_naming_rule.interfaces_prefix.style = prefix_i
+dotnet_naming_rule.interfaces_prefix.severity = warning
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_style.prefix_i.capitalization = pascal_case
+dotnet_naming_style.prefix_i.required_prefix = I

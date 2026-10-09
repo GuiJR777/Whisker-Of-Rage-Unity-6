@@ -1,0 +1,14 @@
+{
+  "name": "{{ASSEMBLY_ROOT}}",
+  "rootNamespace": "{{ASSEMBLY_ROOT}}",
+  "references": {{RUNTIME_REFERENCES_JSON}},
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
