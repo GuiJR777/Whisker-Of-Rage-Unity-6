@@ -4,3 +4,6 @@
 [submodule "Packages/com.ramirestechgames.stats"]
 	path = Packages/com.ramirestechgames.stats
 	url = https://github.com/GuiJR777/com.ramirestechgames.stats.git
+[submodule "Packages/com.ramirestechgames.hfsm"]
+	path = Packages/com.ramirestechgames.hfsm
+	url = https://github.com/GuiJR777/com.ramirestechgames.hfsm.git

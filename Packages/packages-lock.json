@@ -6,6 +6,14 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.ramirestechgames.hfsm": {
+      "version": "file:com.ramirestechgames.hfsm",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.ramirestechgames.core": "0.3.0"
+      }
+    },
     "com.ramirestechgames.stats": {
       "version": "file:com.ramirestechgames.stats",
       "depth": 0,

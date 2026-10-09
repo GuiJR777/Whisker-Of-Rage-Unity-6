@@ -1,9 +1,10 @@
-# M2 — Hierarchical State Machine (HFSM) · Especificação técnica (design para revisão)
+# M2 — Hierarchical State Machine (HFSM) · Especificação técnica
 
 - **Package:** `com.ramirestechgames.hfsm` · assembly/namespace raiz `RamiresTechGames.HierarchicalStateMachine` · camada L1
 - **Dependência hard:** `com.ramirestechgames.core` (≥ 0.2.0: `ExecutionOrder`, `IValidatable`, `[SelectImplementation]`)
 - **Opcionais:** nenhuma (quem integra são Character, Combat e Abilities, nas integration assemblies deles)
-- **Status:** **Design em revisão — não implementar antes da aprovação.**
+- **Status:** **v2 — aprovada com ajustes; implementação autorizada.** Decisões D1–D12 aprovadas (§13); ajustes da revisão
+  na **§14, que prevalece sobre as seções anteriores em caso de conflito**. M2 só é concluído após revisão final.
 - **Insumos:** Master Prompt §4.2 · ADR-0003 (decisões temporais do M2) · ADR-0004 (command buffers) ·
   [spike de graph editor](m2-graph-editor-spike.md).
 
@@ -49,8 +50,7 @@ Para uma transição de **S** (folha ativa) para **T**:
    precedência (ex.: "Hit" definido em `Alive` interrompe qualquer sub-estado).
 2. Em cada nível, transições ordenadas por **prioridade** (maior primeiro), depois por ordem de declaração.
 3. A primeira transição **permitida** (§2.3) com todas as condições verdadeiras é executada.
-4. **No máximo `MaxTransitionsPerTick` transições por tick** (padrão 1; limite 8). Cadeias continuam nos ticks seguintes
-   (previsível; impede laços).
+4. **No máximo uma transição por tick** (D3). Cadeias continuam nos ticks seguintes (previsível; impede laços).
 
 ### 2.3 Prioridade e interrupção
 - Cada estado ativo tem um **limiar de interrupção** (`InterruptionThreshold`, padrão 0), definido no asset e alterável
@@ -75,7 +75,6 @@ flag, que zera ao (re)entrar. Isso evita que estados conheçam seus sucessores.
 | `Transitions` | `List<TransitionData>` | Todas as transições. |
 | `Parameters` | `List<ParameterDefinition>` | Parâmetros (bool, int, float, trigger) com valor padrão. |
 | `TriggerLifetime` | float (s, padrão 0.2) | Validade de um trigger não consumido (mesma lógica de "borda com expiração" do ADR-0004). |
-| `MaxTransitionsPerTick` | int (1..8) | Ver §2.2. |
 
 ### 3.2 `StateData` (serializável)
 | Campo | Tipo | Descrição |
@@ -244,7 +243,7 @@ em EditMode; a vista GraphView só chama esse modelo. Isso isola o GraphView (re
 | Composto sem filho inicial ou com mais de um | Transição sem condições saindo de estado sem `Complete` (sempre dispara) |
 | Transição para/de estado inexistente | Comportamento ausente em folha (estado vazio) |
 | Condição nula na lista; parâmetro inexistente ou de tipo incompatível | Prioridade negativa |
-| Ciclo entre sub-máquinas; tipo `[SerializeReference]` ausente (Core) | `MaxTransitionsPerTick` > 1 com transições sem condição (risco de cadeia) |
+| Ciclo entre sub-máquinas; tipo `[SerializeReference]` ausente (Core) | Transição para si mesmo sem `AllowReentry` (nunca dispara) |
 
 ---
 
@@ -297,7 +296,7 @@ Samples~/ PatrolAndAlert/
 |---|---|---|---|
 | D1 | Tecnologia do grafo | **GraphView** como vista isolada; reavaliar Graph Toolkit no M4/M6 ([spike](m2-graph-editor-spike.md)) | Graph Toolkit agora (perde `[SerializeReference]`); canvas próprio (caro) |
 | D2 | Loop das transições | `Update` por padrão, `FixedUpdate` opcional por runner | Sempre `FixedUpdate` |
-| D3 | Transições por tick | 1 (configurável até 8) | Encadear até estabilizar |
+| D3 | Transições por tick | **Aprovado: exatamente 1** (sem encadeamento configurável no M2) | Encadear até estabilizar |
 | D4 | Interrupção | Limiar por estado (estático + dinâmico) × prioridade da transição | Flag `CanInterrupt` booleana por transição |
 | D5 | Precedência | Níveis externos antes dos internos | Folha primeiro |
 | D6 | Parâmetros e triggers | Incluídos; trigger com consumo ou expiração | Sem parâmetros (só command buffers) |
@@ -307,3 +306,82 @@ Samples~/ PatrolAndAlert/
 | D10 | Notificações | Fila FIFO após o tick (igual ao Stats) | Eventos síncronos |
 | D11 | Infra de grafo compartilhada | No HFSM.Editor agora; extrair para Core.Editor no M4 com ADR | Já no Core |
 | D12 | Regiões paralelas | Fora do M2 | Incluir |
+
+---
+
+## 14. Ajustes da revisão (v2) — normativos
+
+### 14.1 Identidade das sub-máquinas
+- O layout compilado cria um **nó de runtime por caminho de inclusão**. O id qualificado é o caminho de GUIDs separado
+  por `/`: um estado `B` de uma sub-máquina incluída no estado `A` vira `A/B`. O **GUID original** fica preservado como
+  `SourceId` (usado pelo Editor e pelo debugger para mapear o nó do grafo).
+- Transições de uma sub-máquina são resolvidas **no escopo da inclusão**: ids locais apontam para os nós daquela
+  inclusão; `Root` da sub-máquina significa o estado que a inclui. Id qualificado da transição = caminho da inclusão +
+  `/` + GUID da transição.
+- Memórias (`TMemory`), contextos, tempos, limiares e *history* são **por nó de runtime**: duas inclusões da mesma
+  sub-máquina nunca compartilham estado. Parâmetros são da instância (mesclados por id; a mesma sub-máquina incluída
+  duas vezes usa os mesmos parâmetros).
+- Transições de fora não apontam para dentro de uma sub-máquina: o destino é o estado que a inclui (entra no inicial).
+- Ciclo de inclusão (A inclui B que inclui A): erro do Validator; em runtime o estado de inclusão fica sem filhos e é
+  diagnosticado. Estado com sub-máquina **e** filhos locais: erro; a sub-máquina prevalece.
+- API pública usa ids qualificados (`IsInState("A/B")`, `GetActivePath`). Testes com **duas inclusões da mesma
+  sub-máquina no mesmo grafo**.
+
+### 14.2 Command buffers: consulta e consumo por token
+- Assinatura (substitui a §4.2): `bool Evaluate(ConditionContext context)`; `ConditionContext.State` é o `StateContext`
+  do estado de origem, `ConditionContext.Parameters` os parâmetros e `ConditionContext.Claim(source, token)` registra
+  claims.
+- Condições só **consultam**. Uma condição que depende de um comando registra a ocorrência casada com
+  `context.Claim(source, token)` (`source` = o buffer; `token` = número de sequência da ocorrência).
+- As *claims* só valem se a transição for **efetivada**. Durante o `OnEnter` dos estados entrados por ela, a lista
+  `StateContext.EntryClaims` contém exatamente essas claims; o executor consome **aquela** ocorrência pelo token.
+- Transição não escolhida, bloqueada por limiar ou com condição falsa: claims descartadas, nada consumido. Condições
+  compostas fazem *rollback* das claims de ramos falsos (`Not` sempre descarta as do filho; `Any` mantém só as do ramo
+  verdadeiro).
+- A HFSM não conhece nenhum buffer concreto. Testes usam um **buffer de teste** (fila, sequência, expiração) para provar:
+  comandos enfileirados consumidos em ordem, expiração, execução única mesmo com várias transições lendo o mesmo comando.
+
+### 14.3 Interrupção e reentrada
+- Ao (re)entrar, o limiar volta ao **valor do asset** do estado (não a zero).
+- **Destino já ativo** (o próprio estado, um ancestral ou a folha ativa): a transição é **ignorada**, a menos que tenha
+  `AllowReentry`. Isso impede que transições globais (do `Root`/pais) reiniciem o estado repetidamente.
+- **Transição para si mesmo** e **reentrada em ancestral** só com `AllowReentry`: sai da folha ativa até o destino
+  (inclusive), reentra no destino e desce pelo inicial (ou *history*).
+- A verificação de limiar inclui todos os estados que serão saídos (na reentrada, o destino também).
+- `RequestState(id, priority, allowReentry)`:
+  - id inexistente ou instância parada → retorna `false` e não enfileira;
+  - pedidos são avaliados **antes** das transições normais no próximo tick de avaliação; entre vários pedidos, vence a
+    maior prioridade (empate: o mais antigo); os outros são **descartados** e registrados no histórico;
+  - pedido bloqueado por limiar (ou destino ativo sem reentrada) é descartado e registrado; as transições normais daquele
+    tick são avaliadas normalmente;
+  - pedido efetivado conta como a única transição do tick.
+
+### 14.4 Tempo, conclusão e triggers
+- **Relógio da instância:** soma dos deltas recebidos **apenas no loop de avaliação** do runner (`Update` por padrão,
+  ou `FixedUpdate`). Tempo escalado por padrão; o runner pode usar tempo não escalado. **Um único loop avalia
+  transições e avança o tempo por runner** (D2).
+- `TimeInState` avança só nesse loop: `OnTick` e `OnFixedTick` nunca avançam o tempo duas vezes.
+- Ordem de um tick de avaliação: (1) relógio e `TimeInState` dos estados ativos avançam; (2) triggers expirados são
+  limpos; (3) pedidos externos; (4) transições normais (no máximo uma efetivada); (5) callbacks de tick do loop
+  (`OnTick` ou `OnFixedTick`) na configuração ativa, raiz → folha; (6) entrega das notificações. Estados que entraram
+  neste tick começam com `TimeInState = 0` e recebem o callback do passo (5).
+- **Conclusão:** `Complete()` marca o estado; a marca vale até ele sair e zera ao (re)entrar. `StateCompletedCondition`
+  lê a marca do **estado de origem da transição**.
+- **Triggers:** registrados com o relógio da instância; expiram após `TriggerLifetime`; **consumidos somente quando a
+  transição que os leu é efetivada** (transição não escolhida mantém o trigger até expirar).
+
+### 14.5 Parâmetros com identidade estável
+- `ParameterDefinition` tem `Id` (GUID) além de `Name`. Condições guardam um `ParameterReference` (id); o Editor mostra o
+  nome. Renomear não quebra condições. Referência para id inexistente ou de tipo incompatível: erro do Validator.
+- API de código: `TryGetHandle(name, out ParameterHandle)` resolve uma vez; leituras/escritas por handle.
+
+### 14.6 Seletor polimórfico em listas e aninhamento
+Validar `[SerializeReference, SelectImplementation]` em `List<TransitionCondition>` e em condições compostas (`Not`,
+`Any`, `All` contendo outras condições). Qualquer limitação real é corrigida **no Core.Editor**, com testes, sem
+solução específica no HFSM.
+
+### 14.7 Modelo de edição do grafo
+O GraphView só chama um **modelo de edição sem UI** sobre o asset (`StateMachineGraphModel`). Trocar o GraphView não
+exige converter assets. Testes do modelo: Undo/Redo de cada operação, persistência após salvar e recarregar, remoção de
+estado com transições associadas (e subárvore), duplicação de estado (novos GUIDs, comportamento clonado, transições
+internas remapeadas), definição/remoção de sub-máquina com restauração por Undo.

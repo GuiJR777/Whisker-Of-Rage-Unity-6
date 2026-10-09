@@ -22,7 +22,7 @@
     },
     "com.ramirestechgames.hfsm": {
       "layer": 1,
-      "status": "planned",
+      "status": "implemented",
       "assemblyRoot": "RamiresTechGames.HierarchicalStateMachine",
       "define": "RAMIRESTECHGAMES_HFSM",
       "hard": [

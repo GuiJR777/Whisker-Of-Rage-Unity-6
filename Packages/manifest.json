@@ -52,6 +52,7 @@
   },
   "testables": [
     "com.ramirestechgames.core",
-    "com.ramirestechgames.stats"
+    "com.ramirestechgames.stats",
+    "com.ramirestechgames.hfsm"
   ]
 }
