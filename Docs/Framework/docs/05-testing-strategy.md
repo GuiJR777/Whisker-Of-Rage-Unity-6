@@ -63,6 +63,13 @@ Sem Editor aberto (CI/batch): `unity test` (ver `unity test --help`).
   só o package + dependências obrigatórias + test framework). Roda sem `-nographics` porque há testes de UI do
   Editor; em CI headless esses testes se marcam como ignorados.
 
+## Testes ignorados e ambientes headless
+- Testes que abrem janelas de Editor (UI Toolkit) exigem dispositivo gráfico. Sem ele, eles se marcam como
+  **Ignored** e **não contam como executados**: o QG12 imprime `skipped, not executed` separadamente.
+- Conhecido: `SelectImplementationChoicesTests.UIToolkitPath_DropdownSelectionOfHomonym_...` (Core). Em CI headless,
+  a seleção por UI Toolkit fica sem verificação automática; o contrato de índice continua coberto pelos testes do
+  caminho IMGUI. A aprovação de release exige a execução com dispositivo gráfico (0 ignorados).
+
 ## Testes das ferramentas de governança
 `python -m unittest discover -s Docs/Framework/tools/tests -v` — regressão do verificador de dependências
 (inclui o falso positivo de workspace vazio). Obrigatório ao alterar `tools/`.

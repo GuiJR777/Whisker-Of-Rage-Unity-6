@@ -18,8 +18,8 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 | Restante de `Assets/` | Conteúdo do jogo (a partir do M9) | Estrutura em CONVENTIONS §11.2 |
 
 ## Estado atual
-**M0 concluído** (Core `v0.1.0`). **M1 (Stats) implementado, aguardando revisão final** — não criar tags nem declarar
-o M1 concluído antes dela. Especificação: `Docs/Framework/docs/design/m1-stats-design.md`.
+**M0 e M1 concluídos** (Core `v0.2.0`, Stats `v0.1.0`). **M2 (HFSM) em design** — não implementar antes da aprovação do
+design (`Docs/Framework/docs/design/m2-hfsm-design.md`) e do spike de graph editor.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras

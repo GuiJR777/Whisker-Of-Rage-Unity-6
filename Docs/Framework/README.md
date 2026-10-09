@@ -29,9 +29,9 @@
 
 | Package | Camada | Milestone | Estado |
 |---|---|---|---|
-| `com.ramirestechgames.core` | L0 | M0 | **v0.1.0**; 0.2.0 (seletor `[SerializeReference]`) aguardando revisão do M1 |
-| `com.ramirestechgames.stats` | L1 | M1 | 0.1.0 implementado (submodule), aguardando revisão final |
-| `com.ramirestechgames.hfsm` | L1 | M2 | — |
+| `com.ramirestechgames.core` | L0 | M0, M1 | **v0.2.0** |
+| `com.ramirestechgames.stats` | L1 | M1 | **v0.1.0** |
+| `com.ramirestechgames.hfsm` | L1 | M2 | Design em revisão |
 | `com.ramirestechgames.character` | L2 | M3 | — |
 | `com.ramirestechgames.combat` | L3 | M4 | — |
 | `com.ramirestechgames.abilities` | L4 | M5 | — |

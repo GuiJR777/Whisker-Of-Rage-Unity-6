@@ -170,6 +170,8 @@ def main():
     print(f"  project: {root / PROJECT_FOLDER}")
 
     failures = []
+    executed = 0
+    skipped = 0
     try:
         project_root = stage_project(root, closure, package_id, editor_version)
         for mode in modes:
@@ -186,6 +188,11 @@ def main():
                 failures.append(f"{mode}: {results['failed']} test(s) failed (see {results_path})")
             elif mode == TEST_MODES[0] and results["total"] == 0:
                 failures.append(f"{mode}: no tests were found for {package_id}")
+            if results is not None:
+                executed += results["passed"] + results["failed"]
+                skipped += results["skipped"]
+                if results["skipped"] > 0:
+                    print(f"  {mode}: {results['skipped']} test(s) SKIPPED/IGNORED - not executed, not counted as passed")
     finally:
         if args.keep or failures:
             print(f"  kept disposable project for inspection: {root}")
@@ -197,7 +204,8 @@ def main():
         for failure in failures:
             print("  - " + failure)
         return 1
-    print(f"OK: {package_id} installs, compiles without errors/warnings and passes its tests in an empty project.")
+    print(f"OK: {package_id} installs, compiles without errors/warnings and passes its tests in an empty project "
+          f"(executed: {executed}; skipped, not executed: {skipped}).")
     return 0
 
 
