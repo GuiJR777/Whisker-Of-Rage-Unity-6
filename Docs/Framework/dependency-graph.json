@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "assemblyPrefix": "RamiresTechGames",
+  "packages": {
+    "com.ramirestechgames.core": {
+      "layer": 0,
+      "assemblyRoot": "RamiresTechGames.Core",
+      "define": "RAMIRESTECHGAMES_CORE",
+      "hard": [],
+      "optional": []
+    },
+    "com.ramirestechgames.stats": {
+      "layer": 1,
+      "assemblyRoot": "RamiresTechGames.Stats",
+      "define": "RAMIRESTECHGAMES_STATS",
+      "hard": ["com.ramirestechgames.core"],
+      "optional": []
+    },
+    "com.ramirestechgames.hfsm": {
+      "layer": 1,
+      "assemblyRoot": "RamiresTechGames.HierarchicalStateMachine",
+      "define": "RAMIRESTECHGAMES_HFSM",
+      "hard": ["com.ramirestechgames.core"],
+      "optional": []
+    },
+    "com.ramirestechgames.character": {
+      "layer": 2,
+      "assemblyRoot": "RamiresTechGames.Character",
+      "define": "RAMIRESTECHGAMES_CHARACTER",
+      "hard": ["com.ramirestechgames.core"],
+      "optional": ["com.ramirestechgames.hfsm", "com.ramirestechgames.stats", "com.unity.inputsystem"]
+    },
+    "com.ramirestechgames.combat": {
+      "layer": 3,
+      "assemblyRoot": "RamiresTechGames.Combat",
+      "define": "RAMIRESTECHGAMES_COMBAT",
+      "hard": ["com.ramirestechgames.core", "com.ramirestechgames.stats"],
+      "optional": ["com.ramirestechgames.hfsm", "com.ramirestechgames.character", "com.unity.inputsystem"]
+    },
+    "com.ramirestechgames.abilities": {
+      "layer": 4,
+      "assemblyRoot": "RamiresTechGames.Abilities",
+      "define": "RAMIRESTECHGAMES_ABILITIES",
+      "hard": ["com.ramirestechgames.core", "com.ramirestechgames.stats"],
+      "optional": [
+        "com.ramirestechgames.hfsm",
+        "com.ramirestechgames.character",
+        "com.ramirestechgames.combat",
+        "com.unity.inputsystem"
+      ]
+    },
+    "com.ramirestechgames.ai": {
+      "layer": 5,
+      "assemblyRoot": "RamiresTechGames.AI",
+      "define": "RAMIRESTECHGAMES_AI",
+      "hard": ["com.ramirestechgames.core"],
+      "optional": ["com.ramirestechgames.character", "com.ramirestechgames.combat", "com.ramirestechgames.abilities"]
+    },
+    "com.ramirestechgames.equipment": {
+      "layer": 5,
+      "assemblyRoot": "RamiresTechGames.Equipment",
+      "define": "RAMIRESTECHGAMES_EQUIPMENT",
+      "hard": ["com.ramirestechgames.core", "com.ramirestechgames.stats"],
+      "optional": ["com.ramirestechgames.abilities"]
+    }
+  },
+  "externalPackages": {
+    "com.unity.inputsystem": {
+      "assemblyRoot": "Unity.InputSystem",
+      "define": "RAMIRESTECHGAMES_INPUTSYSTEM"
+    }
+  }
+}

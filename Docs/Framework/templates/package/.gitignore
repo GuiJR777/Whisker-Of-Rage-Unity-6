@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE (packages are opened through a host Unity project such as RamiresTech-Sandbox)
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.sln
+*.slnx
+*.user

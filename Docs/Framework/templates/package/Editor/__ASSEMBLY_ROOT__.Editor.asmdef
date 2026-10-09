@@ -1,0 +1,16 @@
+{
+  "name": "{{ASSEMBLY_ROOT}}.Editor",
+  "rootNamespace": "{{ASSEMBLY_ROOT}}.Editor",
+  "references": {{EDITOR_REFERENCES_JSON}},
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
