@@ -96,7 +96,7 @@ velocidade, ADR-0010).
 | `MovementProfileDefinition` | SO | Velocidades, aceleração/desaceleração, ar, **altura e tempo de pulo exatos**, pulo variável, coyote, jump buffer, pulos/dashes aéreos, dash, rampas/snapping, forças externas, facing, `PlanarAxisScale`. |
 | `CharacterCommandBuffer` | MB | Estado (`Move`, `JumpHeld`, `FacingOverride`) e bordas `Jump`/`Dash` com token e instante (ADR-0011); dono `Motor` ou `External`. |
 | `CharacterCommands` | struct | `Move`, `JumpHeld`, `HasFacingOverride`, `FacingOverride` (bordas ficam no buffer). |
-| `CharacterMotor` | MB + Pure core | Uma `AddForce(VelocityChange)` por passo, gravidade única no domínio; `RequestJump/RequestDash(token)` (duas fases); `Teleport`; eventos. |
+| `CharacterMotor` | MB + Pure core | Uma `AddForce(VelocityChange)` por passo, gravidade única no domínio; `RequestJump/RequestDash(token)` (duas fases) e `CancelJumpRequest/CancelDashRequest(token)`; `Teleport`; eventos entregues no fim do passo. |
 | `IExternalForceReceiver` | interface (Experimental até o M4) | `AddImpulse`, `TryAddForceOverTime` (handle por geração), `RemoveForce`, `ClearExternalForces`, `ExternalVelocity` — knockback/launch. |
 | `GroundInfo` | struct | Resultado do sensor (o `GroundSensor` é interno: sobreposição, sweep NonAlloc, saturação, borda). |
 | `FacingController` | Pure + MB | Facing lógico + `Sign`, travas; presenters de sprite e de modelo. |

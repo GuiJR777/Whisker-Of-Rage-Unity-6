@@ -543,7 +543,7 @@ Samples~/ MovementPlayground/ · InputSystemPlayer/ (opcional)
   entre o collider do personagem e o outro dá direção e profundidade; direção caminhável → chão com distância
   **negativa** (afundado) e essa normal. Não se depende de `distance == 0` do sweep (esses hits são ignorados: já
   cobertos pela sobreposição).
-- **Ordem e saturação:** a documentação 6000.6 não garante ordenação dos resultados nem quais hits entram quando há
+- **Ordem e saturação** (o tratamento de buffer cheio foi substituído na §19.8): a documentação 6000.6 não garante ordenação dos resultados nem quais hits entram quando há
   mais que a capacidade. O sensor percorre os `n` resultados e escolhe pelo critério (menor distância entre os
   caminháveis; senão a menor distância). Se `n == capacidade` (saturado), faz também a consulta de **um único hit**
   (`PhysicsScene.SphereCast(..., out RaycastHit, ...)`, que devolve o acerto mais próximo) para garantir o mais próximo
@@ -616,3 +616,25 @@ Samples~/ MovementPlayground/ · InputSystemPlayer/ (opcional)
   puder executar. Idade negativa (não esperada) vale 0. `timeScale` < 1 → tempo de jogo e passos escalam juntos (janela
   em segundos de jogo preservada); `timeScale = 0` → sem passos e sem expiração. `maximumDeltaTime` limita os passos de
   recuperação após um frame longo; bordas valem pelo tempo de jogo, não pelo número de passos.
+
+### 19.8 Revisão final da implementação (0.1.0) — normativo
+- **Decisões aprovadas:** (1) `RequestJump/RequestDash(token)` em duas fases; `AlreadyPending` = **qualquer** pedido
+  pendente da mesma ação (mesmo token ou outro); (2) o último passo do dash cobre só o tempo restante (distância
+  nominal exata sem obstrução); (3) dependência hard de `com.unity.modules.physics`; (4) jump buffer via HFSM com
+  latência de até um frame mais um passo fixo após a aterrissagem.
+- **Notificações:** `ActionResolved` entra na fila de eventos do passo (FIFO com `Jumped`, `DashStarted` etc.) e é
+  entregue no fim do `FixedUpdate`, depois de `Integrate` e do `AddForce`. A entrega usa uma cópia da fila: pedidos,
+  impulsos, cancelamentos ou `Teleport` feitos por listeners só valem nos passos seguintes; notificações geradas
+  durante a entrega ou fora de um passo saem no fim do próximo passo. `LastJumpRequest/LastDashRequest` mudam na hora.
+- **Cancelamento:** `CancelJumpRequest/CancelDashRequest(token)` → `true` só para o pedido pendente daquele token.
+  A ação não executa, a borda é descartada do buffer (não pode executar depois, nem por outra claim),
+  `ActionResult.Cancelled` é registrado na hora e notificado uma vez. Token antigo não cancela pedido novo; pedido já
+  executado devolve `false` e a física não é desfeita. `JumpBehaviour`/`DashBehaviour` cancelam o próprio pedido no
+  `OnExit` (interrupção por Dead, Hitstun…); `Teleport` cancela pedidos pendentes. A HFSM não muda e não passa a
+  conhecer o Character.
+- **GroundSensor saturado (substitui o fallback de hit único da §19.2):** buffer primário (8) cheio → a mesma
+  consulta é repetida num buffer estendido pré-alocado (32), no sweep e na sobreposição, e a seleção (caminhável antes
+  de íngreme, depois menor gap) roda sobre todos os resultados. Com menos de 32 resultados a escolha é a de uma busca
+  exaustiva. Com 32 ou mais (saturação residual, contada em `GroundQueryResidualSaturationCount`) **não há garantia de
+  exaustividade**: o sweep também considera o acerto único mais próximo, mas uma caminhável fora do buffer pode ser
+  perdida. Sem alocação recorrente.
