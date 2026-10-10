@@ -1,6 +1,6 @@
 # ADR-0012 — Decisões temporais do Character
 
-- **Status:** Proposta (design do M3) · **Milestone:** M3
+- **Status:** Aceita (revisão do design do M3, 2026-10-10) · **Milestone:** M3
 - **Relacionada:** [ADR-0003](0003-execution-order-bands.md) (fecha as decisões adiadas para o M3),
   [especificação do M3](../design/m3-character-design.md) §7.2, §11
 
@@ -31,3 +31,7 @@ O ADR-0003 adiou para o M3: valor do passo fixo, interpolação de Rigidbody, mo
 - Altura de pulo estável entre projetos com passos fixos diferentes (testada).
 - Câmera lenta global preserva a forma das trajetórias.
 - O M4 herda um ponto em aberto explícito (hitstop local).
+
+## Ajustes da revisão (2026-10-10)
+- Referencial de tempo das bordas e casos de `timeScale`, vários passos fixos por frame e `maximumDeltaTime`
+  documentados na especificação §19.7.

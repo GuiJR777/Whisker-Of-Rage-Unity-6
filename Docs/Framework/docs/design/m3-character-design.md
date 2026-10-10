@@ -4,7 +4,9 @@
 - **Dependência hard:** `com.ramirestechgames.core` (≥ 0.3.0: `ExecutionOrder`, `IValidatable`, `[SelectImplementation]`)
 - **Opcionais (integration assemblies, ADR-0002):** `com.ramirestechgames.hfsm`, `com.ramirestechgames.stats`,
   `com.unity.inputsystem` (já declarados em `dependency-graph.json`)
-- **Status:** **v1 — proposta para revisão.** Nada implementado. Decisões a aprovar na §16; ADRs propostos na §17.
+- **Status:** **v2 — aprovada com ajustes; implementação autorizada.** D1–D12 aprovadas (ressalvas em D3, D5,
+  D9, D11); ADRs 0010–0012 aceitos. Ajustes na **§19, que prevalece sobre as seções anteriores em caso de
+  conflito**. M3 só é concluído após a revisão final.
 - **Insumos:** Master Prompt §4.3 · [02 — fronteiras](../02-package-boundaries-and-contracts.md#character--ramirestechgamescharacter-l2--m3)
   · [ADR-0003](../adr/0003-execution-order-bands.md) (decisões temporais do M3) ·
   [ADR-0004](../adr/0004-command-buffers.md) (primeiro buffer, capacidade, janela do jump buffer) ·
@@ -419,7 +421,7 @@ segue D11 (proposta: mantém `TimeToApex` e recalcula `g` e `v0`, para o ritmo d
 | `MovementProfileDefinition` (+ enums `FacingMode`, `DashDirectionMode`) | SO | Experimental |
 | `CharacterCommandBuffer`, `CharacterCommands`, `CommandEdge`, `CommandOwner` (enum `Motor`/`External`) | MB / struct | Experimental |
 | `CharacterMotor` (`Velocity`, `LocomotionVelocity`, `ExternalVelocity`, `Ground`, `IsGrounded`, `IsDashing`, `Jump()`, `Dash(dir)`, `CanJump`, `CanDash`, `Teleport(pos)`, eventos) | MB | Experimental |
-| `IExternalForceReceiver`, `ExternalForceMode`, `ExternalForceHandle` | interface / tipos | **Stable** (contrato para o Combat) |
+| `IExternalForceReceiver`, `ExternalForceMode`, `ExternalForceHandle` | interface / tipos | Experimental até o Combat (M4) validar o uso (§19.3) |
 | `GroundInfo` | readonly struct | Experimental |
 | `FacingController` (`Facing`, `Sign`, `LockFacing()` → `FacingLockHandle`, `Unlock`) | MB | Experimental |
 | `SpriteFacingPresenter`, `TransformFacingPresenter` | MB | Experimental |
@@ -513,3 +515,104 @@ Editor/   Inspectors/ · Gizmos/ · Debugger/ · Validation/
 Tests/    Editor/ (domínio, buffer, sensor, validators) · Runtime/ (PlayMode + fixtures) · Editor/Integration/<Outro>/
 Samples~/ MovementPlayground/ · InputSystemPlayer/ (opcional)
 ```
+
+---
+
+## 19. Ajustes da revisão (v2) — normativos
+
+### 19.1 Integração vertical: uma única equação, gravidade aplicada uma vez
+- **Dono da gravidade: `MovementModel`.** O `CharacterMotor` não aplica `ForceMode.Acceleration` nem usa
+  `Rigidbody.useGravity` (desligado no `Awake` e cobrado pelo Validator). A §3.3 passo 5 passa a ser **uma única**
+  chamada `AddForce(alvo − medida, ForceMode.VelocityChange)` por passo.
+- Equação do passo (Δt = passo fixo; `v_y⁰` = velocidade vertical medida e reconciliada no início do passo):
+  ```
+  v_y = v_y⁰ + Δv_pulo_ou_launch − g_ef · Δt,     v_y ≥ −MaxFallSpeed
+  g_ef = g_up se v_y⁰ > 0 · g_down se v_y⁰ ≤ 0 · (× DashGravityScale durante o dash)
+  posição (PhysX, Euler semi-implícito): x ← x + v · Δt
+  ```
+  É a integração assumida na correção discreta da §7.2 (o primeiro passo do pulo já desconta `g·Δt`).
+- **Chão caminhável:** sem gravidade; a velocidade é a locomoção projetada no plano do chão (o `y` vem da projeção)
+  mais o termo de snapping. **Rampa íngreme:** a única aceleração é a gravidade **projetada** no plano da rampa,
+  aplicada pela mesma equação — nunca a gravidade vertical somada à projetada.
+- Testes que detectam duplicação: queda livre (`v_y` após N passos = `−g·N·Δt` ± ε; o dobro falha), altura e tempo de
+  ápice do pulo, queda da borda, aceleração ao longo da rampa íngreme = `g·sen θ` (nem `2g·sen θ`, nem `g + g·sen θ`).
+
+### 19.2 GroundSensor: sobreposição inicial, buffer cheio, múltiplas superfícies
+- **Sobreposição inicial:** antes do sweep, `PhysicsScene.OverlapSphere(..., Collider[] buffer, ...)` (NonAlloc) na
+  esfera de prova. Para cada collider sobreposto (exceto os do próprio ator e triggers), `Physics.ComputePenetration`
+  entre o collider do personagem e o outro dá direção e profundidade; direção caminhável → chão com distância
+  **negativa** (afundado) e essa normal. Não se depende de `distance == 0` do sweep (esses hits são ignorados: já
+  cobertos pela sobreposição).
+- **Ordem e saturação:** a documentação 6000.6 não garante ordenação dos resultados nem quais hits entram quando há
+  mais que a capacidade. O sensor percorre os `n` resultados e escolhe pelo critério (menor distância entre os
+  caminháveis; senão a menor distância). Se `n == capacidade` (saturado), faz também a consulta de **um único hit**
+  (`PhysicsScene.SphereCast(..., out RaycastHit, ...)`, que devolve o acerto mais próximo) para garantir o mais próximo
+  e incrementa `SaturationCount` (debugger). A camada do próprio ator fora da máscara é exigida pelo Validator; ainda
+  assim os próprios colliders são filtrados.
+- **Múltiplas superfícies:** entre caminhável e íngreme no alcance, vence a caminhável mais próxima; teto nunca é chão
+  (normal com componente `y ≤ 0`).
+- Testes (EditMode, colliders reais): começar afundado no chão; saturação com mais colliders que a capacidade (o
+  escolhido é o mesmo de uma busca exaustiva); caminhável × íngreme × teto; trigger e camada ignorados; borda.
+
+### 19.3 Forças externas
+- **Distância ideal × deslocamento:** `d_ext = |v_ext|² / (2 · desaceleração externa)` é a distância do **canal externo**
+  sem colisões. O deslocamento do personagem é `∫(v_loc + v_ext + v_y) dt` e inclui a locomoção (com controle
+  reduzido). Testes: comando neutro → deslocamento ≈ `d_ext`; comando contrário → o canal externo ainda percorre `d_ext`
+  e o deslocamento total fica ≥ `d_ext − d_loc_max` (o máximo que a locomoção com `ControlDuringExternal` contrapõe no
+  mesmo intervalo).
+- **Contrato:**
+  ```csharp
+  void AddImpulse(Vector3 amount, ExternalForceMode mode = ExternalForceMode.VelocityChange);
+  bool TryAddForceOverTime(Vector3 amount, float duration, ExternalForceMode mode, out ExternalForceHandle handle);
+  bool RemoveForce(ExternalForceHandle handle);
+  void ClearExternalForces();
+  Vector3 ExternalVelocity { get; }
+  ```
+- **Unidades:** impulso `VelocityChange` = Δv em **m/s**; `Impulse` = **N·s** (Δv = J / massa). Força ao longo do tempo:
+  `VelocityChange` = aceleração em **m/s²** (ignora massa); `Impulse` = força em **N** (a = F / massa).
+- **Falha explícita:** `TryAddForceOverTime` devolve `false` (handle inválido) com as 8 vagas ocupadas, `duration ≤ 0`
+  ou valor não finito.
+- **Handles seguros:** `ExternalForceHandle` = (vaga, geração); cada reutilização da vaga incrementa a geração;
+  `RemoveForce` com geração antiga devolve `false` e não remove a força nova. `default` é inválido.
+- `IExternalForceReceiver` é **Experimental** na 0.1.0 (Stable após o Combat validá-lo no M4).
+
+### 19.4 Ownership de comandos (D3): requisição em duas fases
+- Dono `Motor`: o motor, no `FixedUpdate`, consome a borda **somente quando consegue executar**; senão a borda espera
+  até a janela expirar.
+- Dono `External` (ex.: estado da HFSM): o executor **não consome**; chama `motor.RequestJump(token)` /
+  `motor.RequestDash(token)`. Resultado imediato (`ActionRequestStatus`): `Accepted` (pendente), `NotOwner` (motor não
+  está em modo External para esse tipo), `UnknownToken` (borda não está pendente no buffer), `AlreadyPending` (mesmo
+  token já pedido — não duplica).
+- No `FixedUpdate`, com pedido pendente: pode executar → `TryConsume(token)` e executa → `Executed`; não pode → segue
+  pendente enquanto a borda estiver na janela (ex.: aterrissar dentro do jump buffer executa no passo da aterrissagem);
+  janela expirou → `Rejected` (a borda expira, **não** é consumida); token já consumido/expirado → `Rejected`. O
+  desfecho sai no evento `ActionResolved` (tipo, token, resultado) e em `LastJumpRequest`/`LastDashRequest`.
+- Consumo acontece **uma vez e só junto com a execução**; vários `FixedUpdate` no frame executam no primeiro possível;
+  frame sem `FixedUpdate` mantém o pedido.
+- Testes: dono errado; token desconhecido; mesmo token duas vezes; 3 passos fixos no frame → 1 execução; frame sem
+  passo fixo; pedido no ar sem pulo aéreo → executa ao aterrissar dentro da janela / rejeitado fora dela; estado da HFSM
+  com claim → um único pulo e uma única remoção da borda.
+
+### 19.5 Movimento 2.5D (D9)
+- `PlanarAxisScale` aceita **0** em um eixo (≥ 0 em ambos, não ambos 0). Locomoção e direção de dash são projetadas nos
+  eixos com escala > 0; dash resultante nulo usa o facing (também projetado).
+- Restrição física opcional no componente: `FreezeZeroScaleAxes` (padrão desligado) acrescenta
+  `RigidbodyConstraints.FreezePositionX/Z` nos eixos com escala 0 (forças externas também não movem nesse eixo).
+  Desligado, forças externas e colisões ainda podem mover no eixo bloqueado. Sem lanes.
+
+### 19.6 Stats durante o salto (D11)
+- `g_up`, `g_down`, `v0` e `v_min` (com os multiplicadores do `IMovementModifierSource` e a correção do Δt) são
+  **capturados na decolagem**. Mudanças de buff durante o voo valem a partir do **próximo** salto. Ao sair do chão sem
+  pular, os parâmetros de queda são capturados no momento da saída.
+- Teste: alterar o multiplicador de altura durante a subida não muda o ápice em andamento e muda o salto seguinte.
+
+### 19.7 Relógios
+- **Instantes:** um único referencial — `Time.timeAsDouble` (tempo de jogo escalado). O buffer carimba a borda com ele
+  no `Enqueue` (normalmente em `Update`); o motor calcula a idade com o mesmo `Time.timeAsDouble` lido no `FixedUpdate`
+  (dentro do `FixedUpdate` a Unity devolve o tempo do passo fixo).
+- **Durações** (coyote, cooldown, duração do dash, tempo no ar) são acumuladas pelo modelo somando o Δt fixo e nunca
+  comparadas com instantes. O relógio acumulado do motor não é usado para idade de bordas.
+- Casos: vários `FixedUpdate` no frame → cada passo vê um tempo maior (Δt a Δt); a borda é consumida no primeiro em que
+  puder executar. Idade negativa (não esperada) vale 0. `timeScale` < 1 → tempo de jogo e passos escalam juntos (janela
+  em segundos de jogo preservada); `timeScale = 0` → sem passos e sem expiração. `maximumDeltaTime` limita os passos de
+  recuperação após um frame longo; bordas valem pelo tempo de jogo, não pelo número de passos.

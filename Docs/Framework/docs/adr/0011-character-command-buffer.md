@@ -1,6 +1,6 @@
 # ADR-0011 — `CharacterCommandBuffer`: comandos, dono das bordas, relógio e capacidade
 
-- **Status:** Proposta (design do M3) · **Milestone:** M3
+- **Status:** Aceita (revisão do design do M3, 2026-10-10) · **Milestone:** M3
 - **Relacionada:** [ADR-0004](0004-command-buffers.md) (fecha as decisões adiadas para o M3),
   [especificação do M3](../design/m3-character-design.md) §5
 
@@ -33,3 +33,9 @@ concreto, a capacidade, a janela do jump buffer e onde fica o tipo genérico.
 ## Consequências
 - O Character funciona isolado (dono `Motor`) e com HFSM (dono `External`) sem mudar o buffer.
 - Seis testes dedicados às garantias do ADR-0004 (perda, duplicação, expiração, dono, clear, overflow).
+
+## Ajustes da revisão (2026-10-10)
+- Dono `External` usa requisição em duas fases: `RequestJump/RequestDash(token)` → consumo e execução juntos no
+  `FixedUpdate`, ou rejeição quando a janela expira sem consumir (especificação §19.4).
+- Instantes num único referencial (`Time.timeAsDouble`); durações acumuladas pelo modelo nunca comparadas com
+  instantes (§19.7).

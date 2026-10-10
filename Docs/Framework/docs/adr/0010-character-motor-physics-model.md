@@ -1,6 +1,6 @@
 # ADR-0010 — Motor de personagem: Rigidbody dinâmico, controle por variação de velocidade e canais
 
-- **Status:** Proposta (design do M3) · **Milestone:** M3
+- **Status:** Aceita (revisão do design do M3, 2026-10-10) · **Milestone:** M3
 - **Relacionada:** [ADR-0003](0003-execution-order-bands.md), [ADR-0004](0004-command-buffers.md),
   [especificação do M3](../design/m3-character-design.md) §3, §6, §8
 
@@ -41,4 +41,11 @@ cinemático (movimento e colisão por conta própria) e Rigidbody dinâmico (sol
   diferentes (`VelocityChange` ignora massa); física real com o resto da cena.
 - Negativas / custos: dependência do solver (contatos, depenetração) — mitigada por validators (atrito, detecção
   contínua) e testes PlayMode; reconciliação é heurística e precisa de testes de parede/teto.
-- CONTRACTS do Character: `IExternalForceReceiver` como **Stable** desde a 0.1.0.
+- CONTRACTS do Character: `IExternalForceReceiver` Experimental na 0.1.0; Stable após validação pelo Combat (M4).
+
+## Ajustes da revisão (2026-10-10)
+- Gravidade aplicada **uma vez**, pelo `MovementModel`, dentro da única variação de velocidade do passo
+  (`VelocityChange`); o motor não usa `ForceMode.Acceleration` (especificação §19.1).
+- Sensor com sobreposição inicial via `OverlapSphere` + `ComputePenetration` e tratamento de buffer saturado (§19.2).
+- `IExternalForceReceiver` começa **Experimental**; `TryAddForceOverTime` com handle (vaga, geração); unidades m/s e
+  N·s (§19.3).
