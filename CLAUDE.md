@@ -18,8 +18,9 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 | Restante de `Assets/` | Conteúdo do jogo (a partir do M9) | Estrutura em CONVENTIONS §11.2 |
 
 ## Estado atual
-**M0 e M1 concluídos** (Core `v0.2.0`, Stats `v0.1.0`). **M2 (HFSM) em design** — não implementar antes da aprovação do
-design (`Docs/Framework/docs/design/m2-hfsm-design.md`) e do spike de graph editor.
+**M0 e M1 concluídos** (Core `v0.2.0`, Stats `v0.1.0`). **M2 (HFSM) implementado, aguardando revisão final**
+(HFSM 0.1.0 e Core 0.3.0 sem tag; especificação `Docs/Framework/docs/design/m2-hfsm-design.md`, notas na §15).
+Não criar tags nem declarar o M2 concluído antes da revisão.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras

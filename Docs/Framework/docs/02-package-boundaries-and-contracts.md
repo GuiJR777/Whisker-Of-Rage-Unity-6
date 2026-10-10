@@ -68,21 +68,21 @@ qualquer conceito de gameplay (vida, dano, time).
 ## hfsm — `RamiresTechGames.HierarchicalStateMachine` (L1) · M2
 
 **Responsabilidade:** executar estados hierárquicos e transições. **Não decide estratégia.**
+Especificação: [design/m2-hfsm-design.md](design/m2-hfsm-design.md) (v2, §14 normativa).
 
 | Contrato | Tipo | Descrição |
 |---|---|---|
-| `StateMachineDefinition` | SO | Grafo: estados (SR), sub-estados, estado inicial por nível, transições. |
-| `IState` / `StateBehaviour` | SR (sem estado entre atores) | `Enter`, `Tick`, `FixedTick`, `Exit` recebendo `StateContext`. |
-| `ITransitionCondition` | SR | Guard: `bool Evaluate(StateContext context)`. |
-| `TransitionDefinition` | data | Origem (estado ou *Any* do pai), destino, condições, prioridade, `CanInterrupt`. |
-| `StateContext` | Pure | Contexto de runtime por ator: acesso a componentes (`TryGet<T>`), dados por estado, tempo no estado. |
-| `StateMachineInstance` | Pure | Instância por ator; avalia transições por prioridade, do nível mais alto ao mais profundo. |
-| `StateMachineRunner` | MB | Tica a instância em `STATE_MACHINE`; expõe estado ativo. |
-| Eventos | `StateEntered`, `StateExited`, `TransitionTaken` | Debug e presentation. |
+| `StateMachineDefinition` | SO | Estados (lista plana com `ParentId`), transições, parâmetros (id estável), sub-máquinas. |
+| `StateBehaviour` / `StateBehaviour<TMemory>` | SR (sem estado entre atores) | `OnEnter`, `OnTick`, `OnFixedTick`, `OnExit` recebendo `StateContext`; memória por ator. |
+| `TransitionCondition` | SR | Guard: `bool Evaluate(ConditionContext context)`; só espia, registra `Claim(source, token)`. |
+| `TransitionData` | data | Origem (estado ou `Root` = Any State; composto = Any do nível), destino, condições (AND), prioridade, `AllowReentry`. |
+| `StateContext` | Pure | Por ator e por estado: `TryGet<T>`, parâmetros, `TimeInState`, conclusão, limiar de interrupção, `EntryClaims`. |
+| `StateMachineInstance` | Pure | Instância por ator; níveis externos primeiro, prioridade, uma transição por tick, `RequestState`, notificações FIFO. |
+| `StateMachineRunner` | MB | Tica a instância na banda `STATE_MACHINE`; loop de avaliação `Update` (padrão) ou `FixedUpdate`. |
 
-**Não faz:** IA, input, movimento, combate. Packages superiores fornecem *tipos de estado* via integração
-(ex.: `Character.Integration.HierarchicalStateMachine.LocomotionState`).
-**Editor:** visualização do grafo, debugger (estado ativo e histórico de transições), validators (estados órfãos, ciclos sem guard).
+Estados concretos (locomoção, ataque, casting) ficam nas integration assemblies dos outros packages
+(ex.: `Character.Integration.HierarchicalStateMachine`).
+**Editor:** grafo (GraphView sobre modelo de edição sem UI), debugger (caminho ativo e histórico), validators.
 
 ---
 

@@ -22,7 +22,7 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 ## Milestones
 
 **Estado:** M0 ✅ (Core `v0.1.0`) · **M1 ✅ concluído em 2026-10-09** (Core `v0.2.0` @`d679181`, Stats `v0.1.0` @`cfc42db`) ·
-**M2 (HFSM) — próximo, em design** (`design/m2-hfsm-design.md`, spike `design/m2-graph-editor-spike.md`); implementação só após aprovação.
+**M2 (HFSM) — implementado, aguardando revisão final** (HFSM 0.1.0 e Core 0.3.0 sem tag; `design/m2-hfsm-design.md` §15).
 
 ```mermaid
 flowchart LR

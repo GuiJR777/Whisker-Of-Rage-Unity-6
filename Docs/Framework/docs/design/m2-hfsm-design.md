@@ -3,8 +3,9 @@
 - **Package:** `com.ramirestechgames.hfsm` · assembly/namespace raiz `RamiresTechGames.HierarchicalStateMachine` · camada L1
 - **Dependência hard:** `com.ramirestechgames.core` (≥ 0.2.0: `ExecutionOrder`, `IValidatable`, `[SelectImplementation]`)
 - **Opcionais:** nenhuma (quem integra são Character, Combat e Abilities, nas integration assemblies deles)
-- **Status:** **v2 — aprovada com ajustes; implementação autorizada.** Decisões D1–D12 aprovadas (§13); ajustes da revisão
-  na **§14, que prevalece sobre as seções anteriores em caso de conflito**. M2 só é concluído após revisão final.
+- **Status:** **v2 — aprovada com ajustes; implementada (aguardando revisão final).** Decisões D1–D12 aprovadas (§13);
+  ajustes da revisão na **§14, que prevalece sobre as seções anteriores em caso de conflito**; notas de implementação
+  para a revisão final na §15. M2 só é concluído após revisão final.
 - **Insumos:** Master Prompt §4.2 · ADR-0003 (decisões temporais do M2) · ADR-0004 (command buffers) ·
   [spike de graph editor](m2-graph-editor-spike.md).
 
@@ -385,3 +386,23 @@ O GraphView só chama um **modelo de edição sem UI** sobre o asset (`StateMach
 exige converter assets. Testes do modelo: Undo/Redo de cada operação, persistência após salvar e recarregar, remoção de
 estado com transições associadas (e subárvore), duplicação de estado (novos GUIDs, comportamento clonado, transições
 internas remapeadas), definição/remoção de sub-máquina com restauração por Undo.
+
+---
+
+## 15. Notas de implementação (para a revisão final)
+Itens que a especificação não fixava ou que a implementação precisou decidir. Nenhum muda uma decisão aprovada.
+
+| # | Tema | Como ficou | Onde |
+|---|---|---|---|
+| N1 | **Trigger em frame lento** | Com o passo 2 (expirar) logo após o passo 1 (avançar o relógio), um trigger definido antes de um frame de 0,33 s expirava sem nenhuma avaliação (visto no sample). Agora o trigger só expira depois de visto por um tick de avaliação. | ADR-0002 do package (**proposta**), `ParameterTests` |
+| N2 | Ordem das notificações | `StateExited` (folha primeiro) → `StateEntered` (de cima para baixo) → `TransitionTaken`, todas após o tick. A raiz nunca é notificada. | CONTRACTS #12 |
+| N3 | Assinatura das condições | `Evaluate(ConditionContext)` conforme §14.2; `ConditionContext.Mark/Rollback` são públicos para condições compostas de terceiros. | CONTRACTS |
+| N4 | Exceções | Exceção em callback de comportamento ou condição é logada com o id do estado; a condição conta como falsa e a máquina segue. `Tick` reentrante lança. | CONTRACTS #13 |
+| N5 | Aviso extra do Validator | Transição com prioridade abaixo do limiar do **próprio estado de origem** nunca sai sem o comportamento baixar o limiar (caso real do sample: `Alert` com limiar 10 e saída por conclusão em prioridade 0). | `ValidationTests` |
+| N6 | Ciclo de sub-máquina | Reportado no asset que contém o estado e também no asset validado (senão o filtro "issues do próprio asset" o escondia). | `SubMachineTests` |
+| N7 | Ids copiados pelo Inspector | O "+" de lista copia o id do elemento anterior; `OnValidate` gera id novo para cópias (o primeiro mantém). | `ValidationTests` |
+| N8 | `Start` do runner | A instância é criada no `Awake` (ou no primeiro acesso) e iniciada no `Start` (e a cada `OnEnable` posterior), para que outros componentes assinem eventos antes das entradas iniciais. | PlayMode |
+| N9 | Copiar/colar | Ctrl+C/Ctrl+V/Ctrl+D duplicam estados dentro da mesma definição (subárvore, comportamentos clonados, transições internas remapeadas). Entre grafos continua fora (§1). | `GraphModelTests` |
+| N10 | `ListenerList` | Cópia idêntica à do Stats (segundo consumidor). Extração para o Core fica como candidata com ADR, sem alterar o Stats aprovado. | ROADMAP do Core |
+| N11 | Core 0.3.0 | O seletor `[SelectImplementation]` compartilhava a instância entre elementos inseridos/duplicados em listas `[SerializeReference]`; corrigido no Core.Editor (§14.6) com 12 testes. | CHANGELOG do Core |
+
