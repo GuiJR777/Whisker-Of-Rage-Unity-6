@@ -394,15 +394,16 @@ Itens que a especificação não fixava ou que a implementação precisou decidi
 
 | # | Tema | Como ficou | Onde |
 |---|---|---|---|
-| N1 | **Trigger em frame lento** | Com o passo 2 (expirar) logo após o passo 1 (avançar o relógio), um trigger definido antes de um frame de 0,33 s expirava sem nenhuma avaliação (visto no sample). Agora o trigger só expira depois de visto por um tick de avaliação. | ADR-0002 do package (**proposta**), `ParameterTests` |
+| N1 | **Trigger em frame lento** | Com o passo 2 (expirar) logo após o passo 1 (avançar o relógio), um trigger definido antes de um frame de 0,33 s expirava sem nenhuma avaliação (visto no sample). Agora o trigger só expira depois de avaliado por um passo de transições que já o encontrou definido; criado durante uma troca de estado (transição ou pedido), espera o tick seguinte. | ADR-0002 do package (**aceita** na revisão, com a correção do caso `OnEnter`), `ParameterTests` |
 | N2 | Ordem das notificações | `StateExited` (folha primeiro) → `StateEntered` (de cima para baixo) → `TransitionTaken`, todas após o tick. A raiz nunca é notificada. | CONTRACTS #12 |
 | N3 | Assinatura das condições | `Evaluate(ConditionContext)` conforme §14.2; `ConditionContext.Mark/Rollback` são públicos para condições compostas de terceiros. | CONTRACTS |
-| N4 | Exceções | Exceção em callback de comportamento ou condição é logada com o id do estado; a condição conta como falsa e a máquina segue. `Tick` reentrante lança. | CONTRACTS #13 |
-| N5 | Aviso extra do Validator | Transição com prioridade abaixo do limiar do **próprio estado de origem** nunca sai sem o comportamento baixar o limiar (caso real do sample: `Alert` com limiar 10 e saída por conclusão em prioridade 0). | `ValidationTests` |
+| N4 | Exceções e reentrância | Exceção em callback de comportamento ou condição é logada com o id do estado; a condição conta como falsa e a máquina segue. `Tick`/`FixedTick` dentro de um tick, de Enter/Exit **ou de um listener de notificação** lançam; `RequestState` em listener roda no próximo tick. | CONTRACTS #13, `NotificationTests` |
+| N5 | Aviso extra do Validator | Transição com prioridade abaixo do limiar de um estado que ela **realmente abandona** (origem e ancestrais abaixo do ancestral comum com o destino; na reentrada, até o destino) nunca sai sem o comportamento baixar o limiar (caso real do sample: `Alert` com limiar 10 e saída por conclusão em prioridade 0). Transições para filhos da origem ou entre irmãos não avisam pelo limiar do pai, que continua ativo. | `ValidationTests` |
 | N6 | Ciclo de sub-máquina | Reportado no asset que contém o estado e também no asset validado (senão o filtro "issues do próprio asset" o escondia). | `SubMachineTests` |
 | N7 | Ids copiados pelo Inspector | O "+" de lista copia o id do elemento anterior; `OnValidate` gera id novo para cópias (o primeiro mantém). | `ValidationTests` |
 | N8 | `Start` do runner | A instância é criada no `Awake` (ou no primeiro acesso) e iniciada no `Start` (e a cada `OnEnable` posterior), para que outros componentes assinem eventos antes das entradas iniciais. | PlayMode |
 | N9 | Copiar/colar | Ctrl+C/Ctrl+V/Ctrl+D duplicam estados dentro da mesma definição (subárvore, comportamentos clonados, transições internas remapeadas). Entre grafos continua fora (§1). | `GraphModelTests` |
-| N10 | `ListenerList` | Cópia idêntica à do Stats (segundo consumidor). Extração para o Core fica como candidata com ADR, sem alterar o Stats aprovado. | ROADMAP do Core |
+| N10 | `ListenerList` | Cópia idêntica à do Stats (segundo consumidor). Extração para o Core **adiada** por decisão da revisão; sem alterar o Stats aprovado. | ROADMAP do Core |
+| N12 | Validação manual do grafo | Feita em Play Mode com o sample; corrigiu enquadramento, minimapa, posição do Any State e nomes no debugger. | [m2-graph-editor-validation.md](m2-graph-editor-validation.md) |
 | N11 | Core 0.3.0 | O seletor `[SelectImplementation]` compartilhava a instância entre elementos inseridos/duplicados em listas `[SerializeReference]`; corrigido no Core.Editor (§14.6) com 12 testes. | CHANGELOG do Core |
 
