@@ -626,6 +626,9 @@ Samples~/ MovementPlayground/ · InputSystemPlayer/ (opcional)
   entregue no fim do `FixedUpdate`, depois de `Integrate` e do `AddForce`. A entrega usa uma cópia da fila: pedidos,
   impulsos, cancelamentos ou `Teleport` feitos por listeners só valem nos passos seguintes; notificações geradas
   durante a entrega ou fora de um passo saem no fim do próximo passo. `LastJumpRequest/LastDashRequest` mudam na hora.
+  `Teleport` chamado por um listener (depois do `AddForce` do passo e antes da simulação) move na hora e cancela uma
+  vez a variação de velocidade já acumulada: o corpo termina o passo em repouso no destino, sem impulso residual nos
+  passos seguintes. Fora de listeners, `Teleport` é imediato como antes.
 - **Cancelamento:** `CancelJumpRequest/CancelDashRequest(token)` → `true` só para o pedido pendente daquele token.
   A ação não executa, a borda é descartada do buffer (não pode executar depois, nem por outra claim),
   `ActionResult.Cancelled` é registrado na hora e notificado uma vez. Token antigo não cancela pedido novo; pedido já
