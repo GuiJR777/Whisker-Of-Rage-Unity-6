@@ -23,8 +23,9 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 
 **Estado:** M0 ✅ (Core `v0.1.0`) · **M1 ✅ concluído em 2026-10-09** (Core `v0.2.0` @`d679181`, Stats `v0.1.0` @`cfc42db`) ·
 **M2 ✅ concluído em 2026-10-10** (Core `v0.3.0` @`197dcd6`, HFSM `v0.1.0` @`903aae9`; Stats segue `v0.1.0`) ·
-**M3 (Character Controller) — implementado, aguardando revisão final** (Character 0.1.0 sem tag; design v2
-`design/m3-character-design.md` §19; ADRs 0010–0012; validação manual em `design/m3-character-validation.md`).
+**M3 ✅ concluído em 2026-10-10** (Character `v0.1.0` @`9a50f83`; Core, Stats e HFSM inalterados; sem dívida técnica
+bloqueante) · **M4 (Combat + Combos) — design técnico** (`design/m4-combat-design.md`, aguardando aprovação; não
+implementar antes).
 
 ```mermaid
 flowchart LR

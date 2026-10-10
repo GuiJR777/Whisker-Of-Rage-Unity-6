@@ -32,8 +32,8 @@
 | `com.ramirestechgames.core` | L0 | M0, M1, M2 | **v0.3.0** |
 | `com.ramirestechgames.stats` | L1 | M1 | **v0.1.0** |
 | `com.ramirestechgames.hfsm` | L1 | M2 | **v0.1.0** |
-| `com.ramirestechgames.character` | L2 | M3 | 0.1.0 (sem tag, aguardando revisão final) |
-| `com.ramirestechgames.combat` | L3 | M4 | — |
+| `com.ramirestechgames.character` | L2 | M3 | **v0.1.0** |
+| `com.ramirestechgames.combat` | L3 | M4 | Design em revisão |
 | `com.ramirestechgames.abilities` | L4 | M5 | — |
 | `com.ramirestechgames.ai` | L5 | M6 | — |
 | `com.ramirestechgames.equipment` | L5 | M7 | — |

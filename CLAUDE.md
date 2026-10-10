@@ -18,9 +18,8 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 | Restante de `Assets/` | Conteúdo do jogo (a partir do M9) | Estrutura em CONVENTIONS §11.2 |
 
 ## Estado atual
-**M0, M1 e M2 concluídos** (Core `v0.3.0`, Stats `v0.1.0`, HFSM `v0.1.0`). **M3 — Character Controller
-implementado, aguardando revisão final** (Character 0.1.0 sem tag; ADRs 0010–0012); não declarar concluído nem criar
-tag antes da revisão final.
+**M0–M3 concluídos** (Core `v0.3.0`, Stats `v0.1.0`, HFSM `v0.1.0`, Character `v0.1.0`). **M4 — Combat + Combos
+em design** (`Docs/Framework/docs/design/m4-combat-design.md`); não implementar antes da aprovação do design.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras
