@@ -1,6 +1,6 @@
 # ADR-0017 — Pipeline de dano e precedência dos resultados
 
-- **Status:** Proposta (design do M4) · **Milestone:** M4
+- **Status:** Aceita (revisão do design do M4, 2026-10-10) · **Milestone:** M4
 - **Relacionada:** [ADR-0008](0008-serialize-reference-picker-in-core.md), contratos do Stats (`IStatValueSource`,
   `ResourcePool`), [especificação do M4](../design/m4-combat-design.md) §7
 
@@ -24,3 +24,9 @@ específicas. Abilities (M5) precisa estender o dano e os efeitos por acerto.
 ## Consequências
 - Positivas: dano testável e extensível sem código no Combat; determinismo com RNG injetado.
 - Negativas / custos: passos SR seguem as regras do R4 (`sealed`, `[MovedFrom]` ao mover).
+
+## Ajustes da revisão
+Aprovada após esclarecer efeitos e múltiplos golpes (§24.2 da especificação): candidatos do mesmo alvo decididos
+em ordem determinística sobre uma cópia local do snapshot (guarda, poise e vida consumidos em sequência; golpe letal
+marcado, excedentes com dano 0); reação de maior severidade; aplicação única na fase 4; `IHitEffect` só lê o resultado
+e enfileira efeitos para o próximo passo (`ICombatEffectSink`).

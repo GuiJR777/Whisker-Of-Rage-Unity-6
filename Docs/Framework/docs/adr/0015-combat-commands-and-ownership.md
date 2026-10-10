@@ -1,6 +1,6 @@
 # ADR-0015 — Comandos de combate, prioridade e requisição em duas fases
 
-- **Status:** Proposta (design do M4) · **Milestone:** M4
+- **Status:** Aceita (revisão do design do M4, 2026-10-10) · **Milestone:** M4
 - **Relacionada:** [ADR-0004](0004-command-buffers.md) (decisões adiadas para o M4), [ADR-0011](0011-character-command-buffer.md),
   especificação do M3 §19.4 e §19.8, [especificação do M4](../design/m4-combat-design.md) §9
 
@@ -27,3 +27,7 @@ O ADR-0011 previu mover o tipo genérico de fila de bordas para o Core no segund
 - Positivas: mesmo modelo mental de Character e Combat; jogador e IA escrevem as mesmas bordas.
 - Negativas / custos: se D5 = Core, o Core ganha um tipo (Core 0.4.0) e o Character migra sua fila interna no próximo
   minor, sem mudar API pública.
+
+## Ajustes da revisão
+Aprovada com D5: `EdgeQueue<TPayload>` no Core 0.4.0, com as 6 garantias do ADR-0004 e o contrato de tokens do
+Character (§24.7). O Character **não** migra para a fila do Core neste milestone.

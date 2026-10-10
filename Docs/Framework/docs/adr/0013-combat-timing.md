@@ -1,6 +1,6 @@
 # ADR-0013 — Tempo de combate: segundos de jogo, Δt fixo e janelas por sobreposição
 
-- **Status:** Proposta (design do M4) · **Milestone:** M4
+- **Status:** Aceita (revisão do design do M4, 2026-10-10) · **Milestone:** M4
 - **Relacionada:** [ADR-0003](0003-execution-order-bands.md), [ADR-0012](0012-character-timing.md), risco R8,
   [especificação do M4](../design/m4-combat-design.md) §5
 
@@ -26,3 +26,7 @@ framework não o altera (ADR-0012). Com Δt de 0,02 s, uma janela de 3 frames a 
 - Positivas: o mesmo ataque funciona em qualquer Δt e `timeScale`; testável em EditMode sem Animator.
 - Negativas / custos: janelas podem durar um passo a mais que o nominal (documentado e testado).
 - CONTRACTS do Combat descreve a regra; testes em Δt 0,02 / 1/60 / 0,01 / 0,0333.
+
+## Ajustes da revisão
+Aprovada sem alterações de decisão. Complementos da §24 da especificação: cancelamentos usam a mesma regra de
+sobreposição (§24.5) e o hitstop pausa a timeline sem confundir com a suspensão física do Character (§24.3).

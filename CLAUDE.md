@@ -19,7 +19,8 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 
 ## Estado atual
 **M0–M3 concluídos** (Core `v0.3.0`, Stats `v0.1.0`, HFSM `v0.1.0`, Character `v0.1.0`). **M4 — Combat + Combos
-em design** (`Docs/Framework/docs/design/m4-combat-design.md`); não implementar antes da aprovação do design.
+em implementação** (design v2 aprovado, ADRs 0013–0018 aceitos); não publicar tags de Core/Character/Combat nem declarar
+M4 concluído antes da auditoria final.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras

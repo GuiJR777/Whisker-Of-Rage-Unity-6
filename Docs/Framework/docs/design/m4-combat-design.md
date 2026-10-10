@@ -1,6 +1,7 @@
 # M4 — Combat + Combos · Especificação técnica
 
-- **Status:** proposta para revisão (design only — **não implementar antes da aprovação**) · **Data:** 2026-10-10
+- **Status:** **v2 aprovada** (arquitetura e D1–D15 aprovadas com ajustes; §24 normativa) — implementação autorizada
+  · **Data:** 2026-10-10
 - **Unity:** 6000.6.5f1 · **Package:** `com.ramirestechgames.combat` (L3, `RamiresTechGames.Combat`)
 - **Dependências (grafo):** hard `core`, `stats`; opcionais `hfsm`, `character`, `com.unity.inputsystem` (ADR-0002).
 - **Base contratual:** Core `v0.3.0`, Stats `v0.1.0`, HFSM `v0.1.0`, Character `v0.1.0` (sem alterar APIs aprovadas;
@@ -9,7 +10,7 @@
   parry). O BeatEmUpTemplate2D é só referência de *game feel*; nenhum código, asset ou estrutura dele é consultado ou
   copiado. Nada de mecânicas específicas de Ryu ou do Whiskers of Rage; habilidades elementais e Jutsus pertencem ao
   Abilities (M5).
-- **ADRs propostos:** 0013–0018 (§22). Decisões pendentes: §21.
+- **ADRs:** 0013–0018 aceitas (§22, §24). Decisões D1–D15 aprovadas (§21) com os ajustes da §24.
 
 ---
 
@@ -341,7 +342,7 @@ Character (Jump/Dash, §19.8 do M3). Mesma definição para jogador e inimigo.
 ---
 
 ## 14. Execução e desempenho
-| Item | Proposta |
+| Item | Aceita |
 |---|---|
 | Loop | `FixedUpdate`: `CombatController` (`COMBAT`), `CombatTarget` (`COMBAT + 50`); fontes em `Update` |
 | Eventos | `AttackStarted`, `AttackEnded`(motivo), `HitConfirmed`(atacante), `HitReceived`(alvo), `Parried`, `Blocked`, `GuardBroken`, `PoiseBroken`, `KnockedDown`, `GotUp`, `ComboAdvanced`, `ComboReset`, `ActionResolved`, `Grabbed`, `Thrown` — `readonly struct`, FIFO no fim do passo (cópia da fila) |
@@ -490,15 +491,15 @@ com.ramirestechgames.combat/
 
 ---
 
-## 22. ADRs propostos
+## 22. ADRs (aceitos na revisão, §24)
 | ADR | Título | Status |
 |---|---|---|
-| [0013](../adr/0013-combat-timing.md) | Tempo de combate: segundos de jogo, Δt fixo e janelas por sobreposição | Proposta |
-| [0014](../adr/0014-two-phase-hit-resolution.md) | Resolução de acertos em duas fases (detecção → resolução) | Proposta |
-| [0015](../adr/0015-combat-commands-and-ownership.md) | Comandos de combate, prioridade e requisição em duas fases | Proposta |
-| [0016](../adr/0016-data-driven-hitboxes.md) | Hitboxes como dados ancorados, consultas sem alocação e anti-tunneling | Proposta |
-| [0017](../adr/0017-damage-pipeline-and-outcomes.md) | Pipeline de dano e precedência dos resultados | Proposta |
-| [0018](../adr/0018-gameplay-tags-in-core.md) | `GameplayTag` no Core | Proposta (depende de D6) |
+| [0013](../adr/0013-combat-timing.md) | Tempo de combate: segundos de jogo, Δt fixo e janelas por sobreposição | Aceita |
+| [0014](../adr/0014-two-phase-hit-resolution.md) | Resolução de acertos em duas fases (detecção → resolução) | Aceita |
+| [0015](../adr/0015-combat-commands-and-ownership.md) | Comandos de combate, prioridade e requisição em duas fases | Aceita |
+| [0016](../adr/0016-data-driven-hitboxes.md) | Hitboxes como dados ancorados, consultas sem alocação e anti-tunneling | Aceita |
+| [0017](../adr/0017-damage-pipeline-and-outcomes.md) | Pipeline de dano e precedência dos resultados | Aceita |
+| [0018](../adr/0018-gameplay-tags-in-core.md) | `GameplayTag` no Core | Aceita (D6) |
 
 ---
 
@@ -512,3 +513,139 @@ com.ramirestechgames.combat/
 | Tunneling de hitboxes rápidas | Subamostragem com contagem (ADR-0016) |
 | Saturação de consultas (muitos alvos) | Buffer estendido + contagem residual (política do GroundSensor) |
 | Hitstop sem pausar o motor (D8) | Medir no sample; fallback `Hold` no Character 0.2.0 |
+
+---
+
+## 24. Ajustes da revisão (v2) — normativos
+
+As decisões D1–D15 foram aprovadas com os ajustes abaixo, que prevalecem sobre as seções anteriores em caso de
+conflito. ADRs 0013–0018 aceitas (com as alterações registradas em cada uma).
+
+### 24.1 Determinismo da resolução (D3, ADR-0014)
+O passo de combate tem **quatro fases**, cada uma numa sub-banda de `COMBAT`, todas antes do `CharacterMotor`:
+
+| Fase | Banda | Quem | Pode mutar |
+|---|---|---|---|
+| 1. Ação e detecção | `COMBAT` (−600) | `CombatController` | Só o próprio atacante: timeline, combo, registro de acertos; **enfileira** candidatos nos alvos |
+| 2. Snapshot | `COMBAT + 10` | `CombatTarget` | Nada fora de si: grava o `DefenseSnapshot` imutável do passo |
+| 3. Decisão | `COMBAT + 50` | `CombatTarget` | Nada compartilhado: calcula `HitResult`s sobre o próprio snapshot e o `AttackSnapshot` de cada candidato; produz efeitos em caixas de entrada |
+| 4. Aplicação | `COMBAT + 80` | `CombatTarget`/`CombatController` | Aplica os efeitos da própria caixa (dano, guarda, poise, reação, knockback, parry-stun, hit-confirm, interrupção) e entrega eventos |
+
+- **`AttackSnapshot`** (gravado na detecção, dentro do candidato): instância do ataque, janela, propriedades do golpe,
+  pose da hitbox, ponto de contato, direção, time, identidade e posição do atacante, armadura do atacante.
+- **`DefenseSnapshot`** (fase 2): guarda (bloqueando, recurso), janela de parry, invulnerabilidades/esquiva, estado
+  (chão/ar/caído), poise, vida, facing, armadura de ataque em curso, hitstop.
+- A decisão é **função pura** dos snapshots: nada decidido num alvo lê estado mutável de outro combatente; parry-stun,
+  stun, morte ou callbacks de um alvo nunca alteram um contato detectado no mesmo passo.
+- **Efeitos** são aplicados só na fase 4, cada combatente processando a própria caixa em ordem determinística.
+  Tudo o que listeners e `IHitEffect` pedirem a partir da fase 4 entra na caixa do destinatário para a fase 4 do
+  **próximo** passo (`ICombatEffectSink`); mudanças nos snapshots só aparecem no próximo passo.
+- **Identidade de combatente:** `CombatantId` (64 bits) gravado no componente (gerado no Editor, único por cena;
+  validator acusa duplicata) e combinado com um índice de spawn para instâncias criadas em runtime
+  (`CombatTarget.AssignCombatantId` para spawners). Distinto do `StableId` dos assets.
+- **Ordem dos candidatos no mesmo alvo:** prioridade do golpe (maior primeiro) → distância do contato (menor) →
+  posição do atacante (x, z, y) → `CombatantId` → índice da janela/hitbox. Não depende da ordem de criação.
+- Knockback e impulsos são aplicados na fase 4 (−520), antes do `CharacterMotor` (−500), no mesmo `FixedUpdate`.
+- Testes: trocas com ordem de criação invertida e embaralhada, morte simultânea, parry-stun recebido junto com outro
+  golpe, múltiplos candidatos no mesmo alvo, saturação da fila de candidatos.
+
+### 24.2 Vários golpes no mesmo passo (ADR-0017)
+- A decisão percorre os candidatos ordenados (§24.1) sobre uma **cópia local** do `DefenseSnapshot`: cada golpe
+  consome guarda, poise e vida da cópia, e os seguintes veem o resultado (ex.: o primeiro quebra a guarda → os
+  seguintes não são bloqueados; o primeiro quebra o poise → os seguintes interrompem).
+- Vida: o golpe que leva a cópia a ≤ mínimo é marcado `IsLethal`; os seguintes são registrados com dano 0
+  (`Overkill` contado), sem nova reação.
+- Reação aplicada: a de maior severidade entre os `Hit`s do lote (empate: a primeira na ordem); hitstop: o maior;
+  knockback: o do golpe da reação escolhida.
+- Na fase 4 a vida é aplicada **uma vez** com a soma (`ResourcePool.Decrease`), assim como guarda e poise; eventos
+  `HitReceived` saem um por golpe, na ordem.
+- `IHitEffect` recebe o `HitResult` somente leitura e um `ICombatEffectSink`; não altera o lote.
+- Testes: poise break e guard break dentro do lote, dano letal simultâneo, efeito que modifica outro alvo (vale no
+  passo seguinte).
+
+### 24.3 Hitstop e suspensão física (D8, D9) — Character 0.2.0 (aditivo)
+Duas coisas diferentes:
+
+| | Pausa da timeline (Combat) | Suspensão física (Character) |
+|---|---|---|
+| O quê | Linhas do tempo de combate do ator param | O motor deixa de integrar |
+| Quem decide | Combat (duração do hitstop) | Combat via integração Character |
+| Sem Character | Funciona sozinho | — |
+
+**Contrato no `CharacterMotor` (Character 0.2.0):**
+```csharp
+SuspensionHandle Freeze();                                      // hitstop: congela e depois retoma
+SuspensionHandle Hold(Transform anchor, Vector3 localOffset);   // agarrão: segue a âncora
+bool Release(SuspensionHandle handle);                          // retoma (Freeze) / solta (Hold)
+bool Release(SuspensionHandle handle, Vector3 releaseVelocity); // arremesso: solta com velocidade
+void ReleaseAllSuspensions();                                   // morte, script
+bool IsSuspended, IsFrozen, IsHeld;  event SuspensionChanged;
+```
+- **Handles** com geração (como `ExternalForceHandle`); até 8 causas simultâneas; handle antigo não solta outra causa.
+- **Freeze:** guarda a velocidade do corpo, zera-a e mantém o corpo parado (uma variação de velocidade por passo); o
+  modelo não é integrado — **pausados**: coyote, tempo no ar, dash (duração e cooldown), decaimento do canal externo,
+  forças ao longo do tempo, supressão de snapping. Ao soltar a última causa, a velocidade guardada é restaurada no
+  passo seguinte e a reconciliação parte dela.
+- **Hold:** o corpo segue a pose da âncora por variação de velocidade (sem `Teleport`, sem desabilitar o motor),
+  colisões continuam; o modelo não é integrado. Hold tem precedência sobre Freeze.
+- **Soltura com velocidade (arremesso):** modelo vai para o ar (como após `Teleport`, sem cancelar pedidos), corpo
+  com velocidade zero e a velocidade de soltura entra como impulso externo (canal externo + vertical).
+- **Impulsos pendentes** e `TryAddForceOverTime` pedidos durante a suspensão ficam pendentes e valem após a soltura.
+- **Pedidos de pulo/dash** ficam pendentes; as bordas continuam envelhecendo em tempo de jogo (ADR-0012) — o Combat
+  limita o hitstop (`MaxHitstop`, 0,2 s) para não expirar o jump buffer em uso normal.
+- **Âncora perdida** (destruída/desativada) → Hold solto com velocidade zero e `SuspensionChanged(AnchorLost)`.
+- **Morte**: o Combat/HFSM chama `ReleaseAllSuspensions`. **Disable/destroy** do motor limpa todas as suspensões.
+  `Teleport` solta Holds e zera a velocidade guardada dos Freezes.
+- **Timers no hitstop:** Character — os listados acima pausados (bordas continuam envelhecendo); Combat — timeline do
+  ataque, janelas, cancelamentos, hitstun/blockstun, combo timeout, janela e cooldown de parry e invulnerabilidades
+  temporizadas do ator em hitstop; Stats — **não** pausa (regeneração e durações de modificadores seguem o `Update`).
+
+### 24.4 Pose autoritativa das hitboxes (D2, ADR-0016)
+- Calculada na fase 1, no relógio fixo: **pose do Rigidbody** (não do Transform interpolado) × **facing lógico**
+  (`IFacingSource`; integração Character usa o `FacingController`) × **pose da âncora capturada no `Awake`** (pose
+  local de autoria, ignora animação em runtime) × **pose da hitbox** na definição, que pode ter **keyframes** no
+  tempo normalizado da janela (arcos de golpe sem Animator).
+- Animator e presenters são apresentação: podem seguir os eventos e a timeline, nunca alteram a colisão.
+- **Identidade das âncoras:** `HitboxAnchor` identificado por um `GameplayTag` (StableId do asset); a definição
+  referencia a tag. Validator: âncora exigida por ataques do perfil ausente no prefab, tags duplicadas no mesmo ator.
+  Em runtime, âncora ausente → raiz do ator + contador `MissingAnchorCount` (sem exceção).
+- **Anti-tunneling:** até 4 poses interpoladas por passo (entre a pose anterior e a atual da hitbox, inclusive o
+  movimento do ator). Limite documentado: deslocamento maior que 4× a meia-dimensão mínima pode atravessar uma hurtbox
+  mais fina que a hitbox; contado em `TunnelingClampCount`. Testes com hurtbox de 0,05 m e golpes rápidos.
+
+### 24.5 Hit-confirm e janelas de cancelamento
+- **Visibilidade:** um contato detectado no passo *n* é decidido e aplicado no passo *n*; o combo runner o enxerga a
+  partir do passo *n + 1* (fase 1). `OnHit` / `OnBlock` valem do passo *n + 1* até o fim da instância do ataque.
+- **`OnWhiff`** só é verdadeiro depois que **todas** as janelas ativas do ataque terminaram (regra de sobreposição) e
+  nenhum contato foi confirmado; antes disso o estado é `ContactPending`. Renomear não é necessário: a semântica fica
+  "sem contato após o fim das janelas ativas".
+- **Cancelamento:** uma `CancelWindow [a, b)` permite a transição num passo cujo intervalo sobrepõe `[a, b)` e cuja
+  condição vale nesse passo. Testes no limite exato de cada janela em Δt 0,02 / 1/60 / 0,01 / 0,0333.
+
+### 24.6 Times (D11)
+`Team` (índice 0–31) e `HostileTeams` (máscara). Regra: um golpe atinge o alvo se o bit do time do alvo está na
+máscara do atacante. **Neutro** = time 31 por convenção (sem bit nas máscaras padrão: não é atingido nem atinge, salvo
+configuração). **Friendly fire** = incluir o próprio time na máscara (desligado no padrão). Atacante nunca atinge a si
+mesmo.
+
+### 24.7 Core 0.4.0 (D5, D6)
+- `EdgeQueue<TPayload>`: fila de bordas com token, instante e payload; as 6 garantias do ADR-0004 e a semântica de
+  tokens do Character (idade negativa = 0, janela inclusiva, overflow descarta a mais antiga e conta, consumo por
+  token, `Contains`, contadores). O Character **não** migra neste milestone.
+- `GameplayTag` (ScriptableObject: `StableId` sincronizado com o GUID do asset, nome, pai) e `GameplayTagSet`
+  (serializável; `Has` = contém a tag ou um descendente dela; `HasExact`; `HasAny`; `HasAll`; sem alocação).
+  Validators: ciclo na hierarquia, referência ausente (entrada nula) no conjunto, `StableId` divergente do GUID.
+  Testes: identidade estável (rename/move do asset), hierarquia, ciclo, referências ausentes, semântica de
+  `Has/HasAny/HasAll`, zero GC.
+
+### 24.8 Projéteis (D15)
+Fora do M4. A fase 1 aceita **produtores externos** de candidatos (`ICombatHitSource`: pose, propriedades, time e
+atacante) para que o Abilities (M5) entregue projéteis pelo mesmo pipeline de snapshot/decisão/aplicação.
+
+### 24.9 Critérios de aceite (substituem AC3 e AC4)
+| # | Critério |
+|---|---|
+| AC3 | **Invariância**: os mesmos `HitResult`s, efeitos e estados finais com a ordem de criação dos atores embaralhada (várias permutações, trocas, morte simultânea, parry-stun, múltiplos candidatos). |
+| AC4 | **Equivalência lógica entre Δt**: a mesma sequência de decisões (ataques, outcomes, cancelamentos, combos) em Δt 0,02 / 1/60 / 0,01 / 0,0333 e `timeScale` 0,5; nenhuma janela pulada; tempos de início/fim de janela dentro de ± 1 passo; distâncias físicas dentro das tolerâncias do M3. |
+
+Zero GC (AC7) e QG12 mantidos.

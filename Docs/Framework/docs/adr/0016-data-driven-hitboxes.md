@@ -1,6 +1,6 @@
 # ADR-0016 — Hitboxes como dados ancorados, consultas sem alocação e anti-tunneling
 
-- **Status:** Proposta (design do M4) · **Milestone:** M4
+- **Status:** Aceita (revisão do design do M4, 2026-10-10) · **Milestone:** M4
 - **Relacionada:** [ADR-0013](0013-combat-timing.md), especificação do M3 §19.2/§19.8 (política de saturação),
   [especificação do M4](../design/m4-combat-design.md) §6
 
@@ -23,3 +23,9 @@ física. Hitboxes rápidas (golpes largos, arremessos) podem atravessar hurtboxe
 ## Consequências
 - Positivas: preview com scrub no Editor; mesma definição para sprite e 3D; sem GC.
 - Negativas / custos: âncoras precisam existir no prefab (Validator avisa id ausente).
+
+## Ajustes da revisão
+Aprovada após definir a pose autoritativa (§24.4 da especificação): pose do Rigidbody × facing lógico × pose de
+autoria da âncora capturada no `Awake` × pose da hitbox (com keyframes no tempo normalizado da janela), calculada na
+fase 1 no relógio fixo; animação nunca determina colisão. Âncoras identificadas por `GameplayTag`, com validação e
+fallback seguro para a raiz (contado). Limite de 4 subamostras documentado e testado com hurtboxes finas.

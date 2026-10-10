@@ -16,11 +16,11 @@ Decisões transversais. ADRs específicas de um package ficam em `Documentation~
 | [0010](0010-character-motor-physics-model.md) | Motor de personagem: Rigidbody dinâmico, controle por variação de velocidade e canais | Aceita |
 | [0011](0011-character-command-buffer.md) | `CharacterCommandBuffer`: comandos, dono das bordas, relógio e capacidade | Aceita |
 | [0012](0012-character-timing.md) | Decisões temporais do Character | Aceita |
-| [0013](0013-combat-timing.md) | Tempo de combate: segundos de jogo, Δt fixo e janelas por sobreposição | Proposta |
-| [0014](0014-two-phase-hit-resolution.md) | Resolução de acertos em duas fases (detecção → resolução) | Proposta |
-| [0015](0015-combat-commands-and-ownership.md) | Comandos de combate, prioridade e requisição em duas fases | Proposta |
-| [0016](0016-data-driven-hitboxes.md) | Hitboxes como dados ancorados, consultas sem alocação e anti-tunneling | Proposta |
-| [0017](0017-damage-pipeline-and-outcomes.md) | Pipeline de dano e precedência dos resultados | Proposta |
-| [0018](0018-gameplay-tags-in-core.md) | `GameplayTag` no Core | Proposta (depende de D6) |
+| [0013](0013-combat-timing.md) | Tempo de combate: segundos de jogo, Δt fixo e janelas por sobreposição | Aceita |
+| [0014](0014-two-phase-hit-resolution.md) | Resolução de acertos em duas fases (detecção → resolução) | Aceita |
+| [0015](0015-combat-commands-and-ownership.md) | Comandos de combate, prioridade e requisição em duas fases | Aceita |
+| [0016](0016-data-driven-hitboxes.md) | Hitboxes como dados ancorados, consultas sem alocação e anti-tunneling | Aceita |
+| [0017](0017-damage-pipeline-and-outcomes.md) | Pipeline de dano e precedência dos resultados | Aceita |
+| [0018](0018-gameplay-tags-in-core.md) | `GameplayTag` no Core | Aceita |
 
 Template: [`templates/package/Documentation~/adr/0000-template.md`](../../templates/package/Documentation~/adr/0000-template.md).

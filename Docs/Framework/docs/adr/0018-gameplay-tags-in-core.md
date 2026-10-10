@@ -1,6 +1,6 @@
 # ADR-0018 — `GameplayTag` no Core
 
-- **Status:** Proposta (design do M4; depende da decisão D6) · **Milestone:** M4
+- **Status:** Aceita (revisão do design do M4, 2026-10-10) · **Milestone:** M4
 - **Relacionada:** [ADR-0001](0001-package-per-domain.md), risco R6 (Core monólito), roadmap do M4 ("GameplayTags entram
   no Core (ADR) se necessárias"), [especificação do M4](../design/m4-combat-design.md) §21
 
@@ -23,3 +23,8 @@ script trocado de assembly — referências quebram (`[MovedFrom]` só cobre `[S
 ## Consequências
 - Positivas: um vocabulário comum para os domínios de gameplay sem acoplar packages.
 - Negativas / custos: o Core cresce (R6); mitigado pelo escopo mínimo acima.
+
+## Ajustes da revisão
+Aprovada com D6 e os validators de tags (§24.7): `StableId` sincronizado com o GUID do asset, ciclos na
+hierarquia, referências ausentes nos conjuntos; testes de identidade, hierarquia e semântica de
+`Has/HasExact/HasAny/HasAll` sem alocação. As tags também identificam as âncoras de hitbox (§24.4).
