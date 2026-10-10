@@ -88,10 +88,28 @@ Estados concretos (locomoção, ataque, casting) ficam nas integration assemblie
 
 ## character — `RamiresTechGames.Character` (L2) · M3
 
-**Responsabilidade:** movimento físico 3D de personagens controlados por comandos.
+**Responsabilidade:** movimento físico 3D de personagens controlados por comandos (Rigidbody dinâmico controlado por
+velocidade, ADR-0010).
 
 | Contrato | Tipo | Descrição |
 |---|---|---|
+| `MovementProfileDefinition` | SO | Velocidades, aceleração/desaceleração, ar, **altura e tempo de pulo exatos**, pulo variável, coyote, jump buffer, pulos/dashes aéreos, dash, rampas/snapping, forças externas, facing, `PlanarAxisScale`. |
+| `CharacterCommandBuffer` | MB | Estado (`Move`, `JumpHeld`, `FacingOverride`) e bordas `Jump`/`Dash` com token e instante (ADR-0011); dono `Motor` ou `External`. |
+| `CharacterCommands` | struct | `Move`, `JumpHeld`, `HasFacingOverride`, `FacingOverride` (bordas ficam no buffer). |
+| `CharacterMotor` | MB + Pure core | Uma `AddForce(VelocityChange)` por passo, gravidade única no domínio; `RequestJump/RequestDash(token)` (duas fases); `Teleport`; eventos. |
+| `IExternalForceReceiver` | interface (Experimental até o M4) | `AddImpulse`, `TryAddForceOverTime` (handle por geração), `RemoveForce`, `ClearExternalForces`, `ExternalVelocity` — knockback/launch. |
+| `GroundInfo` | struct | Resultado do sensor (o `GroundSensor` é interno: sobreposição, sweep NonAlloc, saturação, borda). |
+| `FacingController` | Pure + MB | Facing lógico + `Sign`, travas; presenters de sprite e de modelo. |
+| `IMovementModifierSource` | interface | Multiplicadores de velocidade, aceleração e altura de pulo. |
+| Eventos | `Jumped`, `Landed`, `GroundedChanged`, `DashStarted`, `DashEnded`, `ExternalImpulseApplied`, `ActionResolved` | Presentation/glue. |
+| Integrações opcionais | `Integration/HierarchicalStateMachine` (estados e condições de locomoção com claims), `Integration/Stats` (`StatMovementModifierSource`), `Integration/InputSystem` (`PlayerInputCharacterSource`). |
+
+**Não faz:** SpriteRenderer obrigatório, animação, input direto, IA, Combat, root motion, plataformas móveis
+completas, hitstop por ator.
+**Editor:** gizmos do sensor/canais/arco, prévia de trajetória no inspector do profile, inspector ao vivo do motor,
+Character Debugger.
+
+---|---|---|
 | `MovementProfileDefinition` | SO | Velocidades, aceleração/desaceleração, gravidade, **altura exata de pulo**, pulo variável, coyote time, jump buffer, air control, dash. |
 | `CharacterCommands` | struct | `Move` (Vector2 plano), `JumpPressed`, `JumpHeld`, `DashPressed`, `FacingOverride`. |
 | `CharacterCommandBuffer` | MB | Recebe comandos de qualquer fonte (Player, AI, cutscene) e os consome por tick. |

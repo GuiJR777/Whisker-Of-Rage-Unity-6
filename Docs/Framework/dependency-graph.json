@@ -32,7 +32,7 @@
     },
     "com.ramirestechgames.character": {
       "layer": 2,
-      "status": "planned",
+      "status": "implemented",
       "assemblyRoot": "RamiresTechGames.Character",
       "define": "RAMIRESTECHGAMES_CHARACTER",
       "hard": [

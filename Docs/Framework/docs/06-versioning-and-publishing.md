@@ -39,6 +39,8 @@ Um package só recebe `1.0.0` quando todos os itens valem e estão registrados n
 ## Dependências entre packages
 
 - `package.json` declara **somente dependências hard**, com a versão **mínima** necessária.
+- Módulos nativos da Unity usados pelo Runtime (ex.: `com.unity.modules.physics` no Character) também vão no
+  `package.json`: o QG12 roda num projeto sem módulos opcionais e acusa o módulo ausente (M3).
 - Dependências opcionais **não** vão no `package.json`. Os integration assemblies usam `versionDefines`
   com faixa mínima (ex.: `[0.2.0,1.0.0)`), então não compilam com versão incompatível em vez de quebrar.
 - UPM não resolve dependências por URL Git: o projeto consumidor precisa incluir cada package requerido

@@ -7,3 +7,6 @@
 [submodule "Packages/com.ramirestechgames.hfsm"]
 	path = Packages/com.ramirestechgames.hfsm
 	url = https://github.com/GuiJR777/com.ramirestechgames.hfsm.git
+[submodule "Packages/com.ramirestechgames.character"]
+	path = Packages/com.ramirestechgames.character
+	url = https://github.com/GuiJR777/com.ramirestechgames.character.git
