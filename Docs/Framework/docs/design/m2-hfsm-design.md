@@ -3,7 +3,7 @@
 - **Package:** `com.ramirestechgames.hfsm` · assembly/namespace raiz `RamiresTechGames.HierarchicalStateMachine` · camada L1
 - **Dependência hard:** `com.ramirestechgames.core` (≥ 0.2.0: `ExecutionOrder`, `IValidatable`, `[SelectImplementation]`)
 - **Opcionais:** nenhuma (quem integra são Character, Combat e Abilities, nas integration assemblies deles)
-- **Status:** **v2 — aprovada com ajustes; implementada (aguardando revisão final).** Decisões D1–D12 aprovadas (§13);
+- **Status:** **v2 — implementada e aprovada; M2 concluído em 2026-10-10 (HFSM `v0.1.0`, Core `v0.3.0`).** Decisões D1–D12 aprovadas (§13);
   ajustes da revisão na **§14, que prevalece sobre as seções anteriores em caso de conflito**; notas de implementação
   para a revisão final na §15. M2 só é concluído após revisão final.
 - **Insumos:** Master Prompt §4.2 · ADR-0003 (decisões temporais do M2) · ADR-0004 (command buffers) ·

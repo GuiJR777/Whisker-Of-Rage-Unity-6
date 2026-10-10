@@ -29,9 +29,9 @@
 
 | Package | Camada | Milestone | Estado |
 |---|---|---|---|
-| `com.ramirestechgames.core` | L0 | M0, M1 | **v0.2.0** |
+| `com.ramirestechgames.core` | L0 | M0, M1, M2 | **v0.3.0** |
 | `com.ramirestechgames.stats` | L1 | M1 | **v0.1.0** |
-| `com.ramirestechgames.hfsm` | L1 | M2 | 0.1.0 implementado, aguardando revisão final |
+| `com.ramirestechgames.hfsm` | L1 | M2 | **v0.1.0** |
 | `com.ramirestechgames.character` | L2 | M3 | — |
 | `com.ramirestechgames.combat` | L3 | M4 | — |
 | `com.ramirestechgames.abilities` | L4 | M5 | — |
