@@ -18,8 +18,8 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 | Restante de `Assets/` | Conteúdo do jogo (a partir do M9) | Estrutura em CONVENTIONS §11.2 |
 
 ## Estado atual
-**M0, M1 e M2 concluídos** (Core `v0.3.0`, Stats `v0.1.0`, HFSM `v0.1.0`). **Próximo: M3 — Character Controller,
-começando apenas pelo design técnico** (não implementar antes da aprovação do design).
+**M0, M1 e M2 concluídos** (Core `v0.3.0`, Stats `v0.1.0`, HFSM `v0.1.0`). **M3 — Character Controller em design**
+(`Docs/Framework/docs/design/m3-character-design.md`, ADRs 0010–0012 propostos): não implementar antes da aprovação.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras

@@ -13,5 +13,8 @@ Decisões transversais. ADRs específicas de um package ficam em `Documentation~
 | [0007](0007-develop-inside-game-host.md) | Desenvolvimento do framework dentro do Whisker-Of-Rage-Unity-6 | Aceita |
 | [0008](0008-serialize-reference-picker-in-core.md) | Seletor genérico de `[SerializeReference]` no Core | Aceita |
 | [0009](0009-ai-optional-stats.md) | AI → Stats como dependência opcional | Aceita |
+| [0010](0010-character-motor-physics-model.md) | Motor de personagem: Rigidbody dinâmico, controle por variação de velocidade e canais | Proposta (M3) |
+| [0011](0011-character-command-buffer.md) | `CharacterCommandBuffer`: comandos, dono das bordas, relógio e capacidade | Proposta (M3) |
+| [0012](0012-character-timing.md) | Decisões temporais do Character | Proposta (M3) |
 
 Template: [`templates/package/Documentation~/adr/0000-template.md`](../../templates/package/Documentation~/adr/0000-template.md).
