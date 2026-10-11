@@ -24,14 +24,18 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 **Estado:** M0 ✅ (Core `v0.1.0`) · **M1 ✅ concluído em 2026-10-09** (Core `v0.2.0` @`d679181`, Stats `v0.1.0` @`cfc42db`) ·
 **M2 ✅ concluído em 2026-10-10** (Core `v0.3.0` @`197dcd6`, HFSM `v0.1.0` @`903aae9`; Stats segue `v0.1.0`) ·
 **M3 ✅ concluído em 2026-10-10** (Character `v0.1.0` @`9a50f83`; Core, Stats e HFSM inalterados; sem dívida técnica
-bloqueante) · **M4 (Combat + Combos) — em implementação** (design v2 aprovado, `design/m4-combat-design.md` §24; ADRs
+bloqueante) · **M4 (Combat + Combos) — implementado, aguardando a auditoria final** (design v2 aprovado, `design/m4-combat-design.md` §24; ADRs
 0013–0018 aceitos). Entregas: 1 ✅ Core 0.4.0 (`754f029`, sem tag) · 2 ✅ Combat — definições, linha do tempo,
 comandos, detecção, snapshots, resolução, dano e defesa (`f4a1d2d`; correção do buffer de contatos `63b342a`) · 3 ✅
 reações, poise, hitstop e integrações com Stats, HFSM e Character (`fdd004b`, sem tag) · 4 ✅ combos, Combo Graph
 Editor, debugger, validators e Input System (`5728995`; correção do knockdown aéreo `3109733`; validação de ids de
 link `f29441c`, sem tag) · 5 ✅ Character 0.2.0 — suspensão física Freeze/Hold/Release (`0325c4c`, sem tag) e
 agarrão/arremesso no Combat (`9d9096e`); correções da auditoria: dono no handle e entrega da fila ao desabilitar
-(Character `b72367b`), hold liberado ao desabilitar o `CharacterCombatBody` (Combat `943255d`) · 6 ⬜ autorizada.
+(Character `b72367b`), hold liberado ao desabilitar o `CharacterCombatBody` (Combat `943255d`) · 6 ✅ handles com
+dono (`ExternalForceHandle`, `FacingLockHandle`, `InvulnerabilityHandle`), inspector/preview de Attack, debugger,
+validators, samples *Combat Arena* e *Combat Character HFSM*, validação das ferramentas
+([m4-combat-validation](design/m4-combat-validation.md)) — Character `1ca4cb8`, Combat `8684f6e` — aguardando auditoria final. Versões candidatas: Core 0.4.0,
+Character 0.2.0, Combat 0.1.0 (sem tags).
 
 ```mermaid
 flowchart LR

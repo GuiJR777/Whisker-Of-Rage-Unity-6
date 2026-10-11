@@ -1,0 +1,8 @@
+False}
+chain: 'Invulnerable=0 Dodged=0 Miss=0 Parried=0 Blocked=0 Hit=3  | Sandbag (idle): Hit 14 poise-break → Knockback / Sandbag (idle): Hit 11 → Stagger / Sandbag (idle): Hit 9 → Flinch
+down: 'down 
+up: 'invulnerable
+miss/invulnerable: 'Invulnerable=4 Dodged=0 Miss=4 Parried=0 Blocked=0 Hit=4  | Sandbag (idle): Invulnerable 0 / Sandbag (idle): Invulnerable 0 / Sandbag (idle): Invulnerable 0 / Sandbag (idle): Invulnerable 0 / Sandbag (idle): Miss 0 / Sandbag (idle): Miss 0 / Sandbag (idle): Miss 0 / Sandbag (idle): Miss 0
+guard: 'Invulnerable=4 Dodged=0 Miss=4 Parried=0 Blocked=1 Hit=5  | Guard (blocks): Hit 19 guard-break poise-break → GuardBreak / Guard (blocks): Blocked 1,8 → Flinch / Sandbag (idle): Invulnerable 0 / Sandbag (idle): Invulnerable 0 / Sandbag (idle): Invulnerable 0 / Sandbag (idle): Invulnerable 0 / Sandbag (idle): Miss 0 / Sandbag (idle): Miss 0
+parry/dodge: 'Invulnerable=4 Dodged=4 Miss=4 Parried=1 Blocked=1 Hit=5  | Dodge (reacts): Dodged 0 / Dodge (reacts): Dodged 0 / Dodge (reacts): Dodged 0 / Dodge (reacts): Dodged 0 / Parry (reacts): Parried 0 → ParryStun / Guard (blocks): Hit 19 guard-break poise-break → GuardBreak / Guard (blocks): Blocked 1,8 → Flinch / Sandbag (idle): Invulnerable 0
+grab held=True}: 'Invulnerable=4 Dodged=4 Miss=4 Parried=1 Blocked=2 Hit=7  | Guard (blocks): Blocked 2,2 → Knockdown / Sandbag (idle): Hit 3 → Flinch / Sandbag (idle): Hit 0 grab / Dodge (reacts): Dodged 0 / Dodge (reacts): Dodged 0 / Dodge (reacts): Dodged 0 / Dodge (reacts): Dodged 0 / Parry (reacts): Parried 0 → ParryStun

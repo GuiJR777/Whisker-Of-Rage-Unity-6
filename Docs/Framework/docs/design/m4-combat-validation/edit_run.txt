@@ -1,0 +1,13 @@
+01 open by double click (OpenAsset) -> steps=6 links=6 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash] edges=6
+02 drag-and-drop Swing.asset into the graph -> steps=7 links=6 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash] edges=6
+03 connect Hook → Swing by dragging between ports -> steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=6
+04a select the Hook → Swing edge -> steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=7
+04b panel fields: Action = Heavy, Priority = 3; condition DirectionCondition Back on the bound list -> panel fields set=2 link action=Heavy priority=3 conditions=1 (DirectionCondition Back) steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=7
+04c panel after the edits -> steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=7
+05 move Swing (+160, +90) by dragging its title -> position (55.00, 219.00) -> (215.00, 309.00) steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=7
+06 delete the Hook → Swing edge (click + Delete), Undo, Redo, Undo -> links 7 -> delete 6 -> undo 7 -> redo 6 -> undo 7 steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=6
+07 delete Swing with its links (panel button), Undo -> steps/links 7/7 -> 6/6 -> undo 7/7 steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=7
+08 save, force reimport, reload from disk, reopen -> steps=7 links=7 | (missing)→Jab Light p0; (missing)→Smash Heavy p0; Jab→Cross Light p0; Cross→Hook Light p0; Jab→Uppercut Heavy p1 [ContactCondition]; Jab→Sweep Heavy p0 [ContactCondition]; Hook→Swing Heavy p3 [DirectionCondition Back];  Swing at (215.00, 309.00) | yaml DirectionCondition=True
+09 reopened after reimport -> steps=7 links=7 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=7
+10 duplicate a link element like the Inspector (same id), reopen: error shown -> links=8 validation errors=1 steps=7 links=8 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=8
+11 click Repair Link Ids; Undo; Redo -> errors after repair 0, after undo 1, after redo 0; unique ids 8/8 steps=7 links=8 nodes=[Entry][Jab][Cross][Hook][Uppercut][Sweep][Smash][Swing] edges=8

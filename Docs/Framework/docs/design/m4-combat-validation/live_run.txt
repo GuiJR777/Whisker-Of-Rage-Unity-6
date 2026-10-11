@@ -1,0 +1,5 @@
+L1 Jab running (selected actor highlighted; paused on that step) -> step=Jab chain=1 open=False events=4,84 Advanced Jab chain 1
+L2 Cross (continuation from Jab) -> step=Cross chain=2 open=False events=4,84 Advanced Jab chain 1 | 5,08 Advanced Cross chain 2
+L3 Cross ended: continuation open (timeout counting) -> step=Cross chain=2 open=True events=4,84 Advanced Jab chain 1 | 5,08 Advanced Cross chain 2
+L4 after the timeout: chain reset to the entry -> step=Entry chain=0 open=False events=4,84 Advanced Jab chain 1 | 5,08 Advanced Cross chain 2 | 5,84 Reset Timeout
+L5 Jab interrupted by the Attacker's swing: reset Interrupted -> step=Entry chain=0 open=False events=4,84 Advanced Jab chain 1 | 5,08 Advanced Cross chain 2 | 5,84 Reset Timeout | 6,80 Advanced Jab chain 1 | 7,04 Reset Interrupted | 7,04 Player received Hit (interrupts)
