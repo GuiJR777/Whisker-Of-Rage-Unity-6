@@ -30,7 +30,8 @@ comandos, detecção, snapshots, resolução, dano e defesa (`f4a1d2d`; correç�
 reações, poise, hitstop e integrações com Stats, HFSM e Character (`fdd004b`, sem tag) · 4 ✅ combos, Combo Graph
 Editor, debugger, validators e Input System (`5728995`; correção do knockdown aéreo `3109733`; validação de ids de
 link `f29441c`, sem tag) · 5 ✅ Character 0.2.0 — suspensão física Freeze/Hold/Release (`0325c4c`, sem tag) e
-agarrão/arremesso no Combat (`9d9096e`), aguardando auditoria · 6 ⬜.
+agarrão/arremesso no Combat (`9d9096e`); correções da auditoria: dono no handle e entrega da fila ao desabilitar
+(Character `b72367b`), hold liberado ao desabilitar o `CharacterCombatBody` (Combat `943255d`) · 6 ⬜ autorizada.
 
 ```mermaid
 flowchart LR
