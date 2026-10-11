@@ -27,7 +27,10 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 bloqueante) · **M4 (Combat + Combos) — em implementação** (design v2 aprovado, `design/m4-combat-design.md` §24; ADRs
 0013–0018 aceitos). Entregas: 1 ✅ Core 0.4.0 (`754f029`, sem tag) · 2 ✅ Combat — definições, linha do tempo,
 comandos, detecção, snapshots, resolução, dano e defesa (`f4a1d2d`; correção do buffer de contatos `63b342a`) · 3 ✅
-reações, poise, hitstop e integrações com Stats, HFSM e Character (`fdd004b`, sem tag) · 4 ✅ combos, Combo Graph Editor, debugger, validators e Input System (`5728995`; correção do knockdown aéreo `3109733`, sem tag) · 5–6 ⬜.
+reações, poise, hitstop e integrações com Stats, HFSM e Character (`fdd004b`, sem tag) · 4 ✅ combos, Combo Graph
+Editor, debugger, validators e Input System (`5728995`; correção do knockdown aéreo `3109733`; validação de ids de
+link `f29441c`, sem tag) · 5 ✅ Character 0.2.0 — suspensão física Freeze/Hold/Release (`0325c4c`, sem tag) e
+agarrão/arremesso no Combat (`9d9096e`), aguardando auditoria · 6 ⬜.
 
 ```mermaid
 flowchart LR
