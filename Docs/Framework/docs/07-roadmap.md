@@ -25,7 +25,8 @@ Um sistema está **pronto** somente quando todos os itens abaixo passam:
 **M2 ✅ concluído em 2026-10-10** (Core `v0.3.0` @`197dcd6`, HFSM `v0.1.0` @`903aae9`; Stats segue `v0.1.0`) ·
 **M3 ✅ concluído em 2026-10-10** (Character `v0.1.0` @`9a50f83`; Core, Stats e HFSM inalterados; sem dívida técnica
 bloqueante) · **M4 (Combat + Combos) — em implementação** (design v2 aprovado, `design/m4-combat-design.md` §24; ADRs
-0013–0018 aceitos).
+0013–0018 aceitos). Entregas: 1 ✅ Core 0.4.0 (`754f029`, sem tag) · 2 ✅ Combat — definições, linha do tempo,
+comandos, detecção, snapshots, resolução, dano e defesa (`f4a1d2d`, sem tag) · 3–6 ⬜.
 
 ```mermaid
 flowchart LR

@@ -46,7 +46,7 @@
     },
     "com.ramirestechgames.combat": {
       "layer": 3,
-      "status": "planned",
+      "status": "implemented",
       "assemblyRoot": "RamiresTechGames.Combat",
       "define": "RAMIRESTECHGAMES_COMBAT",
       "hard": [

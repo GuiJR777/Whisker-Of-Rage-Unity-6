@@ -9,6 +9,16 @@
         "com.unity.modules.physics": "1.0.0"
       }
     },
+    "com.ramirestechgames.combat": {
+      "version": "file:com.ramirestechgames.combat",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.ramirestechgames.core": "0.4.0",
+        "com.ramirestechgames.stats": "0.1.0",
+        "com.unity.modules.physics": "1.0.0"
+      }
+    },
     "com.ramirestechgames.core": {
       "version": "file:com.ramirestechgames.core",
       "depth": 0,
