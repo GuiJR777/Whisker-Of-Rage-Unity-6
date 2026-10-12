@@ -606,6 +606,18 @@ bool IsSuspended, IsFrozen, IsHeld;  event SuspensionChanged;
   local de autoria, ignora animação em runtime) × **pose da hitbox** na definição, que pode ter **keyframes** no
   tempo normalizado da janela (arcos de golpe sem Animator).
 - Animator e presenters são apresentação: podem seguir os eventos e a timeline, nunca alteram a colisão.
+- **Pose de autoria canônica (refinamento R20, entrega 6):** a pose de uma âncora é capturada uma vez, no `Awake` do
+  controller, **relativa ao seu frame de facing**: um transform cujo +z local é o facing por contrato. O frame é, em
+  ordem, o `HitboxAnchor.FacingFrame` explícito; o frame do corpo (`IFacingFrameSource`, ex.: o visual girado pelo
+  `TransformFacingPresenter`, fornecido pelo `CharacterCombatBody`) quando a âncora está dentro dele; senão a raiz do
+  ator. Posição = deslocamento a partir da posição do ator, nos eixos do frame; rotação = rotação relativa ao frame.
+  Assim a pose não depende de quanto o presenter já girou o visual (nem do facing inicial): uma âncora autorada com o
+  modelo voltado para +z vale para qualquer facing. Para a raiz sem fonte de facing (raiz girada com o ator) o
+  resultado é idêntico à regra anterior. A captura **não** é adiada para `LateUpdate` e a pose continua independente
+  do Animator. Frames fora do ator, frame explícito que não contém a âncora (erro) e frame com pivô fora do eixo
+  vertical do ator ou vários presenters sem frame explícito (aviso) são validados.
+- **Preview:** o inspector usa o mesmo facing lógico do runtime (`CombatTarget`: fonte de facing, senão rotação do
+  corpo) e a mesma captura (`HitboxPose`); em Play Mode usa as poses capturadas pelo controller.
 - **Identidade das âncoras:** `HitboxAnchor` identificado por um `GameplayTag` (StableId do asset); a definição
   referencia a tag. Validator: âncora exigida por ataques do perfil ausente no prefab, tags duplicadas no mesmo ator.
   Em runtime, âncora ausente → raiz do ator + contador `MissingAnchorCount` (sem exceção).

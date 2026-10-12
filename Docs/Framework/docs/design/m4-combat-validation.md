@@ -1,6 +1,6 @@
 # M4 — Validação das ferramentas e dos samples do Combat (entrega 6)
 
-- **Data:** 2026-10-11 · **Unity:** 6000.6.5f1 (URP) · **Packages:** Core 0.4.0, Stats 0.1.0, HFSM 0.1.0,
+- **Data:** 2026-10-11 (R20: 2026-10-12) · **Unity:** 6000.6.5f1 (URP) · **Packages:** Core 0.4.0, Stats 0.1.0, HFSM 0.1.0,
   Character 0.2.0, Combat 0.1.0 (working copies da entrega 6, sem tag).
 - **Samples:** montados por script em `Assets/_CombatSampleBuild`, copiados para `Samples~`, importados pelo
   Package Manager (`Sample.Import`) em `Assets/Samples/...`, validados, executados e removidos. Os resultados abaixo
@@ -84,6 +84,23 @@ tempo de jogo.
 | Sample: aresta Jab → Sweep cruzava o nó Uppercut | Posições dos passos no asset do sample |
 | Script de montagem: um `GrabDefinition` no mesmo caminho da ação `Grab` sobrescrevia a ação; referências a assets criados depois eram gravadas nulas; `NewScene` descarregava os assets já criados | Caminhos únicos, assets criados em memória e gravados juntos (re-serialização depois de todos existirem), cena criada antes dos assets |
 
+## Pose de autoria das âncoras (R20, auditoria da entrega 6)
+
+Correção: pose de autoria canônica, relativa ao frame de facing (ADR-0016, refinamento; especificação §24.4). Sample
+*Combat Character HFSM* reconstruído com a âncora `Hand` dentro do `Model` girado pelo `TransformFacingPresenter`
+(Jab, Cross e Launcher ancorados), reimportado, validado (0/0, sem scripts ausentes) e executado.
+
+| Verificação | Resultado | Evidência |
+|---|---|---|
+| Edit Mode (modelos ainda não girados): preview do Jab no jogador (facing +X, em x = −3) e no rival (facing −X, em x = 2) | Hitbox em x = −2,15 e x = 1,15: 0,85 m à frente de cada um, mão do lado certo (z = −0,15 / +0,15) | `r20_run.txt`, `33_r20_preview_rival.png` |
+| Play Mode logo após o `Awake` e 3 s depois: pose capturada e hitbox dos três atores | Pose capturada (0,15; 1,15; 0,35) nos três (facings +X, −X, −X); hitbox 0,85 m à frente; modelos já girados (forward = facing) | `r20_run.txt` |
+| Rotina do sample com golpes ancorados | O rival (facing inicial −X) acerta o jogador (Hitstun, Down); o jogador acerta rival e parceiro | `character_run.txt` |
+| Mutação: regra anterior (`Inverse(FacingRotation)` no `Awake`) restaurada temporariamente | 4 testes PlayMode com presenter real falham (facings +X, −X, −Z e mudança de facing; +Z passa) e 9 EditMode; com a correção, todos passam | — |
+
+Os testes automatizados da correção estão em TESTING do Combat (`AnchorPoseTests`, `CharacterCombatBodyPlayModeTests`,
+`AllocationPlayModeTests` com âncoras). No preview em Edit Mode o marcador "anchor Hand" aparece na posição atual do
+transform (modelo ainda não girado); a hitbox é desenhada pela pose canônica.
+
 ## Estabilidade dos testes (R19)
 
 Numa rodada completa do host nesta entrega, um teste de infraestrutura do Core falhou:
@@ -93,7 +110,16 @@ RamiresTechGames.Core.Tests.Editor.TemporaryAssetFolderTests.Delete_RemovesTheFo
 Unhandled log message: '[Error] Cannot open file 'Assets/_RamiresTechGamesCoreTests_922ca26a4253/Nested.meta' for write.'
 ```
 
-As duas rodadas completas seguintes passaram (589/589). Registrado como **possível recorrência da família R19**
+As duas rodadas completas seguintes passaram (589/589).
+
+Depois da correção do R20, a primeira rodada completa teve outra falha da mesma assinatura, agora no Stats:
+
+```
+RamiresTechGames.Stats.Tests.Editor.StableIdTests.Create_StableIdEqualsAssetGuid("ResourceDefinition")
+SetUp : Unhandled log message: '[Error] Cannot open file 'Assets/_RamiresTechGamesStatsTests_71cb16892dda.meta' for write. '
+```
+
+As duas rodadas completas seguintes (consecutivas) passaram: 633/633 EditMode e 199/199 PlayMode cada. Registrado como **possível recorrência da família R19**
 ([riscos](../08-architectural-risks.md)); a causa raiz não foi demonstrada. Nenhum retry, espera ou `Ignore` foi
 adicionado. As rodadas de release estão em TESTING/CHANGELOG da entrega.
 
