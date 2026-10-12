@@ -6,7 +6,8 @@
       "source": "embedded",
       "dependencies": {
         "com.ramirestechgames.core": "0.4.0",
-        "com.ramirestechgames.stats": "0.1.0"
+        "com.ramirestechgames.stats": "0.1.0",
+        "com.unity.modules.physics": "1.0.0"
       }
     },
     "com.ramirestechgames.character": {
