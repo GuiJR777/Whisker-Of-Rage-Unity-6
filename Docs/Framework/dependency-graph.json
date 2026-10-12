@@ -61,7 +61,7 @@
     },
     "com.ramirestechgames.abilities": {
       "layer": 4,
-      "status": "planned",
+      "status": "implemented",
       "assemblyRoot": "RamiresTechGames.Abilities",
       "define": "RAMIRESTECHGAMES_ABILITIES",
       "hard": [

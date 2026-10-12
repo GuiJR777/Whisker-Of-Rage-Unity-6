@@ -1,5 +1,14 @@
 {
   "dependencies": {
+    "com.ramirestechgames.abilities": {
+      "version": "file:com.ramirestechgames.abilities",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.ramirestechgames.core": "0.4.0",
+        "com.ramirestechgames.stats": "0.1.0"
+      }
+    },
     "com.ramirestechgames.character": {
       "version": "file:com.ramirestechgames.character",
       "depth": 0,

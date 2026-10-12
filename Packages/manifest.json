@@ -55,6 +55,7 @@
     "com.ramirestechgames.stats",
     "com.ramirestechgames.hfsm",
     "com.ramirestechgames.character",
-    "com.ramirestechgames.combat"
+    "com.ramirestechgames.combat",
+    "com.ramirestechgames.abilities"
   ]
 }
