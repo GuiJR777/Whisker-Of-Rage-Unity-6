@@ -22,5 +22,12 @@ Decisões transversais. ADRs específicas de um package ficam em `Documentation~
 | [0016](0016-data-driven-hitboxes.md) | Hitboxes como dados ancorados, consultas sem alocação e anti-tunneling | Aceita |
 | [0017](0017-damage-pipeline-and-outcomes.md) | Pipeline de dano e precedência dos resultados | Aceita |
 | [0018](0018-gameplay-tags-in-core.md) | `GameplayTag` no Core | Aceita |
+| [0019](0019-abilities-execution-and-timing.md) | Execução de habilidades: passo fixo, duas sub-bandas, caixa de entrada e hitstop | Proposta (M5) |
+| [0020](0020-gameplay-effects-over-stats.md) | Gameplay Effects sobre o Stats: duração e stacking no Abilities, modificadores com fonte no Stats | Proposta (M5) |
+| [0021](0021-ability-costs-commit-refund.md) | Custos de habilidade: verificação, reserva, commit e reembolso | Proposta (M5) |
+| [0022](0022-ability-commands-and-ownership.md) | Comandos de habilidade e posse em duas fases | Proposta (M5) |
+| [0023](0023-ability-composition.md) | Composição de habilidades por linha do tempo e ações SR (sem grafo) | Proposta (M5) |
+| [0024](0024-projectiles-and-combat-delivery.md) | Projéteis determinísticos e entrega pelo Combat | Proposta (M5) |
+| [0025](0025-owned-tags-in-abilities.md) | Tags possuídas com contagem no Abilities | Proposta (M5) |
 
 Template: [`templates/package/Documentation~/adr/0000-template.md`](../../templates/package/Documentation~/adr/0000-template.md).
