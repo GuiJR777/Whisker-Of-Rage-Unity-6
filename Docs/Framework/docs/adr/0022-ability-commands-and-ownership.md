@@ -1,6 +1,6 @@
 # ADR-0022 — Comandos de habilidade e posse em duas fases
 
-- **Status:** Proposta (design do M5, 2026-10-12) · **Milestone:** M5
+- **Status:** Aceita (revisão do design do M5, 2026-10-12) · **Milestone:** M5
 - **Relacionada:** [ADR-0004](0004-command-buffers.md), [ADR-0011](0011-character-command-buffer.md),
   [ADR-0015](0015-combat-commands-and-ownership.md), [especificação do M5](../design/m5-abilities-design.md) §5.3
 
@@ -8,7 +8,7 @@
 Jogador e AI precisam pedir habilidades pelo mesmo caminho; a HFSM precisa reivindicar o pedido (estado de habilidade)
 sem que o pedido execute duas vezes, como já ocorre com pulo/dash (Character) e ações de combate (Combat).
 
-## Decisão (proposta)
+## Decisão
 1. `AbilityCommandBuffer` com bordas sobre `EdgeQueue` do Core 0.4.0 (3.º consumidor): token, instante, prioridade e
    payload (tag de entrada, direção/mira, alvo ou ponto sugerido, valores `SetByCaller` opcionais).
 2. Habilidades são endereçadas por **tag de entrada** (`GameplayTag`), não por índice: a concessão define a tag;
@@ -27,3 +27,7 @@ sem que o pedido execute duas vezes, como já ocorre com pulo/dash (Character) e
 ## Consequências
 - Positivas: mesmo modelo mental em Character, Combat e Abilities; AI (M6) escreve só no buffer.
 - Negativas / custos: mais um buffer por ator (componente leve, opcional para atores sem habilidades por comando).
+
+## Ajustes da revisão
+Aceita sem alterações de decisão. Complemento: com `RetriggerPolicy = Restart`, a execução anterior é encerrada por
+completo (janelas, tags, reserva/reembolso, ações e mutações pendentes) antes da validação do novo pedido (§25.7).

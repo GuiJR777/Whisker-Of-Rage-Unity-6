@@ -1,6 +1,6 @@
 # ADR-0023 — Composição de habilidades por linha do tempo e ações SR (sem grafo)
 
-- **Status:** Proposta (design do M5, 2026-10-12) · **Milestone:** M5
+- **Status:** Aceita (revisão do design do M5, 2026-10-12) · **Milestone:** M5
 - **Relacionada:** [ADR-0008](0008-serialize-reference-picker-in-core.md), [ADR-0013](0013-combat-timing.md),
   [especificação do M5](../design/m5-abilities-design.md) §10, §15
 
@@ -9,7 +9,7 @@ O roadmap exige "composição de 2 abilities sem código novo". Sistemas comerci
 habilidade (com tarefas assíncronas) ou um grafo visual. O framework já tem um seletor de `[SerializeReference]` no
 Core e uma regra temporal consolidada (janelas por sobreposição).
 
-## Decisão (proposta)
+## Decisão
 1. `AbilityDefinition` contém uma **linha do tempo**: ações pontuais em τ (`IAbilityAction`) e janelas `[a, b)`
    (`IAbilityWindowBehaviour` com `OnEnter`/`OnStep`/`OnExit`), escolhidas no seletor do Core.
 2. Efeitos (`GameplayEffectDefinition`) e magnitudes (`IMagnitudeCalculation`) são reutilizados entre habilidades.
@@ -27,3 +27,7 @@ Core e uma regra temporal consolidada (janelas por sobreposição).
 ## Consequências
 - Positivas: conteúdo por designers; mesmo modelo temporal do Combat; inspector com linha do tempo e validação.
 - Negativas / custos: lógica muito ramificada fica verbosa (mitigado por SR do jogo); fragilidade de SR (R4/R25).
+
+## Ajustes da revisão
+Aceita sem alterações de decisão (sem editor de grafo no M5). Complementos: ações que mudam o mundo são diferidas
+para A2 do próprio ator (§25.1); validators de commit e de entrega da §25.8.

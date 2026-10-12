@@ -1,6 +1,6 @@
 # ADR-0020 — Gameplay Effects sobre o Stats: duração e stacking no Abilities, modificadores com fonte no Stats
 
-- **Status:** Proposta (design do M5, 2026-10-12) · **Milestone:** M5
+- **Status:** Aceita (revisão do design do M5, 2026-10-12) · **Milestone:** M5
 - **Relacionada:** especificação do M1 (Stats), [ADR-0019](0019-abilities-execution-and-timing.md),
   [especificação do M5](../design/m5-abilities-design.md) §7
 
@@ -11,7 +11,7 @@ modificadores temporizados (`Duration`) que expiram no `Tick` do `StatsComponent
 variável. Efeitos de habilidade precisam de stacking, períodos, inibição, pausa por hitstop e determinismo no passo
 fixo — nada disso existe no Stats, e não deveria (Stats é L1, sem conceito de efeito).
 
-## Decisão (proposta)
+## Decisão
 1. Cada `ActiveEffect` é um `IModifierSource`. Seus modificadores entram no Stats **sem** `Duration` (infinitos) e
    saem por `RemoveModifiersFromSource` quando o efeito termina, é inibido ou muda de stacks (reaplicação com a
    magnitude nova).
@@ -31,3 +31,16 @@ fixo — nada disso existe no Stats, e não deveria (Stats é L1, sem conceito d
   o mesmo mecanismo de fonte.
 - Negativas / custos: mudanças de stacks reaplicam modificadores (custo por mudança, sem GC); o Debugger precisa
   correlacionar fontes com efeitos.
+
+## Ajustes da revisão
+Aceita com o ajuste 5 da revisão (§25.5 da especificação), sem mudança no Stats:
+
+1. O ASC registra, por efeito ativo, a coleção onde estão seus modificadores e acompanha `StatsComponent.Rebuilt`:
+   ao receber o evento, reaplica os modificadores dos efeitos **ativos e não inibidos** na nova coleção (mesma fonte,
+   magnitude pelos stacks atuais), sem duplicar e sem alterar stacks, tempos, períodos ou tags.
+2. Inscrição em `OnEnable`, remoção em `OnDisable`/`OnDestroy`; ao reabilitar, ressincroniza se a coleção mudou.
+3. Testes: efeitos ativos e inibidos atravessando `Rebuild`, remoção posterior igual a coleção virgem, `Rebuild` com o
+   ASC desabilitado.
+4. Efeitos condicionais carregam uma **cadeia causal** de tamanho fixo no `EffectSpec` (§25.6, ADR-0025 não muda):
+   recorrência de definição sem `AllowRecurrence` ou cadeia acima de `MaxConditionalChain` (8) é bloqueada com
+   diagnóstico; o validator acusa ciclos entre definições (A → B → A).

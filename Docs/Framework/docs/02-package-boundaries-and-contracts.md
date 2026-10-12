@@ -154,21 +154,33 @@ agarrões, reações). Nenhuma implementação existente é migrada.
 ## abilities — `RamiresTechGames.Abilities` (L4) · M5
 
 **Responsabilidade:** Gameplay Ability System em escala indie.
+**Contratos finais do design v2** ([especificação](design/m5-abilities-design.md), ADRs 0019–0025 aceitas). Hard:
+`core`, `stats`; opcionais: `hfsm`, `character`, `combat`, `com.unity.inputsystem` (sem mudança no grafo).
 
 | Contrato | Tipo | Descrição |
 |---|---|---|
-| `AbilityDefinition` | SO | Ativa/passiva, tags (ability, required, blocked, cancel), custos, cooldown, targeting (SR), operações (SR), composição. |
-| `AbilityInstance` | Pure | Ciclo de vida: `CanActivate` → `Activate` → `Tick` → `End`/`Cancel`. |
-| `GameplayEffectDefinition` | SO | Instantâneo/duração/infinito, período, modificadores de Stats, tags concedidas, regras de stacking, condições de remoção. |
-| `ActiveGameplayEffect` | Pure | Estado de um efeito aplicado (stacks, tempo restante, handles de modificadores). |
-| `AbilitySystemComponent` | MB | Concede/revoga abilities, tags possuídas, efeitos ativos, cooldowns. |
-| `AbilityCommandBuffer` | MB | Pedidos de ativação (Player/AI). |
-| `ITargetingStrategy`, `IAbilityOperation`, `IActivationRequirement` | SR | Pontos de extensão. |
-| Eventos | `AbilityActivated`, `AbilityEnded`, `AbilityCancelled`, `EffectApplied`, `EffectRemoved`, `TagsChanged` | |
-| Integrações opcionais | `Integration/Combat` (operação "executar ataque", `IHitEffect` que aplica effect), `Integration/Character` (dash/impulso), `Integration/HierarchicalStateMachine` (estado de casting). |
+| `AbilityDefinition` | SO | Linha do tempo (ações `IAbilityAction` em τ, janelas `IAbilityWindowBehaviour` em `[a, b)`), tags (ativação, bloqueio, cancelamento, interrupção), custos, `CommitPoint`, reembolso, cooldown/grupo/cargas, targeting, `RetriggerPolicy` (ADR-0023). |
+| `GameplayEffectDefinition` | SO | Instantâneo/duração/infinito, período, modificadores de Stats, tags concedidas, imunidades, stacking, dispel, `ConditionalEffects` (ADR-0020). |
+| `ProjectileDefinition`, `AbilitySetDefinition` | SO | Projéteis cinemáticos (sweep, pool, perfuração, políticas de bloqueio/parry, `OnInstigatorLost`); conjuntos de concessões. |
+| `AbilitySystemComponent` (ASC) | MB | Concessões, execuções, tags possuídas, efeitos ativos, cooldowns/cargas, caixa de entrada, eventos. Banda `ABILITIES` com sub-bandas **A0** (+0, snapshot do início do passo), **A1** (+30, ativações e ações; outros atores só pelo snapshot), **A2** (+60, mutações do mundo, caixa de entrada, efeitos, eventos) — ADR-0019. |
+| Caixa de entrada | regra | Ordem total (canal, emissor, sequência, índice); saturação top-K pelas menores chaves, contada. Efeitos entre atores só por ela. |
+| Custos | regra | Magnitude congelada, consolidação por recurso, reserva `Reserved` → `Committed` ou `Released` (própria reserva excluída), commit atômico, `CommitFailed` sem débito/carga/cooldown/entregas, reembolso ≤ debitado; com entrega pelo Combat, commit antes do envio de candidatos (ADR-0021). |
+| `AbilityCommandBuffer` | MB | Bordas por tag de entrada sobre `EdgeQueue`; posse `Abilities`/`External`; estado segurado (ADR-0022). |
+| `AbilityActorId`, `ProjectileShotId` | struct | Identidades estáveis para ordem total e feedback do Combat (com geração da vaga do pool). |
+| `AbilityHandle`, `ActiveEffectHandle`, `LooseTagHandle` | struct | Dono + vaga + geração; handle estrangeiro ou obsoleto nunca age. |
+| `EffectSpec` | struct | Nível, magnitudes `SetByCaller`, instigador, cadeia causal de tamanho fixo (proteção contra recorrência entre passos). |
+| `OwnedTagCounter`, `TagRequirements` | Pure | Tags possuídas por (tag, fonte), consultas hierárquicas sem alocação (ADR-0025). |
+| `IAbilityAction`, `IAbilityWindowBehaviour`, `ITargetingStrategy`, `ITargetFilter`, `IActivationRequirement`, `IEffectExecution`, `IMagnitudeCalculation`, `IAbilityTimeSource`, `ITeamRelation`, `IAbilityFacingSource`, `IAbilityFacingFrameSource` | SR/interface | Pontos de extensão. |
+| `Projectile`, `ProjectilePool`, `ProjectileDriver`, `AbilityTargetPoint` | MB | Projéteis pooled no passo fixo; pontos de origem com pose canônica relativa ao frame de facing. |
+| Eventos | `AbilityActivated`, `AbilityEnded`, `AbilityCancelled`, `ActivationResolved`, `EffectApplied`, `EffectStacked`, `EffectRemoved`, `EffectBlocked`, `CooldownEnded`, `TagsChanged` | Entregues em A2, FIFO. |
+| Integrações opcionais | `Integration/Combat` (`ApplyGameplayEffectOnHit : IHitEffect` — efeito vale em A2 de *n + 2*; `ProjectileCombatSource : ICombatHitSource`; `PerformAttack`; tags de estado de combate; interrupção em A1 de *n + 1*; hitstop; times), `Integration/Character` (impulso, teleporte, suspensão, modificadores de movimento, facing), `Integration/HierarchicalStateMachine` (`AbilityBehaviour`, condições), `Integration/InputSystem` (`PlayerInputAbilitySource`). |
 
-**Não faz:** nomes de um jogo (ex.: Jutsu, Técnica, Chakra no WOR) — esses são *assets* no jogo.
-**Editor:** Ability Debugger (abilities, cooldowns, tags, efeitos ativos), inspectors, validators.
+**Não faz:** nomes de um jogo (ex.: Jutsu, Técnica, Chakra no WOR) — esses são *assets* no jogo; sistema de cartas;
+dano com defesa próprio (só pela entrega do Combat); `ICombatActionGate` (orquestração pela HFSM); mudar Stats ou
+Combat (acompanha `StatsComponent.Rebuilt` sem alterá-lo).
+**Editor:** Ability Debugger (concessões, cooldowns, tags com fonte, efeitos ativos, reservas, diagnósticos de
+saturação e de cadeia condicional), inspectors com linha do tempo, preview de targeting/trajetória, validators (sem
+editor de grafo no M5).
 
 ---
 
