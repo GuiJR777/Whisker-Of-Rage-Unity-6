@@ -161,10 +161,12 @@ nomes únicos na cadeia). Referências por id (`BlackboardKeyReference` com cach
 Cada nó guarda `IsActive`, `LastStatus` e, nos composites, o cursor (filho atual) e, no `Parallel`, o resultado de
 cada filho. O tick da árvore:
 1. **Fase de aborts** (§5.4): avalia as condições observadas do conjunto ativo; aplica no máximo um abort.
-2. **Fase de execução**: percorre o conjunto ativo em **pré-ordem** (pais antes dos filhos, filhos em ordem de
+2. **Fase de services**: executa os services devidos dos composites ativos, em pré-ordem.
+3. **Fase de execução**: percorre o conjunto ativo em **pré-ordem** (pais antes dos filhos, filhos em ordem de
    declaração); cada folha ativa recebe `OnTick`; resultados sobem aos pais, que avançam o cursor e podem iniciar o
-   próximo filho no mesmo tick.
-3. **Fase de services** devidos dos composites ativos (antes da execução dos filhos, na mesma pré-ordem).
+   próximo filho no mesmo tick (composites ativados nesta fase executam seus services na ativação, §5.5).
+
+Ordem normativa (ADR-0027): **aborts → services devidos → execução**.
 
 ### 5.3 Composites
 | Composite | Semântica |
@@ -365,7 +367,22 @@ Cada bridge declara o caminho do seu executor, verificado em runtime (diagnósti
 | `HfsmOwner` / `AgentOwner`, Combat | `ActionResolved` com `Request.Token` = token rastreado: `Executed` → iniciado; `Rejected` → `Rejected`; `Cancelled` → `Cancelled`. Instância do ataque: o `AttackStarted` do mesmo controller, com `Action` igual, entregue no mesmo passo **antes** do `Resolved(Executed)` (ordem observada no Combat 0.1.0, verificada por teste de contrato, §20.2) | `AttackEnded` com a mesma `Instance`: `Completed` ou `Interrupted` conforme `AttackEndReason` |
 | `HfsmOwner` / `AgentOwner`, Abilities | `ActivationResolved` com `Request.Token`: `Activated` → iniciado (handle no request; geração pelo `AbilityActivated` do mesmo handle no mesmo passo); `Expired`/`Cancelled` → idem | `AbilityEnded` com o mesmo (handle, geração): `Completed`/`Interrupted`/`Cancelled` por `AbilityEndReason` |
 | `HfsmOwner` / `AgentOwner`, Character | `ActionResolved` do motor com `Request.Token` | Pulo: instantâneo (`Completed` ao executar); dash: `DashEnded` |
-| `PackageOwner` (todos) | **Uma borda rastreada pendente por buffer** (pedidos seguintes esperam no bridge, `Running`). Token ausente + **exatamente um** evento de início compatível desde o envio (`AttackStarted` com a `Action`; `AbilityActivated` de concessão com a mesma tag de entrada; `Jumped`/`DashStarted` com `FromBuffer`) → iniciado, instância/geração do evento. Token ausente, nenhum evento e idade da borda ≥ janela do consumidor (`InputBufferTime` do perfil de combate ou do ASC, `JumpBufferTime`/`DashBufferTime`) → `Expired`. Qualquer outro caso (nenhum evento antes da janela, mais de um evento compatível) → **`Unconfirmed`** | Como acima, pela instância/geração do evento de início |
+| `PackageOwner` (todos) | **Uma borda rastreada pendente por buffer** (pedidos seguintes esperam no bridge, `Running`). Início **só com origem estabelecida** (§10.3.1) → instância/geração do evento. Token ausente, nenhum evento compatível e idade da borda ≥ janela do consumidor (`InputBufferTime` do perfil de combate ou do ASC, `JumpBufferTime`/`DashBufferTime`) → `Expired`. Qualquer outro caso → **`Unconfirmed`**, **mesmo com um único evento compatível** | Como acima, pela instância/geração do evento de início |
+
+#### 10.3.1 Origem estabelecida no `PackageOwner` (ajuste da autorização de implementação)
+Um único evento compatível **não** prova que a execução veio da borda da IA: outra origem (script, gatilho,
+passiva, outra fonte de comandos) pode iniciar a mesma execução. O bridge amostra o buffer em **todo** passo (fase
+`DECISION + 20`, mesmo quando o agente não avalia) e só declara a origem estabelecida quando **todas** as condições
+valem; caso contrário o desfecho é `Unconfirmed` (contado em `UnconfirmedCount`):
+1. `Source` do buffer foi o agente em todas as amostras desde o envio;
+2. nenhuma borda de outra origem (token que o agente não criou) esteve no buffer em amostra alguma desde o envio;
+3. o token sumiu entre duas amostras consecutivas (passo *s*), sem variação de `DroppedCount`/`ExpiredCount` nesse
+   passo e com idade da borda ≤ janela do consumidor;
+4. **exatamente um** evento de início compatível foi entregue no mesmo passo *s* (não basta "desde o envio");
+5. no passo *s* não houve outro evento de início do mesmo executor que pudesse ter consumido a borda (ex.: outro
+   `AttackStarted` com ação não nula, outra ativação da mesma tag de entrada).
+O teste de contrato cobre: script iniciando a mesma execução no passo do consumo (dois eventos), evento compatível
+com o token ainda pendente (não correlaciona), borda estrangeira no buffer, `Source` trocado e o caso feliz.
 
 Duas bordas iguais: nos caminhos `HfsmOwner`/`AgentOwner` cada uma é correlacionada pelo seu token (prioridades e
 ordem de consumo vêm do executor); no `PackageOwner` são serializadas (a segunda só é enviada após o desfecho da
@@ -707,6 +724,7 @@ Parecer: arquitetura geral aprovada com ajustes obrigatórios antes da implement
 | 1 — revisão parcial dos ADRs 0003/0004 | ADR-0026; notas de revisão nos ADRs 0003 e 0004; §12.5, §13 |
 | 2 — BT e `Parallel` | ADR-0027; §5.1–§5.8; testes §18.1; AC3 |
 | 3 — vida útil dos tokens | ADR-0031; §9 (ações avulsas de pedir/liberar token do v1 removidas); AC7 |
+| Autorização de implementação (2026-10-13) | Ordem do tick aborts → services → execução reconciliada (§5.2); origem estabelecida no `PackageOwner` (§10.3.1, ADR-0032) |
 | 4 — rastreamento de comandos | ADR-0032; §10 (v1 presumia evento = última borda e descartava bordas com `TryConsume`, o que violava o ADR-0004 — corrigido); §20.2; AC8 |
 | 5 — saturação e identidades | ADRs 0028/0029; §6, §7, §14; AC5 |
 | Refinamentos | GraphView (§15), NavMesh fora (§11), Utility fechado (§5.3), hitstop (§13), samples (§16), plano XZ (§11), QG12 só com Core (§3.1, AC12), equivalência lógica (§13, AC4) |

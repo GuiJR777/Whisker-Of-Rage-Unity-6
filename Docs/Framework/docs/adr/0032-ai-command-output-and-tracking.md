@@ -16,9 +16,12 @@ precisam saber o desfecho de cada borda enviada. O v1 presumia que `AttackStarte
    `External`, sem HFSM no mesmo buffer), `PackageOwner` (combo runner, ASC ou motor).
 3. **Correlação por token** em `HfsmOwner`/`AgentOwner`: `ActionResolved`/`ActivationResolved` com `Request.Token`;
    término pela identidade da execução (`Instance` do ataque, handle + geração da habilidade, `DashEnded`).
-4. **`PackageOwner`:** os eventos não trazem token; o bridge mantém **uma borda rastreada pendente por buffer**;
-   token ausente + exatamente um evento de início compatível → iniciado; nenhum evento e idade ≥ janela do consumidor →
-   `Expired`; qualquer outro caso → **`Unconfirmed`** (contado).
+4. **`PackageOwner`:** os eventos não trazem token; o bridge mantém **uma borda rastreada pendente por buffer** e
+   amostra o buffer em todo passo. Início só com **origem estabelecida** (especificação §10.3.1): fonte exclusiva em
+   todas as amostras, nenhuma borda estrangeira, token sumido entre duas amostras sem descarte nem expiração,
+   exatamente um evento compatível **no mesmo passo** e nenhum outro início do mesmo executor nesse passo. Nenhum
+   evento e idade ≥ janela do consumidor → `Expired`; qualquer outro caso → **`Unconfirmed`** (contado), **mesmo com
+   um único evento compatível**.
 5. Desfechos `Pending`, `Executing`, `Completed`, `Expired`, `Rejected`, `Cancelled`, `Interrupted`, `Unconfirmed`,
    `TimedOut`. Abort com rastreio aberto: `AgentOwner` cancela por token; `HfsmOwner`/`PackageOwner` abandonam a borda
    (expira na janela do consumidor) ou limpam as próprias bordas do canal (`ClearChannel`).
@@ -42,4 +45,5 @@ precisam saber o desfecho de cada borda enviada. O v1 presumia que `AttackStarte
 ## Ajustes da revisão
 Substituída a correlação por "último evento" por correlação por token e pela identidade da execução; estado
 `Unconfirmed`/`TimedOut`; caminhos com e sem HFSM verificados contra o código do Combat 0.1.0, Abilities 0.1.0 e
-Character 0.2.0; limitações e alternativas registradas antes da implementação.
+Character 0.2.0; limitações e alternativas registradas antes da implementação. Na autorização de implementação:
+um único evento compatível não basta no `PackageOwner` — sem origem estabelecida, `Unconfirmed` (item 4).

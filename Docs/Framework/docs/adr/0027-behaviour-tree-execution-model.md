@@ -13,8 +13,8 @@ em ordem total.
    vez por tick da árvore; `OnStop(reason)` exatamente uma vez (`Completed`, `Aborted`, `TreeStopped`), inclusive em
    abort antes do primeiro tick; cascatas da folha para a raiz (irmãos de `Parallel` em ordem reversa).
 2. **Conjunto ativo** persistido; `Parallel` mantém **vários ramos ativos**, cada filho com estado e memória próprios;
-   filho terminado guarda o resultado e não reinicia na mesma ativação. Tick: fase de aborts → services devidos →
-   execução em pré-ordem.
+   filho terminado guarda o resultado e não reinicia na mesma ativação. Tick, em ordem normativa: **aborts →
+   services devidos → execução** em pré-ordem (especificação §5.2).
 3. **`Parallel`:** `SuccessPolicy`/`FailurePolicy` ∈ {`RequireOne`, `RequireAll`} avaliadas após todos os filhos do
    tick; ambas satisfeitas no mesmo tick → `ConflictPolicy` (`FailureWins` padrão, `SuccessWins`); ao decidir, filhos
    ainda ativos param com `Aborted`.
