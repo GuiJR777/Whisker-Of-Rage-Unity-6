@@ -152,6 +152,34 @@ Gates depois das correções:
 | QG12 | 135 testes (67 EditMode + 68 PlayMode), 0 mensagens do compilador |
 | `check_dependencies` | OK |
 
+## Auditoria final (2026-10-13) — correções localizadas e gates
+
+Decisões e capacidades normativas em [m5-abilities-design §26 e §26.1](m5-abilities-design.md). Correções de runtime
+no Abilities `4ab2d05`; preparação de versão em commits separados (Stats `24304db`, Abilities `ea204ba`).
+
+| Item | Resultado | Teste |
+|---|---|---|
+| Efeitos condicionais com magnitudes do instigador (opção (c)) | Erro no validator; em runtime `EffectBlocked` com `ConditionalUncapturedInstigator` em vez de fallback; Wet + Shock com stat do alvo continua aplicando | `ConditionalReadingTheInstigator_IsBlockedWithDiagnostic_...`, `ConditionalEffect_ReadingInstigatorMagnitudes_IsAValidationError` |
+| Saturação da ponte do Combat | 40 alvos (pares empatados em distância) criados em 3 ordens: mesmo subconjunto, ids 10–41 com `MaxTargets` 0 (32 candidatos) e 10–14 com `MaxTargets` 5 (empate pelo menor `CombatantId`); consulta saturada (8 slots) contada e limitada aos candidatos | `BridgeSaturationPlayModeTests` |
+| Resultados causados > 64 | 96 resultados reais (3 disparos × 32) em 3 ordens: os mesmos 64 eventos na mesma ordem; overflow = 32; zero GC | `MoreThanSixtyFourCausedResults_...` |
+| Feedback do `ReportContact` | 40 relatos (20 alvos × 2 sequências) em 6 ordens: os mesmos 32 (alvos 100–115), overflow 8; registro e `HitCount` coerentes; zero GC | `FeedbackSaturationPlayModeTests` |
+| Stats 0.1.1 | Versão preparada (sem tag) para `4f29bfa`; Abilities depende de `0.1.1`; lockfile resolvido. Matemática e API do Stats inalteradas | Suíte do Stats |
+
+Limitação funcional documentada: um disparo/área acerta no máximo 32 alvos distintos na vida; o que a PhysX deixa
+fora de uma consulta cheia (128) não é visto.
+
+Gates (Abilities `ea204ba`, Stats `24304db`, host `c97c7d4`):
+
+| Gate | Resultado |
+|---|---|
+| Host EditMode | Core 62, Stats 126, HFSM 118, Character 164, Combat 164, Abilities 70 — **704/704** |
+| Host PlayMode | Stats 4, HFSM 5, Character 85, Combat 105, Abilities 108 (inclui 38 de integração) — **307/307** |
+| Saturação, passivas de projéteis e áreas | `BridgeSaturationPlayModeTests`, `FeedbackSaturationPlayModeTests`, `ProjectileCausedEventsPlayModeTests` — verdes |
+| Zero GC | `FiftyFullActors_WithPhysics_DoNotAllocate_InTheSteadyState` (50 atores) e os testes de alocação da saturação — verdes |
+| QG12 | 138 testes (68 EditMode + 70 PlayMode), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+| Clone limpo autenticado | `git clone --recurse-submodules` em caminho curto (num caminho longo os objetos do submodule ficam incompletos — seção Submodules do `CLAUDE.md` do host): host `c97c7d4`, seis submodules nos commits fixados, `fsck` e `status` limpos, 7 evidências via LFS |
+
 ## Checklist com mouse físico (pendente do owner)
 
 1. Selecionar uma `AbilityDefinition` no Project; passar o mouse sobre as barras da linha do tempo (tooltip com s,
