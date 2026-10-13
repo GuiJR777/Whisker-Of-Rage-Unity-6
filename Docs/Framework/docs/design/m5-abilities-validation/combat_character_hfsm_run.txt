@@ -1,0 +1,54 @@
+OK
+t=0,30 mode Guard | Hero (keyboard) [Grounded] Health 200 Mana 60 Guard 60 | Rival (scripted) [Guard] Health 200 Mana 60 Guard 60
+t=0,51 Q | Hero (keyboard) [Grounded] Health 200 Mana 60 Guard 60 | Rival (scripted) [Guard] Health 200 Mana 60 Guard 60
+t=2,00 mode Parry | Hero (keyboard) [Grounded] Health 200 Mana 51,9 Guard 60 | Rival (scripted) [Guard] Health 198,6 Mana 60 Guard 50
+t=2,20 Q | Hero (keyboard) [Grounded] Health 200 Mana 52,8 Guard 60 | Rival (scripted) [Grounded] Health 198,6 Mana 60 Guard 51,9
+t=4,01 mode Idle | Hero (keyboard) [Grounded] Health 200 Mana 46 Guard 60 | Rival (scripted) [Grounded] Health 198,6 Mana 60 Guard 60
+t=4,20 Q | Hero (keyboard) [Grounded] Health 200 Mana 46,7 Guard 60 | Rival (scripted) [Grounded] Health 198,6 Mana 60 Guard 60
+t=5,01 Shift | Hero (keyboard) [Grounded] Health 200 Mana 36,8 Guard 60 | Rival (scripted) [Grounded] Health 191,6 Mana 60 Guard 60
+  hero x after the dash: -1,74
+t=5,51 x | Hero (keyboard) [Grounded] Health 200 Mana 38 Guard 60 | Rival (scripted) [Grounded] Health 189,6 Mana 60 Guard 60
+t=5,81 teleport | Hero (keyboard) [Grounded] Health 200 Mana 39,2 Guard 60 | Rival (scripted) [Grounded] Health 189,6 Mana 60 Guard 60
+t=6,31 E | Hero (keyboard) [Grounded] Health 200 Mana 41,2 Guard 60 | Rival (scripted) [Grounded] Health 187,6 Mana 60 Guard 60
+t=6,76 paused for the capture | Hero (keyboard) [Cast] Health 200 Mana 31,2 Guard 60 | Rival (scripted) [Grounded] Health 170,6 Mana 60 Guard 60
+t=8,00 R | Hero (keyboard) [Grounded] Health 200 Mana 33,9 Guard 60 | Rival (scripted) [Grounded] Health 158,6 Mana 60 Guard 60
+t=8,41 mode Aggressive | Hero (keyboard) [Cast] Health 200 Mana 35,6 Guard 60 | Rival (scripted) [Grounded] Health 154,6 Mana 60 Guard 60
+
+== Events (actor #step event) ==
+Hero (keyboard) #782 activated ArcaneBolt
+Hero (keyboard) #800 ended ArcaneBolt (Completed)
+Rival (scripted) #810 hit received: Blocked 1,4
+Hero (keyboard) #867 activated ArcaneBolt
+Hero (keyboard) #885 ended ArcaneBolt (Completed)
+Rival (scripted) #895 hit received: Parried 0
+Hero (keyboard) #967 activated ArcaneBolt
+Hero (keyboard) #985 ended ArcaneBolt (Completed)
+Rival (scripted) #995 hit received: Hit 7
+Rival (scripted) #997 applied Burn
+Hero (keyboard) #1007 activated Dash
+Hero (keyboard) #1022 ended Dash (Completed)
+Hero (keyboard) #1072 activated FlameStrike
+Rival (scripted) #1082 hit received: Hit 15
+Hero (keyboard) #1083 event Event.HitConfirmed
+Hero (keyboard) #1083 activated BattleFocus
+Hero (keyboard) #1089 applied ManaSurge
+Hero (keyboard) #1092 ended BattleFocus (Completed)
+Hero (keyboard) #1108 ended FlameStrike (Completed)
+Hero (keyboard) #1157 activated Meditate
+Hero (keyboard) #1157 applied Meditation
+Hero (keyboard) #1182 hit received: Hit 9 (interrupts)
+Hero (keyboard) #1183 event Event.Interrupted
+Hero (keyboard) #1183 removed Meditation (Removed)
+Hero (keyboard) #1183 ended Meditate (Interrupted)
+Rival (scripted) #1183 event Event.HitConfirmed
+Rival (scripted) #1233 removed Burn (Expired)
+Hero (keyboard) #1242 hit received: Hit 9 (interrupts)
+Hero (keyboard) #1243 event Event.Interrupted
+Rival (scripted) #1243 event Event.HitConfirmed
+Hero (keyboard) #1303 hit received: Hit 9 (interrupts)
+Hero (keyboard) #1304 event Event.Interrupted
+Rival (scripted) #1304 event Event.HitConfirmed
+
+== Final ==
+Hero (keyboard) [Grounded] Health 173 Mana 50 Guard 60
+Rival (scripted) [Grounded] Health 146,6 Mana 60 Guard 60

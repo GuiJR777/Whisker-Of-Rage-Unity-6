@@ -1,0 +1,90 @@
+OK
+t=0,50 press Soak (A)
+t=1,00 press Zap (S)
+t=1,61 press Fireball (Q)
+t=2,31 press Shield (W)
+t=2,70 paused for the capture
+  Hexer: Health 90 Energy 60 [Burn x1]
+  Dummy B: Health 100 Energy 60 [Wet x1]
+  Mage: Health 86 Energy 26 [FocusAura x1] [Shielded x1]
+  Dummy A: Health 95 Energy 60 [Stunned x1]
+t=8,00 press Cleanse (R)
+t=8,50 press Burst (E)
+t=8,80 press Burst (E)
+t=9,10 press Burst (E) no charge
+
+== Events (actor #step event) ==
+Mage #1 applied FocusAura
+Mage #1 +Aura
+Hexer #151 activated PoisonDart
+Hexer #161 ended PoisonDart (Completed)
+Mage #194 applied Poison
+Mage #194 +Poisoned
+Hexer #302 activated PoisonDart
+Hexer #312 ended PoisonDart (Completed)
+Hexer #453 activated PoisonDart
+Hexer #463 ended PoisonDart (Completed)
+Mage #467 activated Soak
+Dummy B #472 applied Wet
+Dummy B #472 +Wet
+Dummy A #472 applied Wet
+Dummy A #472 +Wet
+Mage #477 ended Soak (Completed)
+Mage #492 activated Zap
+Dummy A #497 applied Shock
+Dummy A #497 removed Wet (Interaction)
+Dummy A #497 -Wet
+Dummy A #498 applied Stunned
+Dummy A #498 +Stunned
+Mage #502 ended Zap (Completed)
+Mage #522 activated Fireball
+Mage #537 ended Fireball (Completed)
+Hexer #556 applied Impact
+Hexer #556 applied Burn
+Hexer #556 +Burning
+Mage #557 activated Shield
+Mage #557 applied Shielded
+Mage #557 removed Poison (Dispelled)
+Mage #557 -Poisoned
+Mage #557 +Shielded
+Mage #567 ended Shield (Completed)
+Dummy A #598 removed Stunned (Expired)
+Dummy A #598 -Stunned
+Hexer #604 activated PoisonDart
+Hexer #614 ended PoisonDart (Completed)
+Mage #647 blocked Poison (Immune)
+Hexer #706 removed Burn (Expired)
+Hexer #706 -Burning
+Dummy B #722 removed Wet (Expired)
+Dummy B #722 -Wet
+Hexer #755 activated PoisonDart
+Mage #757 removed Shielded (Expired)
+Mage #757 -Shielded
+Hexer #765 ended PoisonDart (Completed)
+Mage #798 applied Poison
+Mage #798 +Poisoned
+Mage #842 activated Cleanse
+Mage #842 removed Poison (Removed)
+Mage #842 -Poisoned
+Mage #847 ended Cleanse (Completed)
+Mage #867 activated EnergyBurst
+Mage #867 applied Haste
+Mage #867 +Hasted
+Mage #872 ended EnergyBurst (Completed)
+Mage #882 activated EnergyBurst
+Mage #887 ended EnergyBurst (Completed)
+Hexer #906 activated PoisonDart
+Hexer #916 ended PoisonDart (Completed)
+
+== Final state at t=10,0 ==
+Hexer: Health 72 Energy 60
+Dummy B: Health 100 Energy 60
+Mage: Health 86 Energy 17 [FocusAura x1] [Haste x1]
+Dummy A: Health 95 Energy 60
+  Fireball cooldown 0,00 charges 1 last Activated
+  Shield cooldown 0,00 charges 1 last Activated
+  EnergyBurst cooldown 0,00 charges 0 last NoCharges
+  Cleanse cooldown 0,02 charges 1 last Activated
+  Soak cooldown 0,00 charges 1 last Activated
+  Zap cooldown 0,00 charges 1 last Activated
+  FocusAura cooldown 0,00 charges 1 last NotGranted

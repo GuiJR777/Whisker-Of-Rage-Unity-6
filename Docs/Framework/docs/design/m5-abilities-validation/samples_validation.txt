@@ -1,0 +1,4 @@
+OK
+errors 0, warnings 0, missing scripts 0
+Assets/Samples/RamiresTech Games - Abilities/0.1.0/Abilities Playground/Scenes/AbilitiesPlayground.unity: issues 0
+Assets/Samples/RamiresTech Games - Abilities/0.1.0/Abilities Combat Character HFSM/Scenes/AbilitiesCombatCharacterHfsm.unity: issues 0

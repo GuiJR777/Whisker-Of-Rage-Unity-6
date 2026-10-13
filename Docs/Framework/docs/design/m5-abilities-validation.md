@@ -54,6 +54,80 @@ físico):** a lista "Checklist com mouse físico" abaixo.
 | Preview em Edit Mode não via objetos recém-movidos (transforms não sincronizados com a física) | `Physics.SyncTransforms()` antes do sweep do preview (só fora do Play Mode) |
 | Regras de passo duplicadas entre runtime e ferramenta | `AbilityDefinition.WindowOverlaps`, `IsActionDue`, `HasReachedDuration` e `ProjectileKinematics.NextVelocity` usados pela execução, pelo driver e pelas ferramentas |
 
+## Samples (entrega 6, cópias importadas)
+
+Montados por script em `Assets/_AbilitiesSampleBuild`, copiados para `Samples~`, a pasta de montagem apagada,
+importados pelo Package Manager (`Sample.Import`) em `Assets/Samples/RamiresTech Games - Abilities/0.1.0`, validados,
+executados e removidos. As entradas de teclado foram **sintéticas** (`KeyboardAbilitySource.Press`,
+`HeroKeyboardSource.PressAbility`, modo do rival por propriedade); o motor foi reposicionado uma vez por
+`CharacterMotor.Teleport` para encostar no rival.
+
+| Verificação | Resultado | Evidência |
+|---|---|---|
+| Importação e compilação | 2 samples importados, assemblies `...Samples.AbilitiesPlayground` e `...Samples.AbilitiesCombatCharacterHfsm` compiladas sem erros/avisos | — |
+| Validator nas duas cenas, assets e prefabs | **0 erros, 0 avisos, 0 scripts ausentes** | `samples_validation.txt` |
+| Abilities Playground (só Abilities + Stats, tudo em assets) | Soak (cone) aplica `Wet` nos dois dummies; Zap no mais próximo: `removed Wet (Interaction)` → `Stunned` no passo seguinte; Fireball (projétil do ponto `Hand`) aplica `Impact` + `Burn` no Hexer; Shield dispersa o veneno ativo (`Dispelled`) e bloqueia o próximo dardo (`blocked Poison (Immune)`); Cleanse remove o veneno; Energy Burst: 2 cargas, a terceira falha (`NoCharges`); passiva `FocusAura` regenera energia | `playground_run.txt`, `10_playground.png` |
+| Abilities Combat Character HFSM | Bolt contra guarda: **Blocked** (chip 1,4); contra parry: **Parried**; sem defesa: **Hit 7** + `Burn` (via `ApplyGameplayEffectOnHit`); Dash: impulso (x −3 → −1,74), facing travado, i-frames; Flame Strike (`PerformAttack`): Hit 15 → `Event.HitConfirmed` → passiva **Battle Focus** (`ManaSurge` +5); Meditate ativo (`Meditation`) **interrompido** no passo seguinte ao golpe que interrompe (`Event.Interrupted` → `ended Meditate (Interrupted)`, efeito da janela removido); estados da HFSM (Cast, Hitstun, Attack, Guard) | `combat_character_hfsm_run.txt`, `11_combat_sample.png` |
+
+Problemas encontrados e corrigidos nos samples: a interação Wet + Shock não removia `Wet` (a remoção usa as tags de
+asset; o efeito `Wet` passou a ter a tag `Wet` como asset tag); `AbilityTargetPoint.Validate` acusava erro falso em
+prefabs (procurava o ASC só em pais ativos; corrigido com `includeInactive` e teste de regressão); o painel mostrava
+"Infinito" para efeitos infinitos; o script de montagem que apagava e recriava `Data` no mesmo passo criava
+`Data 1` e perdia campos (montagem passou a exigir pasta vazia e a criar os assets depois de configurados, como no M4).
+
+## Fechamento (entrega 6)
+
+### Regressão completa do host (2026-10-13)
+| Package | EditMode | PlayMode |
+|---|---|---|
+| Core | 62/62 | — (sem testes de PlayMode) |
+| Stats | 126/126 | 4/4 |
+| HFSM | 118/118 | 5/5 |
+| Character | 164/164 | 85/85 |
+| Combat | 164/164 | 105/105 |
+| Abilities (inclui integrações e ferramentas) | 68/68 | 96/96 |
+| **Total** | **702/702** | **295/295** |
+
+QG12 (projeto vazio só com Core + Stats + Abilities): ver CHANGELOG/TESTING do package (134 testes, 0 mensagens do
+compilador; as assemblies de integração e o sample 2 não compilam sem os outros packages, como esperado).
+
+### Critérios de aceite (§18.2)
+| # | Status | Evidência |
+|---|---|---|
+| AC1 | ✅ | Playground: 7 habilidades e 9 efeitos só com assets (projétil, periódico com stacking); sample 2: 5 habilidades só com assets |
+| AC2 | ✅ | `AbilityLifecyclePlayModeTests` (ativa, passiva, por evento com a mesma validação); Battle Focus por evento no sample 2 |
+| AC3 | ✅ | `AbilityCostPlayModeTests`; validator `OnFirstDelivery` × Combat (`IntegrationValidationAndAllocationTests`) |
+| AC4 | ✅ | `ActiveEffectSetTests`, `AbilitySystemPlayModeTests` |
+| AC5 | ✅ | Testes com ordem embaralhada do `AbilityRig` (efeitos, habilidades, projéteis com saturação) |
+| AC6 | ✅ | Δt 0,02/1/60/0,01/0,0333 (`AbilityLifecyclePlayModeTests`, `CooldownAndCommandPlayModeTests`, `AbilityToolsTests`) e `timeScale` 0,5 no player loop (`ClosurePlayModeTests`) |
+| AC7 | ✅ | `CombatOrchestrationPlayModeTests` (n + 2, n + 1, Blocked/PierceGuard, Parried, obstáculo, hitstop) sem mudar o Combat |
+| AC8 | ✅ | `ClosurePlayModeTests.FiftyFullActors_WithPhysics_DoNotAllocate_InTheSteadyState` (50 atores PhysX com custo, cooldown, targeting de área, leque de projéteis, área persistente, janela e efeitos periódicos); efeitos com 50 atores; integrações |
+| AC9 | ✅ | Busca por nomes de jogo no código, assets e samples do package: só nas regras de governança (CLAUDE/ROADMAP) |
+| AC10 | ✅ | QG1–QG12 abaixo |
+| AC11 | ✅ | Testes de `Rebuild` (entrega 1) |
+| AC12 | ✅ | `ConditionalEffectTests`, validator de ciclos |
+
+### Quality Gates
+| QG | Status | Observação |
+|---|---|---|
+| QG1 Compila sem erros/avisos | ✅ | console 0/0 no host; QG12 0 mensagens |
+| QG2 Sem jogo consumidor | ✅ | QG12 em projeto vazio |
+| QG3 Testes verdes | ✅ | tabela acima |
+| QG4 Sample funcional | ✅ | dois samples importados e executados |
+| QG5 Docs | ✅ | README, CONTRACTS, ARCHITECTURE, TESTING, ROADMAP, CHANGELOG |
+| QG6 API pública listada | ✅ | CONTRACTS |
+| QG7 Editor UX | ✅ | inspectors, preview, debugger, Header/Tooltip, menus |
+| QG8 Validações | ✅ | §15 e §25.8 (definições, ator, conjunto, pontes) |
+| QG9 Debug de runtime | ✅ | Ability Debugger, contadores de saturação, painéis dos samples |
+| QG10 `check_dependencies` | ✅ | OK |
+| QG11 Caso comum só pelo Inspector | ✅ | samples montados só com componentes e assets (scripts só de entrada/painel/rotina) |
+| QG12 Instalação isolada | ✅ | 134 testes (66 EditMode + 68 PlayMode), 0 mensagens do compilador |
+
+### Clone limpo
+`git clone` do host + `git submodule update --init` em pasta temporária: os seis submodules nos commits fixados
+(Abilities resolvido do repositório local por `url.insteadOf`, porque o repositório remoto ainda não existe — ver o
+relatório final) e `check_dependencies` OK no clone.
+
 ## Checklist com mouse físico (pendente do owner)
 
 1. Selecionar uma `AbilityDefinition` no Project; passar o mouse sobre as barras da linha do tempo (tooltip com s,
@@ -64,3 +138,4 @@ físico):** a lista "Checklist com mouse físico" abaixo.
    facing.
 4. Em Play Mode, abrir `Tools/RamiresTech Games/Abilities/Ability Debugger`, clicar nos atores da lista, usar *Grant*,
    *Apply* e *Clear cooldowns and refill charges*.
+5. Jogar os dois samples pelo teclado (Playground: Q W E R A S; sample 2: A/D, Espaço, J, L, Q, E, R, Shift e 1–4).
