@@ -16,3 +16,6 @@
 [submodule "Packages/com.ramirestechgames.abilities"]
 	path = Packages/com.ramirestechgames.abilities
 	url = https://github.com/GuiJR777/com.ramirestechgames.abilities.git
+[submodule "Packages/com.ramirestechgames.ai"]
+	path = Packages/com.ramirestechgames.ai
+	url = https://github.com/GuiJR777/com.ramirestechgames.ai.git

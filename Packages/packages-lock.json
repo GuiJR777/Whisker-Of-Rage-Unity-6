@@ -10,6 +10,14 @@
         "com.unity.modules.physics": "1.0.0"
       }
     },
+    "com.ramirestechgames.ai": {
+      "version": "file:com.ramirestechgames.ai",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.ramirestechgames.core": "0.4.0"
+      }
+    },
     "com.ramirestechgames.character": {
       "version": "file:com.ramirestechgames.character",
       "depth": 0,

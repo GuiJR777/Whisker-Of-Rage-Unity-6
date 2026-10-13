@@ -77,7 +77,7 @@
     },
     "com.ramirestechgames.ai": {
       "layer": 5,
-      "status": "planned",
+      "status": "implemented",
       "assemblyRoot": "RamiresTechGames.AI",
       "define": "RAMIRESTECHGAMES_AI",
       "hard": [
