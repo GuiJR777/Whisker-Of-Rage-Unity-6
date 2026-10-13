@@ -186,22 +186,31 @@ editor de grafo no M5).
 
 ## ai — `RamiresTechGames.AI` (L5) · M6
 
-**Responsabilidade:** decidir intenções com Behaviour Tree.
+**Responsabilidade:** decidir intenções com Behaviour Tree e entregá-las aos executores pelos command buffers.
+Especificação normativa: [m6-ai-design](design/m6-ai-design.md) v2; ADRs 0026–0032.
 
 | Contrato | Tipo | Descrição |
 |---|---|---|
-| `BehaviourTreeDefinition` | SO | Grafo de nós (SR). |
-| `BehaviourNode` | SR | Ciclo `OnStart`/`OnTick`/`OnStop`, `NodeStatus` ∈ {Running, Success, Failure}. |
-| Composites | Selector, Sequence, Parallel | Parallel apenas com política explícita de sucesso/falha. |
-| Decorators | Inverter, Repeat, Cooldown, TimeLimit, Conditional (com abort/interrupção) | |
-| `BlackboardDefinition` / `Blackboard` | SO / Pure | Chaves tipadas; instância por agente. |
-| `ISensor` | SR | Visão, alcance, ruído → escrevem no Blackboard. |
-| `ITargetSelector` | SR | Seleção de alvo por pontuação. |
-| `BehaviourTreeRunner` | MB | Tica em `DECISION` com intervalo configurável. |
-| Integrações opcionais | `Integration/Stats` (condições sobre stats/recursos, ADR-0009), `Integration/Character` (MoveTo, Strafe, Flee → `CharacterCommandBuffer`), `Integration/Combat` (Attack, Defend → `CombatCommandBuffer`), `Integration/Abilities` (UseAbility → `AbilityCommandBuffer`). |
+| `BehaviourTreeDefinition` | SO | Nós SR em lista plana, subárvores, `TickBudget` (unidades de trabalho), `RestartPolicy`. |
+| `BehaviourNode` / `<TMemory>` | SR | Por ativação: `OnStart` e `OnStop(reason)` exatamente uma vez, `OnTick` no máximo uma vez por tick; `NodeStatus` ∈ {Running, Success, Failure}; `StopReason` ∈ {Completed, Aborted, TreeStopped}. |
+| Composites | Sequence, Selector, Parallel, Random, Utility, Subtree, `EngagementScope` | `Parallel` com vários ramos ativos e `SuccessPolicy`/`FailurePolicy`/`ConflictPolicy` explícitas. |
+| Decorators / services | anexados aos nós | Condition com abort `Self`/`LowerPriority`/`Both` (um abort por tick, ordem em pré-ordem, sem cascata), Cooldown, TimeLimit, Repeat, Inverter, ForceResult; services periódicos. |
+| Canais de saída | regra | Primeiro escritor em pré-ordem vence por tick; canal de estado volta ao neutro quando o detentor para. |
+| `BlackboardDefinition` / `Blackboard` | SO / Pure | Chaves tipadas por GUID, sem boxing; escrita externa coalescida por chave (não satura). |
+| `AIAgent` | MB | `FixedUpdate`, `DECISION + 20`, intervalo em passos escalonado; `TakeControl`/controle perdido; RNG por agente. |
+| `AIWorld` | MB | Um por cena (sem singleton): `WorldId`, passo, P0 (`DECISION + 0`), estímulos, arbitragem (`DECISION + 60`). |
+| `AIEntityId` / `AIEntityHandle` | struct | Identidade de 64 bits (duplicata recusada); handle = mundo + vaga + geração. |
+| `AIPerceivable`, `ISensor`, `PerceptionMemory`, `StimulusInbox` | MB / SR / Pure | Registro com capacidade declarada; descoberta sem física (física só para linha de visão); estímulos com top-K global e caixa por agente (entrega cronológica); memória top-K. |
+| `ITargetSelector` | SR | Pontuação com histerese, desempate por id. |
+| `EngagementScope` / `EngagementTokenHandle` | nó / struct | Pedido → concessão (fase +60) → retenção durante o filho; liberação exatamente uma vez. |
+| `IAgentLocomotion`, `INavigationProvider` | extension points | Movimento no plano XZ por comandos; navegação direta (NavMesh fora). |
+| `IAgentCommandBridge`, `CommandOutcome` | extension point / enum | Caminhos `HfsmOwner`/`AgentOwner` (correlação por token) e `PackageOwner` (borda única, `Unconfirmed`). |
+| Integrações opcionais | `Integration/Stats` (condições, ADR-0009), `Integration/Character` (`CharacterAgentLocomotion` → `CharacterCommandBuffer`), `Integration/Combat` (`PerformCombatAction`, `HoldGuard` → `CombatCommandBuffer`; estímulo de dano), `Integration/Abilities` (`ActivateAbility`, `HoldAbilityInput` → `AbilityCommandBuffer`; detectabilidade por tags). |
 
-**Não faz:** mover, atacar ou animar diretamente.
-**Editor:** Behaviour Tree Graph Editor, Runtime Blackboard Debugger, status de nós ao vivo.
+**Não faz:** mover, atacar, ativar habilidades ou animar diretamente; consumir bordas (`TryConsume`); depender da HFSM
+(integração exclusivamente pelos command buffers, ADR-0004).
+**Editor:** Behaviour Tree Graph Editor (GraphView sobre modelo de edição), AI Debugger (status de nós, Blackboard,
+percepção, engajamento, rastreios), gizmos, validators.
 
 ---
 
@@ -227,7 +236,7 @@ editor de grafo no M5).
 
 ```
 [COMMAND_SOURCES] PlayerInput → CharacterCommandBuffer / CombatCommandBuffer (jogador)
-[DECISION]        BehaviourTreeRunner (inimigo) → nó Attack → CombatCommandBuffer (inimigo)
+[DECISION]        AIAgent do inimigo (FixedUpdate) → PerformCombatAction → CombatCommandBuffer (inimigo)
 [STATE_MACHINE]   HFSM do inimigo: guard "HasAttackRequest" → AttackState (Combat.Integration.HFSM)
 [COMBAT]          ComboRunner escolhe AttackDefinition → HitBox ativa → HurtBox do jogador
                   → DamageResolver(StatCollection atacante/defensor) → HitResult(Hit)

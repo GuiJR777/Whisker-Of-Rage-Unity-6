@@ -202,6 +202,8 @@ Update:              COMMAND_SOURCES → buffers   DECISION → BT escreve inten
                      STATE_MACHINE → avalia transições (peek) → Exit/Enter (Enter consome) → OnTick(ativos)
                      → entrega notificações (Animator, VFX, debugger)
 ```
+*Revisão (M6, [ADR-0026](../adr/0026-ai-execution-and-timing.md)):* a BT passou a decidir no `FixedUpdate`, na banda
+`DECISION`; com `EvaluationLoop = FixedUpdate` a HFSM consome as bordas da IA no mesmo passo fixo.
 
 ---
 

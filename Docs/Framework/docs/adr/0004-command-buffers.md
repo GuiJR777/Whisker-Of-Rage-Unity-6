@@ -1,6 +1,7 @@
 # ADR-0004 — Command buffers por domínio: Player e AI compartilham execução
 
-- **Status:** Aceita (M0) · **Revisada** na revisão do M0: ciclo de vida de comandos explicitado
+- **Status:** Aceita (M0) · **Revisada** na revisão do M0: ciclo de vida de comandos explicitado · **Revisão parcial** pelo
+  [ADR-0026](0026-ai-execution-and-timing.md) (M6, IA no passo fixo) e [ADR-0032](0032-ai-command-output-and-tracking.md)
 - **Relacionada:** [ADR-0003](0003-execution-order-bands.md) (bandas e loops)
 
 ## Contexto
@@ -42,6 +43,14 @@ que roda 0..N vezes por frame (ADR-0003): sem um contrato, inputs se perdem ou e
 - Input System: enfileirar bordas pelo callback `performed` da action ou com `WasPressedThisFrame()` **somente em
   `Update`**. Nunca consultar `WasPressedThisFrame()` em `FixedUpdate` (perde ou duplica input).
 - AI escreve na banda `DECISION` (`Update`), no intervalo de avaliação da BT.
+
+## Revisão parcial (ADR-0026 e ADR-0032, M6, 2026-10-13)
+As regras acima são mantidas como registro histórico, com estas precisões para a IA:
+- "AI escreve na banda `DECISION` (`Update`)" passa a **"AI escreve na banda `DECISION` no passo fixo"**
+  ([ADR-0026](0026-ai-execution-and-timing.md)); fontes do jogador continuam amostrando em `Update`;
+- a IA nunca consome bordas (garantia 4); acompanha o desfecho por token e pela identidade da execução e assume o
+  buffer com `SetSource` (garantia 5) — [ADR-0032](0032-ai-command-output-and-tracking.md);
+- a IA continua sem depender da HFSM no grafo.
 
 ## Latência
 Uma borda produzida no `Update` do frame N é consumida no primeiro passo fixo do frame N+1

@@ -1,6 +1,7 @@
 # ADR-0003 — Ordem de execução por bandas definidas no Core
 
-- **Status:** Aceita (M0) · **Revisada** na revisão do M0: contrato e limitações explicitados
+- **Status:** Aceita (M0) · **Revisada** na revisão do M0: contrato e limitações explicitados · **Revisão parcial** pelo
+  [ADR-0026](0026-ai-execution-and-timing.md) (M6, IA no passo fixo)
 - **Relacionada:** [ADR-0004](0004-command-buffers.md) (ciclo de vida de comandos)
 
 ## Contexto
@@ -45,6 +46,16 @@ O framework não tem um loop de simulação próprio nesta fase.
 | O momento em que o Input System processa eventos (depende do *Update Mode* dele). | Comandos de borda são *latched* nos buffers (ADR-0004), então isso não causa perda. |
 | Objetos instanciados no meio do frame: o primeiro `Update` deles pode ser no frame seguinte. | Spawns não participam do tick do frame em que nasceram. |
 | Determinismo entre máquinas/frame rates. | Não-objetivo (R14). |
+
+## Revisão parcial (ADR-0026, M6, 2026-10-13)
+A decisão original abaixo é mantida como registro histórico; para a **IA** vale o
+[ADR-0026](0026-ai-execution-and-timing.md):
+- as Behaviour Trees da banda `DECISION` rodam em **`FixedUpdate`** (fases `DECISION + 0/+20/+60`), não em `Update`;
+- fontes de comando do jogador (`COMMAND_SOURCES`) continuam em `Update`;
+- as bandas continuam sendo **convenção de execução, não scheduler**;
+- HFSM com `EvaluationLoop = FixedUpdate` consome as bordas da IA no mesmo passo fixo; HFSM em `Update` mantém a
+  latência entre loops descrita aqui;
+- nenhum código do Core ou da HFSM mudou.
 
 ## Update × FixedUpdate
 | | `FixedUpdate` | `Update` |

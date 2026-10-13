@@ -29,12 +29,12 @@ Decisões transversais. ADRs específicas de um package ficam em `Documentation~
 | [0023](0023-ability-composition.md) | Composição de habilidades por linha do tempo e ações SR (sem grafo) | Aceita |
 | [0024](0024-projectiles-and-combat-delivery.md) | Projéteis determinísticos e entrega pelo Combat | Aceita |
 | [0025](0025-owned-tags-in-abilities.md) | Tags possuídas com contagem no Abilities | Aceita |
-| [0026](0026-ai-execution-and-timing.md) | Execução da IA: passo fixo na banda DECISION, fases e intervalos | Proposta |
-| [0027](0027-behaviour-tree-execution-model.md) | Modelo de execução da Behaviour Tree: caminho ativo, aborts e orçamento | Proposta |
-| [0028](0028-blackboard.md) | Blackboard tipado por agente com escrita diferida | Proposta |
-| [0029](0029-ai-perception.md) | Percepção por registro, snapshot e estímulos com ordem total | Proposta |
-| [0030](0030-agent-locomotion-and-navigation.md) | Contrato de locomoção do agente e navegação sem NavMesh | Proposta |
-| [0031](0031-engagement-coordination.md) | Coordenação de engajamento por tokens e vagas | Proposta |
-| [0032](0032-ai-command-output-and-tracking.md) | Saída da IA por command buffers e rastreamento por observação | Proposta |
+| [0026](0026-ai-execution-and-timing.md) | Execução da IA: passo fixo na banda DECISION, fases e intervalos | Aceita |
+| [0027](0027-behaviour-tree-execution-model.md) | Modelo de execução da Behaviour Tree: conjunto ativo, aborts e orçamento | Aceita |
+| [0028](0028-blackboard.md) | Blackboard tipado por agente com escrita externa coalescida | Aceita |
+| [0029](0029-ai-perception.md) | Percepção: identidades, registro, snapshot e estímulos com ordem total | Aceita |
+| [0030](0030-agent-locomotion-and-navigation.md) | Contrato de locomoção do agente e navegação sem NavMesh | Aceita |
+| [0031](0031-engagement-coordination.md) | Escopo de engajamento por tokens e vagas | Aceita |
+| [0032](0032-ai-command-output-and-tracking.md) | Saída da IA por command buffers e rastreamento por token | Aceita |
 
 Template: [`templates/package/Documentation~/adr/0000-template.md`](../../templates/package/Documentation~/adr/0000-template.md).

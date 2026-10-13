@@ -21,8 +21,8 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 **M0–M3 concluídos** (Core `v0.3.0`, Stats `v0.1.0`, HFSM `v0.1.0`, Character `v0.1.0`). **M4 — Combat** implementado,
 aguardando a validação manual do owner (sem tags). **M5 — Abilities**: **tecnicamente aprovado** (auditoria final, 2026-10-13),
 aguardando a validação manual do owner e o release formal (Abilities 0.1.0 e Stats 0.1.1 candidatas, sem tags).
-**M6 — AI / Behaviour Trees**: somente design ([especificação](Docs/Framework/docs/design/m6-ai-design.md)), sem
-código. Não publicar tags do M4/M5 nem declarar releases antes da validação manual.
+**M6 — AI / Behaviour Trees**: design v2 aprovado ([especificação](Docs/Framework/docs/design/m6-ai-design.md),
+ADRs 0026–0032 aceitas); implementação ainda não iniciada. Não publicar tags do M4/M5 nem declarar releases antes da validação manual.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras
