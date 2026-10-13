@@ -814,4 +814,15 @@ seguem o mesmo instante (processados em A1 de *n + 1*).
 | Driver em `ABILITIES + 15`; `Blocked` consome `MaxHits` | Aprovados. |
 | Feedback externo de áreas | Áreas com entrega externa registram os alvos de `Hit`, `Blocked` e `Parried` (re-acerto só após o intervalo) e contam `Hit`/`Blocked`; nunca terminam por bloqueio ou parry. |
 | Magnitudes do instigador em efeitos de golpe do Combat | **Capturadas**, nunca lidas pelo alvo: golpe corpo a corpo captura do ASC do atacante quando o Combat decide o golpe (instante em que o próprio Combat lê os stats do atacante); projéteis e áreas usam o spec capturado no lançamento (§25.4: o disparo guarda só dados do spawn), inclusive com o lançador destruído. Sem ASC no atacante (ou entrega não lançada por habilidade) o fallback é usado e **contado** (`UncapturedCount`). |
-| Magnitudes do instigador em efeitos condicionais | **Pendente de decisão do owner.** O spec condicional é criado na A2 do alvo; ler o instigador ali quebraria o determinismo (§25.1), então as magnitudes do instigador usam o fallback. Deixou de ser silencioso: o validator avisa em toda interação cujo efeito lê o instigador. Opções: (a) manter o fallback documentado; (b) capturar, ao criar o spec pai, as magnitudes dos efeitos condicionais diretos (um nível; spec maior); (c) proibir magnitudes do instigador em efeitos condicionais (erro no validator). |
+| Magnitudes do instigador em efeitos condicionais | **Opção (c) aprovada para a 0.1.0 (auditoria final).** Efeito condicional não pode usar magnitude que captura o instigador: o validator acusa **erro** e, em runtime, o efeito é **bloqueado** (`EffectBlocked`, motivo `ConditionalUncapturedInstigator`, contador de interações bloqueadas) em vez de aplicar o fallback. Continuam válidos: constantes, stats do alvo, curva por nível e set-by-caller. O `EffectSpec` não cresce e o alvo nunca lê o instigador na A2. **Futuro:** captura das magnitudes condicionais do instigador (ex.: no spec pai), com ADR. |
+
+### 26.1 Saturação determinística (auditoria final)
+
+| Buffer | Capacidade | Política |
+|---|---|---|
+| Consulta física da ponte do Combat (sweep/overlap) | 128 colliders | Explícita: abaixo dela o subconjunto independe da ordem de criação; consulta cheia é contada (`SaturationCount`) e o que a PhysX deixou de fora não é visto (limite documentado). |
+| Contatos por disparo/área e passo na ponte | 32 | Top-K por (distância, `CombatantId`) com substituição do pior, qualquer que seja a ordem de chegada (`CandidateOverflowCount`). |
+| Feedback externo por instância (`ReportContact`) | 32 | Top-K por (alvo, sequência) com substituição do pior; igual aos candidatos que a ponte envia por passo, então o feedback do Combat não transborda. |
+| Registro de re-acerto por instância | 32 | Um disparo/área acerta no máximo 32 alvos distintos na vida (novos alvos recusados quando cheio). |
+| Resultados causados por passo (`RecordCaused`) | 64 | Top-K por (disparo, alvo, sequência) com substituição do pior; só são despachados os resultados cujo feedback o disparo manteve, então as passivas recebem exatamente o conjunto preservado. |
+| Gameplay Events e eventos de listener por ator | 16 e 64 (configuráveis no ASC) | Saturação da fila por chave total (mantém as menores), contada; limite por ator documentado. |
