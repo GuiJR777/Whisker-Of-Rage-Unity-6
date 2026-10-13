@@ -335,7 +335,8 @@ Magnitudes (`IMagnitudeCalculation`): constante, curva por nível, stat do insti
   no sink; o Combat o aplica na fase 4 de *n + 1*, que coloca o `EffectSpec` na caixa do ASC; o efeito vale em **A2
   de *n + 2*** (latência exata na §25.3; regra do Combat respeitada).
 - `CombatProjectileSource`/`CombatAreaSource` (`ICombatHitSource`, banda `COMBAT`): candidatos de projéteis/áreas.
-- Ação `PerformAttack` (inicia um `AttackDefinition` no `CombatController` do ator) e janela `GrantArmor`.
+- Ação `PerformAttack` (inicia um `AttackDefinition` no `CombatController` do ator). A janela `GrantArmor` foi
+  **adiada** (fora da 0.1.0, decisão da auditoria preliminar — §26).
 - `CombatStateTags`: espelha estados do `CombatTarget` em tags configuráveis (hitstun, knockdown, agarrado, guarda,
   hitstop) — base para `ActivationBlockedTags` e interrupção.
 - Interrupção: golpe com `Interrupts` envia o evento configurado (ex. tag "interrompido") → habilidades com essa tag
@@ -800,3 +801,17 @@ seguem o mesmo instante (processados em A1 de *n + 1*).
   respeitando o limite.
 - **Cooldown de grupo, `Restart`, `OwnedTagCounter`** (fontes múltiplas, handle obsoleto/estrangeiro) e
   **`AbilityTargetPoint`** (facing ±X/±Z, presenter girando).
+
+---
+
+## 26. Ajustes da auditoria preliminar (2026-10-13) — normativos
+
+| Tema | Decisão |
+|---|---|
+| Janela `GrantArmor` | **Adiada** para depois da 0.1.0. A armadura continua disponível pelas janelas de armadura do `AttackDefinition` iniciado por `PerformAttack`. Qualquer API de armadura externa no Combat exige ADR e aprovação próprias. |
+| Passivas por acertos de projéteis | **Obrigatório.** Cada resultado entregue a um disparo pelo `ReceiveHitFeedback` é guardado (sem efeito colateral, fase 3) com a identidade do disparo e o instigador; depois da fase 4 do Combat do mesmo passo (`COMBAT + 85`) os resultados são ordenados por (disparo, alvo, sequência da decisão) e entregues ao `CombatAbilityBridge` do instigador, cujos mapeamentos `Caused` enviam os Gameplay Events — mesmo caminho e mesmo instante do `HitConfirmed` corpo a corpo (A1 de *n + 1*). `Hit`, `Blocked`, `Parried` e os demais desfechos são separados pelas condições dos mapeamentos; instigador destruído ou desabilitado não recebe nada (contado). |
+| Parry de projétil | O disparo termina, sem reflexão e **sem** parry-stun no lançador (política padrão). |
+| Driver em `ABILITIES + 15`; `Blocked` consome `MaxHits` | Aprovados. |
+| Feedback externo de áreas | Áreas com entrega externa registram os alvos de `Hit`, `Blocked` e `Parried` (re-acerto só após o intervalo) e contam `Hit`/`Blocked`; nunca terminam por bloqueio ou parry. |
+| Magnitudes do instigador em efeitos de golpe do Combat | **Capturadas**, nunca lidas pelo alvo: golpe corpo a corpo captura do ASC do atacante quando o Combat decide o golpe (instante em que o próprio Combat lê os stats do atacante); projéteis e áreas usam o spec capturado no lançamento (§25.4: o disparo guarda só dados do spawn), inclusive com o lançador destruído. Sem ASC no atacante (ou entrega não lançada por habilidade) o fallback é usado e **contado** (`UncapturedCount`). |
+| Magnitudes do instigador em efeitos condicionais | **Pendente de decisão do owner.** O spec condicional é criado na A2 do alvo; ler o instigador ali quebraria o determinismo (§25.1), então as magnitudes do instigador usam o fallback. Deixou de ser silencioso: o validator avisa em toda interação cujo efeito lê o instigador. Opções: (a) manter o fallback documentado; (b) capturar, ao criar o spec pai, as magnitudes dos efeitos condicionais diretos (um nível; spec maior); (c) proibir magnitudes do instigador em efeitos condicionais (erro no validator). |

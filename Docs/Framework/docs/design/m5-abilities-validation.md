@@ -128,6 +128,30 @@ compilador; as assemblies de integração e o sample 2 não compilam sem os outr
 (Abilities resolvido do repositório local por `url.insteadOf`, porque o repositório remoto ainda não existe — ver o
 relatório final) e `check_dependencies` OK no clone.
 
+## Auditoria preliminar (2026-10-13) — correções e gates
+
+Decisões e correções (normativas em [m5-abilities-design §26](m5-abilities-design.md)):
+
+| Item | Resultado | Teste |
+|---|---|---|
+| Passivas por acertos de projéteis e áreas | Mesma passiva "ganhar recurso ao acertar" funciona com corpo a corpo e projétil, ambos processados na A1 de *n + 1* (sem duplicação); `Blocked` e `Parried` geram seus próprios eventos; área com três alvos no mesmo passo gera três eventos na ordem (4, 6, 9) de identidade; disparo perfurante gera um evento por alvo; instigador destruído não recebe nada (contado); registrar e despachar não alocam | `ProjectileCausedEventsPlayModeTests` (5) |
+| Parry de projétil | Disparo encerrado, sem reflexão e sem parry-stun no lançador | `BlockedAndParriedShots_...` |
+| Áreas com entrega externa | **Bug corrigido:** o feedback era descartado (acertavam a cada passo, ignorando o intervalo); agora registram e contam | `SeveralTargetsInOneStep_...` (falhava com 12 eventos antes da correção) |
+| Magnitudes do instigador em efeitos de golpe | **Bug corrigido:** usavam o fallback; agora capturadas (corpo a corpo na decisão, projéteis/áreas no lançamento, valor preservado mesmo com o lançador destruído ou com o stat alterado depois) | `HitEffectCapturePlayModeTests` (2) |
+| Magnitudes do instigador em efeitos condicionais | Fallback mantido (determinismo da A2), agora **com aviso do validator**; decisão do owner pendente | `ConditionalEffect_ReadingInstigatorMagnitudes_...` |
+| `GrantArmor` | Adiada (design §26, CONTRACTS, ROADMAP) | — |
+
+Gates depois das correções:
+
+| Gate | Resultado |
+|---|---|
+| Host EditMode | Core 62, Stats 126, HFSM 118, Character 164, Combat 164, Abilities 69 — **703/703** |
+| Host PlayMode | Stats 4, HFSM 5, Character 85, Combat 105, Abilities 103 (inclui 35 de integração Combat/Character/HFSM) — **302/302** |
+| Input System | `PlayerInputAbilitySourceTests` 2/2 (dentro dos 69 do Abilities) |
+| Zero GC | `ClosurePlayModeTests` (50 atores), `IntegrationValidationAndAllocationTests`, `RecordAndDispatch_DoNotAllocate` — verdes |
+| QG12 | 135 testes (67 EditMode + 68 PlayMode), 0 mensagens do compilador |
+| `check_dependencies` | OK |
+
 ## Checklist com mouse físico (pendente do owner)
 
 1. Selecionar uma `AbilityDefinition` no Project; passar o mouse sobre as barras da linha do tempo (tooltip com s,
