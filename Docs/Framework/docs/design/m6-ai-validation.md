@@ -39,3 +39,20 @@ percebível não registra), porque durante a ativação a ordem de `OnEnable` en
 percebe em todas; (3) linha de visão depende de colliders sincronizados pela física (testes chamam
 `Physics.SyncTransforms` ao criar paredes); (4) dano de fonte não registrada é ignorado pela memória (a seleção só usa
 entidades registradas).
+
+## Entrega 3 — movimento e engajamento (AI `d4eb189`)
+
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings |
+| EditMode (AI) | 68/68 — inclui validators de perfil de engajamento e de nós de movimento/escopo |
+| PlayMode (AI) | 38/38 — chegada, `AlignDepthFirst`, desvio de parede, travamento, separação, patrulha, distância/fuga/órbita, facing em `Parallel`, pulo/dash rastreados; engajamento com 6 agentes e 2 tokens (máximo 2 detentores em 400 passos, token retido em todos os ticks do filho, vagas distintas, liberação única por concessão), interrupção, troca de alvo, handle velho, agente desabilitado, revogação por tempo, mesma sequência de concessões em 3 ordens de criação |
+| Zero GC | 12 agentes com escopo, movimento até a vaga, desvio, separação, órbita e revogação |
+| QG12 (só Core) | 106 testes (68 + 38), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+
+Desvios e precisões: (1) a liberação do token é imediata (síncrona) — concessões continuam só na fase +60, então o
+resultado não depende da ordem dos agentes; isso permite reativar o escopo no mesmo tick sem conflito; (2) o lado de
+desvio de obstáculo é mantido pelo nó enquanto a sonda acerta (sem isso o agente oscilava no eixo da parede — achado
+pelo teste); (3) com score = −distância, os agentes mais próximos recuperam o token: a rotação entre atacantes é
+configuração da árvore (ex.: `Cooldown` no escopo), não regra do package.
