@@ -180,6 +180,13 @@ Gates (Abilities `ea204ba`, Stats `24304db`, host `c97c7d4`):
 | `check_dependencies` | OK |
 | Clone limpo autenticado | `git clone --recurse-submodules` em caminho curto (num caminho longo os objetos do submodule ficam incompletos — seção Submodules do `CLAUDE.md` do host): host `c97c7d4`, seis submodules nos commits fixados, `fsck` e `status` limpos, 7 evidências via LFS |
 
+## Resultado da auditoria técnica final (2026-10-13)
+
+**M5 tecnicamente aprovado**: as seis entregas estão implementadas e as correções de estabilização foram verificadas;
+nenhuma alteração de código adicional foi pedida. Pendentes: a validação manual abaixo e o release formal (sem tags do
+M4 nem do M5). Riscos conhecidos mantidos: R19 (pasta temporária em testes de Editor) e R32 (limites das filas de
+eventos por ator).
+
 ## Checklist com mouse físico (pendente do owner)
 
 1. Selecionar uma `AbilityDefinition` no Project; passar o mouse sobre as barras da linha do tempo (tooltip com s,

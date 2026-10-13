@@ -1,6 +1,7 @@
 # M5 — Abilities · Especificação técnica
 
-- **Status:** **v2 — aprovada para implementação** (arquitetura geral e D1–D18 aprovadas; ajustes obrigatórios da
+- **Status:** **implementada e tecnicamente aprovada** (auditoria técnica final, 2026-10-13; aguardando validação
+  manual do owner e release formal, sem tags) · design: **v2 — aprovada para implementação** (arquitetura geral e D1–D18 aprovadas; ajustes obrigatórios da
   revisão incorporados na §25, que prevalece em caso de divergência; ADRs 0019–0025 aceitas) · **Data:** 2026-10-12
 - **Histórico:** v1 (proposta) → v2 (ajustes 1–6 e refinamentos da revisão: determinismo A0/A1/A2, custos, latência
   do `IHitEffect`, projéteis, `Stats.Rebuild`, cadeias condicionais)
