@@ -32,3 +32,24 @@ inteiros do token; guardá-los num objeto (`Data`) alocaria a cada equipamento �
 separado de `InvalidItem`; (4) efeitos que alteram stats precisam de `IStatsRebuildAware` para sobreviver a um
 `Rebuild` (o modelo de referência usa um efeito assim); (5) `Deactivate` chamado durante uma transação (componente
 desabilitado por um efeito) retorna `Reentrant` e só marca o controlador inativo. Nenhum package existente alterado.
+
+## Entrega 2 — restrições e armazenamento (Equipment `dcc84e3`)
+
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings |
+| EditMode | 37/37 — novos: `RestrictionsAndStorageTests` (10) |
+| PlayMode | 2/2 |
+| Ocupação múltipla | arma de duas mãos com a mão secundária ocupada: `Fail` → `SlotsBlocked` com o escudo em `FailedItem` e stats intactos; `DisplaceToStorage` → escudo vai ao stash na mesma transação (contribuições revertidas), mão secundária bloqueada; no sentido inverso (escudo entrando na mão bloqueada) a arma de duas mãos é o conflito e sai com `DisplaceToStorage`, aceita pela capacidade líquida |
+| Requisitos | composição `All`/`Any`, índice do requisito recusado, sem reavaliação (D8) e satisfação pelo item que sai na mesma troca (R54) |
+| Armazenamento | fonte não autorizada → `ItemNotAvailable`; `StorageFull`/`StorageRejected` antes de qualquer efeito (item e stats intactos); violações de commit (pós-condição e exceção) → `IsClean = false`, item solto e em `DetachedByViolation`; eventos do stash depois de `Changed`; colocação em armazenamento recusada durante a transação |
+| Zero GC | também com equipar do stash, deslocamento e desequipar para o stash |
+| QG12 (Core + Stats) | 39 testes (37 + 2), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+
+Desvios e precisões: (1) `IEquipmentStorageNotifications` acrescentado para que armazenamentos com eventos próprios os
+entreguem depois da transação (o `EquipmentStash` usa); (2) `EquipmentItem.TryPlaceInStorage`/`TryTakeFromStorage`
+são o único caminho de um armazenamento mudar a localização fora de transações (recusados durante uma); (3) uma
+violação em `CommitRemove` (o armazenamento continua com o item já equipado) mantém o item equipado, registra
+`StorageCommit` e o lista em `DetachedByViolation` — não há como soltar um item já consolidado no slot; (4) com
+`DisplaceToStorage` e `Destination` nulo, os deslocados ficam soltos. Nenhum package existente alterado.
