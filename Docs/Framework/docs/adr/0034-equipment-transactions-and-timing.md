@@ -1,6 +1,6 @@
 # ADR-0034 — Transações atômicas do Equipment em sete etapas, sem tick
 
-- **Status:** Proposta — revisada na v2 do design do M7 (2026-10-14), após a auditoria do v1 · **Milestone:** M7
+- **Status:** Aceita (auditoria da v2 do design do M7, 2026-10-14; proposta no v1, revisada na v2) · **Milestone:** M7
 - **Relacionada:** [ADR-0003](0003-execution-order-bands.md), [ADR-0019](0019-abilities-execution-and-timing.md),
   [ADR-0033](0033-equipment-contribution-ledger.md), [ADR-0036](0036-equipment-slots-occupancy-and-storage.md),
   [especificação do M7](../design/m7-equipment-design.md) §7, §9, §13
@@ -43,6 +43,12 @@ remover antigo → conjuntos) permitia exatamente isso quando um limiar de conju
 8. **Tempo**: modificadores valem na chamada; passivas na A2 seguinte; para o mesmo resultado em qualquer frame rate, o
    jogo chama a API no passo fixo. Inicialização: loadout inicial no `Start` (uma transação); `OnDisable` desabilita;
    `OnEnable` reaplica item a item (falha deixa o item desabilitado com motivo); `OnDestroy` reverte.
+
+9. **Precisões da auditoria da v2:** (a) o resultado distingue sucesso íntegro (`IsClean`) de sucesso com
+   `ContractViolations > 0`, e os itens `Detached` por violação ficam expostos no componente e no Debugger;
+   (b) operações enfileiradas (`Enqueue`) durante as etapas 1–4 de uma transação recusada são descartadas
+   (`Discarded`); listeners de `EquipFailed` podem enfileirar recuperação; FIFO, reentrância recusada e limite de
+   operações por drenagem (`QueueOverflow`) contra ciclos.
 
 ## Alternativas consideradas
 - **Ordem do v1 (novo → antigo → conjuntos):** limiar recusado depois de remover o antigo obrigaria a reconcedê-lo.

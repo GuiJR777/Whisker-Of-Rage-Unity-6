@@ -1,7 +1,6 @@
 # ADR-0033 — Livro de contribuições e reversibilidade exata do Equipment
 
-- **Status:** Proposta — revisada na v2 do design do M7 (2026-10-14), após a auditoria do v1 (decisão aprovada;
-  contrato de efeitos e `Rebuild` detalhados) · **Milestone:** M7
+- **Status:** Aceita (auditoria da v2 do design do M7, 2026-10-14; proposta no v1, revisada na v2) · **Milestone:** M7
 - **Relacionada:** [ADR-0020](0020-gameplay-effects-over-stats.md), [ADR-0025](0025-owned-tags-in-abilities.md),
   [ADR-0034](0034-equipment-transactions-and-timing.md), [ADR-0035](0035-equipment-abilities-through-grants.md),
   [especificação do M7](../design/m7-equipment-design.md) §3.3, §8, §9

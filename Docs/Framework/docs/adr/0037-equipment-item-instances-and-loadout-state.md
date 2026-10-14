@@ -1,6 +1,6 @@
 # ADR-0037 — Instâncias de item, localização, identidade e estado de loadout
 
-- **Status:** Proposta — revisada na v2 do design do M7 (2026-10-14), após a auditoria do v1 · **Milestone:** M7
+- **Status:** Aceita (auditoria da v2 do design do M7, 2026-10-14; proposta no v1, revisada na v2) · **Milestone:** M7
 - **Relacionada:** [ADR-0033](0033-equipment-contribution-ledger.md), [ADR-0034](0034-equipment-transactions-and-timing.md),
   [ADR-0036](0036-equipment-slots-occupancy-and-storage.md), [especificação do M7](../design/m7-equipment-design.md) §5,
   §11

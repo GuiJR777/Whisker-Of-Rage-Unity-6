@@ -1,7 +1,6 @@
 # ADR-0036 — Slots, ocupação, unicidade e armazenamento transacional
 
-- **Status:** Proposta — decisão aprovada na auditoria do v1; contrato de armazenamento detalhado na v2 do design do M7
-  (2026-10-14) · **Milestone:** M7
+- **Status:** Aceita (auditoria da v2 do design do M7, 2026-10-14; proposta no v1, revisada na v2) · **Milestone:** M7
 - **Relacionada:** [ADR-0018](0018-gameplay-tags-in-core.md), [ADR-0034](0034-equipment-transactions-and-timing.md),
   [ADR-0037](0037-equipment-item-instances-and-loadout-state.md), [especificação do M7](../design/m7-equipment-design.md)
   §4, §6, §10

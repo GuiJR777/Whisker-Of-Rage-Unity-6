@@ -1,7 +1,6 @@
 # ADR-0035 — Efeitos do Equipment sobre o Abilities somente por concessões e tags soltas
 
-- **Status:** Proposta — decisão aprovada na auditoria do v1; texto revisado na v2 do design do M7 (2026-10-14) ·
-  **Milestone:** M7
+- **Status:** Aceita (auditoria da v2 do design do M7, 2026-10-14; proposta no v1, revisada na v2) · **Milestone:** M7
 - **Relacionada:** [ADR-0002](0002-optional-integration-assemblies.md), [ADR-0020](0020-gameplay-effects-over-stats.md),
   [ADR-0025](0025-owned-tags-in-abilities.md), [ADR-0033](0033-equipment-contribution-ledger.md),
   [ADR-0034](0034-equipment-transactions-and-timing.md), [especificação do M7](../design/m7-equipment-design.md) §8.7,

@@ -216,8 +216,8 @@ percepção, engajamento, rastreios), gizmos, validators.
 
 ## equipment — `RamiresTechGames.Equipment` (L5) · M7
 
-> Contratos do design do M7 (arquitetura aprovada na auditoria do v1; v2 com os ajustes obrigatórios, aguardando
-> revisão — [especificação](design/m7-equipment-design.md), ADRs 0033–0037). Sem código ainda.
+> Contratos do design do M7 v2, **aprovado** (auditoria da v2, 2026-10-14; [especificação](design/m7-equipment-design.md),
+> ADRs 0033–0037 aceitas). Implementação em andamento.
 
 **Responsabilidade:** equipar instâncias de itens em slots de um ator e aplicar suas contribuições com
 **reversibilidade exata** (só o que o item aplicou, por handle) e **transações atômicas** (sem reconceder o item

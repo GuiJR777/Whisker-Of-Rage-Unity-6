@@ -36,10 +36,10 @@ Decisões transversais. ADRs específicas de um package ficam em `Documentation~
 | [0030](0030-agent-locomotion-and-navigation.md) | Contrato de locomoção do agente e navegação sem NavMesh | Aceita |
 | [0031](0031-engagement-coordination.md) | Escopo de engajamento por tokens e vagas | Aceita |
 | [0032](0032-ai-command-output-and-tracking.md) | Saída da IA por command buffers e rastreamento por token | Aceita |
-| [0033](0033-equipment-contribution-ledger.md) | Livro de contribuições e reversibilidade exata do Equipment | Proposta (M7; revisada na v2) |
-| [0034](0034-equipment-transactions-and-timing.md) | Transações atômicas do Equipment em sete etapas, sem tick | Proposta (M7; revisada na v2) |
-| [0035](0035-equipment-abilities-through-grants.md) | Efeitos do Equipment sobre o Abilities somente por concessões e tags soltas | Proposta (M7; revisada na v2) |
-| [0036](0036-equipment-slots-occupancy-and-storage.md) | Slots, ocupação, unicidade e armazenamento transacional | Proposta (M7; revisada na v2) |
-| [0037](0037-equipment-item-instances-and-loadout-state.md) | Instâncias de item, localização, identidade e estado de loadout | Proposta (M7; revisada na v2) |
+| [0033](0033-equipment-contribution-ledger.md) | Livro de contribuições e reversibilidade exata do Equipment | Aceita |
+| [0034](0034-equipment-transactions-and-timing.md) | Transações atômicas do Equipment em sete etapas, sem tick | Aceita |
+| [0035](0035-equipment-abilities-through-grants.md) | Efeitos do Equipment sobre o Abilities somente por concessões e tags soltas | Aceita |
+| [0036](0036-equipment-slots-occupancy-and-storage.md) | Slots, ocupação, unicidade e armazenamento transacional | Aceita |
+| [0037](0037-equipment-item-instances-and-loadout-state.md) | Instâncias de item, localização, identidade e estado de loadout | Aceita |
 
 Template: [`templates/package/Documentation~/adr/0000-template.md`](../../templates/package/Documentation~/adr/0000-template.md).

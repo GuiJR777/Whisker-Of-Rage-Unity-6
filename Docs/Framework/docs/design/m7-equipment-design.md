@@ -1,8 +1,8 @@
 # M7 — Equipment · Especificação técnica
 
-- **Status:** **v2 — ajustes obrigatórios da auditoria incorporados, aguardando revisão** (arquitetura geral aprovada na
-  auditoria do v1; D1, D2, D4, D5, D7–D9, D11–D16 aprovadas; D3, D6 e D10 refinadas na v2; nenhum código; ADRs
-  0033–0037 propostas, revisadas na v2) · **Data:** 2026-10-14
+- **Status:** **v2 — aprovada para implementação** (auditoria da v2, 2026-10-14; implementação das seis entregas
+  autorizada; ADRs 0033–0037 **aceitas**; precisões da auditoria da v2 incorporadas em §7.4 e §7.7) ·
+  **Data:** 2026-10-14
 - **Histórico:** v1 (proposta, WOR `e8f7786`) → v2 (transação em sete etapas com aplicação provisória e remoção do
   antigo só depois do ponto sem rejeição; contrato estrito de `IEquipmentEffect`; resolução de itens e contrato
   transacional do armazenamento; regras do `Rebuild` e da reativação; uso no Whiskers of Rage atualizado). Registro em
@@ -256,8 +256,11 @@ Resultado `EquipResult`: `Succeeded`, `Reason` (`EquipFailureReason`), `Detail`,
 | Livros, slots, handles | Internos | — |
 | Listeners (Stats, eventos do Equipment) | Isolados | Exceção registrada; demais listeners recebem |
 
-Uma transação que chegou à etapa 5 **é consolidada** mesmo com violações (não há como voltar sem reconceder); o
-resultado traz `Succeeded = true` e `ContractViolations > 0`; o Debugger mostra cada violação.
+Uma transação que chegou à etapa 5 **é consolidada** mesmo com violações (não há como voltar sem reconceder).
+**Precisão da auditoria da v2:** o resultado distingue sucesso íntegro (`Succeeded = true`, `IsClean = true`,
+`ContractViolations = 0`) de sucesso com violações (`Succeeded = true`, `IsClean = false`, `ContractViolations > 0`);
+o componente expõe `ViolationCount`, os itens `Detached` por violação (`GetDetachedByViolation`) e o Debugger mostra
+cada violação com transação, operação e item. Violações nunca aparecem como sucesso normal.
 
 ### 7.5 O que não é prometido
 Rollback perfeito de **callbacks externos irreversíveis** não existe: uma passiva concedida provisoriamente e revogada
@@ -279,6 +282,15 @@ Da etapa 1 até o fim da entrega de eventos, o Equipment está **ocupado**: qual
 `EquipmentComponent` aberta nesse intervalo (de efeitos, listeners do Stats ou do Equipment) retorna `Reentrant`.
 `Enqueue(operation)` registra a operação numa fila FIFO executada depois da transação externa terminar (cada uma
 com resultado próprio, entregue por callback). Leituras (`GetEquipped`, livros) são permitidas.
+
+**Precisão da auditoria da v2 (Enqueue e rollback):**
+- operações enfileiradas **durante as etapas 1–4** de uma transação que acaba recusada (ex.: por um efeito provisório)
+  são **descartadas** junto com o provisório — recebem resultado `Discarded` no callback e nunca executam;
+- operações enfileiradas nas etapas 5–7 de uma transação consolidada, ou por listeners de `EquipFailed`/eventos de
+  sucesso, executam em FIFO depois da transação (recuperação depois de uma falha é permitida);
+- cada operação da fila é uma transação própria, sujeita à mesma reentrância;
+- **proteção contra ciclos**: no máximo `MaxQueuedPerDrain` (padrão 64) operações executadas por drenagem; o excedente
+  é descartado com `QueueOverflow`, contado e registrado (ex.: listener que reenfileira a mesma troca a cada falha).
 
 ### 7.8 Recursos (Stats)
 Mudanças de máximo seguem a `ResourceMaxChangePolicy` do recurso, aplicada **uma vez por lote** pelo Stats; o Equipment
@@ -510,7 +522,7 @@ Ambos com smoke tests versionados na Sandbox do host.
 | `EquipmentSlotDefinition`, `EquipmentSlotLayoutDefinition`, `EquipmentDefinition`, `EquipmentSetDefinition`, `EquipmentLoadoutDefinition` | SO | §4 |
 | `EquipmentModifierEntry`, `EquipmentSetThreshold`, `EquipmentLoadoutEntry` | serializable | Entradas |
 | `EquipmentItem`, `ItemLocation` | classe / struct | §5 |
-| `EquippedItemHandle`, `EquipResult`, `EquipFailureReason`, `EquipFailureDetail`, `EquipOptions`, `LoadoutPolicy`, `BlockedSlotPolicy`, `MissingStatPolicy`, `DisabledReason`, `ContractViolation` | structs/enums | §5–§7 |
+| `EquippedItemHandle`, `EquipResult` (`Succeeded`, `IsClean`, `ContractViolations`), `EquipFailureReason`, `EquipFailureDetail`, `EquipOptions`, `LoadoutPolicy`, `BlockedSlotPolicy`, `MissingStatPolicy`, `DisabledReason`, `ContractViolation` | structs/enums | §5–§7 |
 | `EquipmentComponent` | MB | `Layout`, `Slots`, `GetEquipped`, `TryGetItem`, `TryEquip`, `Unequip`/`TryUnequip`, `TrySwap`, `TryMove`, `TryApplyLoadout`, `CaptureLoadout`, `TrySetContributionsEnabled`, `IsEnabled`, `Enqueue`, `GetReceipts`, `ActiveSetThresholds`, `IsBusy`; eventos `Equipped`, `Unequipped`, `Moved`, `EquipFailed`, `SetBonusChanged`, `ContributionsStateChanged`, `Changed`; contadores |
 | `IEquipmentStorage`, `EquipmentStash` | interface / MB | §10 |
 | `EquipmentLoadoutState` | dados | §11.2 (contrato versionado) |
@@ -630,26 +642,26 @@ Core, Stats, HFSM, Character, Combat, Abilities e AI não mudam; o grafo não mu
 |---|---|---|
 | D1 | Grafo inalterado: hard core+stats, opcional abilities; sem integração com Character/Combat | Aprovada |
 | D2 | Livro de recibos, reversão por handle, item como fonte (ADR-0033) | Aprovada |
-| D3 | Transação em sete etapas: plano completo → validação → provisório → desfazer → ponto sem rejeição e remoção do antigo → commit → lote e eventos; operações infalíveis do commit e tratamento de violações (ADR-0034) | **Refinada na v2** |
+| D3 | Transação em sete etapas: plano completo → validação → provisório → desfazer → ponto sem rejeição e remoção do antigo → commit → lote e eventos; operações infalíveis do commit; violações distintas do sucesso íntegro (`IsClean`) (ADR-0034) | Aprovada (refinada na v2 + precisão da auditoria da v2) |
 | D4 | Sem tick e sem banda; API síncrona (ADR-0034) | Aprovada |
 | D5 | Abilities só por concessões, passivas concedidas e tags soltas (ADR-0035) | Aprovada |
-| D6 | Make-before-break **estrito**: todas as contribuições novas potencialmente falíveis (itens e limiares) aplicadas provisoriamente antes de qualquer remoção; itens que permanecem nunca são revertidos | **Refinada na v2** |
+| D6 | Make-before-break **estrito**: todas as contribuições novas potencialmente falíveis (itens e limiares) aplicadas provisoriamente antes de qualquer remoção; itens que permanecem nunca são revertidos | Aprovada (refinada na v2) |
 | D7 | Slots por definição e layout; ocupação múltipla resolvida no plano; unicidade (ADR-0036) | Aprovada |
 | D8 | Requisitos só no ato de equipar | Aprovada |
 | D9 | `IEquipmentStorage` (agora transacional) e `EquipmentStash` mínimo, sem inventário completo | Aprovada (contrato detalhado na v2) |
-| D10 | Itens com identidade estável e localização única; `TryApplyLoadout(state)` resolve ids em equipados e armazenamentos autorizados, nunca recria instâncias; regras de ausência, duplicação, outro ator e definição divergente (ADR-0037) | **Refinada na v2** |
+| D10 | Itens com identidade estável e localização única; `TryApplyLoadout(state)` resolve ids em equipados e armazenamentos autorizados, nunca recria instâncias; regras de ausência, duplicação, outro ator e definição divergente (ADR-0037) | Aprovada (refinada na v2) |
 | D11 | Peças por definição distinta | Aprovada |
 | D12 | Limiares cumulativos | Aprovada |
 | D13 | `Current` de recursos segue a política do Stats | Aprovada |
 | D14 | `OnDisable`/`OnEnable`/`OnDestroy` (reativação item a item na v2) | Aprovada (detalhada na v2) |
-| D15 | Reentrância recusada em qualquer componente durante uma transação; `Enqueue` FIFO | Aprovada (escopo global explicitado na v2) |
+| D15 | Reentrância recusada em qualquer componente durante uma transação; `Enqueue` FIFO, descarte das operações enfileiradas por transações recusadas e limite por drenagem | Aprovada (precisão da auditoria da v2) |
 | D16 | Sem editor gráfico | Aprovada |
-| D17 | `IEquipmentEffect` com contrato estrito (só contribuições reversíveis, tudo-ou-nada, exceções, reentrância, apresentação só após sucesso) | **Nova na v2** |
-| D18 | `TryMove`: mudar de slot no mesmo componente não reaplica contribuições (contribuições independem do slot) | **Nova na v2** |
+| D17 | `IEquipmentEffect` com contrato estrito (só contribuições reversíveis, tudo-ou-nada, exceções, reentrância, apresentação só após sucesso) | Aprovada (nova na v2) |
+| D18 | `TryMove`: mudar de slot no mesmo componente não reaplica contribuições (contribuições independem do slot) | Aprovada (nova na v2) |
 
 ---
 
-## 21. ADRs propostas (revisadas na v2)
+## 21. ADRs (aceitas na auditoria da v2)
 
 | # | Título |
 |---|---|
@@ -713,3 +725,4 @@ Cada entrega termina com suítes do package e do WOR verdes, QG12, `check_depend
 | 3 — Armazenamento e loadouts | §5.3 (localização), §10 (contrato transacional, capacidade líquida, falhas antes/depois), §11 (resolução de ids, permanência, `ReplaceAll`/`FillEmpty`, ocupação múltipla, no-op), §17.1, AC8, D9, D10, D18, ADRs 0036 e 0037 |
 | 4 — Reversibilidade e `Rebuild` | §8.1 (I1 com coleção real e soma canônica), §8.5 (substituição de handles, dormentes, convivência com o Abilities), §7.9 (inicialização e reativação item a item), §8.6 (handles obsoletos, fontes compartilhadas), AC6, ADR-0033 |
 | 5 — Uso no Whiskers of Rage | §18 (Jutsus, Técnicas e Equipamentos; sem cartas), §4.2 e §15 (exemplos genéricos sem cartas) |
+| Auditoria da v2 — precisões (2026-10-14) | §7.4 (sucesso íntegro × `ContractViolations`, itens `Detached` expostos), §7.7 (descarte das operações enfileiradas por transações recusadas, recuperação por listeners de `EquipFailed`, FIFO, limite por drenagem contra ciclos), D3, D15, ADR-0034 |
