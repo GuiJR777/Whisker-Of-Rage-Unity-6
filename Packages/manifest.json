@@ -57,6 +57,7 @@
     "com.ramirestechgames.character",
     "com.ramirestechgames.combat",
     "com.ramirestechgames.abilities",
-    "com.ramirestechgames.ai"
+    "com.ramirestechgames.ai",
+    "com.ramirestechgames.equipment"
   ]
 }

@@ -44,6 +44,15 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.ramirestechgames.equipment": {
+      "version": "file:com.ramirestechgames.equipment",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.ramirestechgames.core": "0.4.0",
+        "com.ramirestechgames.stats": "0.1.1"
+      }
+    },
     "com.ramirestechgames.hfsm": {
       "version": "file:com.ramirestechgames.hfsm",
       "depth": 0,
