@@ -1,0 +1,30 @@
+{
+  "name": "RamiresTechGames.Sandbox.Tests.Integration.AI",
+  "rootNamespace": "RamiresTechGames.Sandbox.Tests.Integration.AI",
+  "references": [
+    "UnityEngine.TestRunner",
+    "RamiresTechGames.Core",
+    "RamiresTechGames.Stats",
+    "RamiresTechGames.Character",
+    "RamiresTechGames.Character.Integration.HierarchicalStateMachine",
+    "RamiresTechGames.Combat",
+    "RamiresTechGames.Combat.Integration.HierarchicalStateMachine",
+    "RamiresTechGames.HierarchicalStateMachine",
+    "RamiresTechGames.AI",
+    "RamiresTechGames.AI.Integration.Character",
+    "RamiresTechGames.AI.Integration.Combat"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
