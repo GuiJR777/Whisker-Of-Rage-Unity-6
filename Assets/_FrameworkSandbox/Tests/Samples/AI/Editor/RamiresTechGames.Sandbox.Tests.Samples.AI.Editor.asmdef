@@ -1,0 +1,51 @@
+{
+  "name": "RamiresTechGames.Sandbox.Tests.Samples.AI.Editor",
+  "rootNamespace": "RamiresTechGames.Sandbox.Tests.Samples.AI",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "RamiresTechGames.Core",
+    "RamiresTechGames.AI"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.ramirestechgames.character",
+      "expression": "0.2.0",
+      "define": "RAMIRESTECHGAMES_CHARACTER"
+    },
+    {
+      "name": "com.ramirestechgames.combat",
+      "expression": "0.1.0",
+      "define": "RAMIRESTECHGAMES_COMBAT"
+    },
+    {
+      "name": "com.ramirestechgames.abilities",
+      "expression": "0.1.0",
+      "define": "RAMIRESTECHGAMES_ABILITIES"
+    },
+    {
+      "name": "com.ramirestechgames.hfsm",
+      "expression": "0.1.0",
+      "define": "RAMIRESTECHGAMES_HFSM"
+    },
+    {
+      "name": "com.ramirestechgames.stats",
+      "expression": "0.1.1",
+      "define": "RAMIRESTECHGAMES_STATS"
+    }
+  ],
+  "noEngineReferences": false
+}
