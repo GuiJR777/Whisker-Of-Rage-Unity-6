@@ -36,5 +36,10 @@ Decisões transversais. ADRs específicas de um package ficam em `Documentation~
 | [0030](0030-agent-locomotion-and-navigation.md) | Contrato de locomoção do agente e navegação sem NavMesh | Aceita |
 | [0031](0031-engagement-coordination.md) | Escopo de engajamento por tokens e vagas | Aceita |
 | [0032](0032-ai-command-output-and-tracking.md) | Saída da IA por command buffers e rastreamento por token | Aceita |
+| [0033](0033-equipment-contribution-ledger.md) | Livro de contribuições e reversibilidade exata do Equipment | Proposta (M7, design v1) |
+| [0034](0034-equipment-transactions-and-timing.md) | Transações atômicas do Equipment, sem tick | Proposta (M7, design v1) |
+| [0035](0035-equipment-abilities-through-grants.md) | Efeitos do Equipment sobre o Abilities somente por concessões e tags soltas | Proposta (M7, design v1) |
+| [0036](0036-equipment-slots-occupancy-and-storage.md) | Slots, ocupação, unicidade e o limite com inventário | Proposta (M7, design v1) |
+| [0037](0037-equipment-item-instances-and-loadout-state.md) | Instâncias de item, identidade e estado de loadout | Proposta (M7, design v1) |
 
 Template: [`templates/package/Documentation~/adr/0000-template.md`](../../templates/package/Documentation~/adr/0000-template.md).
