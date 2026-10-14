@@ -53,3 +53,30 @@ são o único caminho de um armazenamento mudar a localização fora de transaç
 violação em `CommitRemove` (o armazenamento continua com o item já equipado) mantém o item equipado, registra
 `StorageCommit` e o lista em `DetachedByViolation` — não há como soltar um item já consolidado no slot; (4) com
 `DisplaceToStorage` e `Destination` nulo, os deslocados ficam soltos. Nenhum package existente alterado.
+
+## Entrega 3 — conjuntos, loadouts e efeitos (Equipment `4c53faf0d6f87648c9c1376d27d6c6ec60cfe004`)
+
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings |
+| EditMode | 50/50 — novos: `SetsAndEffectsTests` (7 casos), `LoadoutTests` (6) |
+| PlayMode | 3/3 — novo: loadout inicial aplicado no `Start` em uma transação |
+| Modelo de referência | 3 sementes × 600 operações, agora também com stash, peças de conjunto (limiares com modificadores e efeito) e capturar/aplicar loadout — **1803 verificações bit a bit** contra uma `StatCollection` real reconstruída a partir dos itens habilitados e dos limiares ativos; 0 violações |
+| Conjuntos | limiares cumulativos contam definições distintas habilitadas (duas cópias = uma peça; peça desabilitada não conta); reversão exata ao desequipar (livro do limiar vazio, efeito revertido) |
+| Falha do bônus de conjunto | troca em que o item novo completa o limiar e o efeito do limiar recusa: **transação recusada** (`ContributionFailed`, só `EquipFailed`); o efeito do item novo foi aplicado e revertido; o item antigo nunca foi revertido (mesmos recibos e handles, mesma geração), stats bit a bit iguais, item novo solto com livro vazio, limiar inativo |
+| Efeitos por posição | exceção no 1º, 2º e 3º efeito de um item: `FailedIndex` correto, stats iguais, efeitos anteriores revertidos |
+| Suspensão | limiar que falha na reativação (`Activate`) fica suspenso (`SetBonusChanged` com `Suspended`), não recusa uma transação não relacionada (`IsClean`) e é ativado logo depois dela |
+| Loadouts | capturar → aplicar é no-op (nenhum evento, recibos e stats iguais, estado desabilitado preservado); `ReplaceAll` mantém, move, adiciona (do stash) e remove (para o stash) em uma transação; ids ausentes, duplicados, em fonte não autorizada e com definição divergente recusados antes de qualquer efeito; `FillEmpty` pula slots ocupados e bloqueados (`SkippedEntries`); assets mantêm itens da mesma definição e nível e criam só o que falta; falha provisória no último item deixa tudo intacto |
+| Kit de contrato | `EquipmentEffectContract.CheckRoundTrip` aceita um efeito reversível e uma recusa limpa; detecta resíduo de recusa e `Revert` que lança |
+| Zero GC | também com limiar de conjunto ativando/desativando e reaplicação de um estado de loadout |
+| QG12 (Core + Stats) | 53 testes (50 + 3), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+
+Desvios e precisões: (1) o registro de estados de limiar (`SetThresholds`) é um cache por (conjunto, índice) criado no
+plano — pode crescer numa transação recusada sem afetar o estado observável (ativo/suspenso/livro), e o modelo de
+referência compara só limiares ativos, suspensos ou com recibos; (2) os ids de um `EquipmentLoadoutState` são
+procurados só neste controlador e nas fontes autorizadas (`Source`/`Sources`): itens em outro controlador não são
+resolvidos (`ItemNotFound`) — mover entre atores continua sendo uma decisão do jogo; (3) o nível de uma entrada de
+estado é informativo (o nível da instância vence); (4) `EquipmentController` foi dividido em arquivos parciais
+(núcleo, conjuntos, loadouts) sem mudança de comportamento; (5) a reativação dos limiares no `Activate` é uma transação
+por limiar, depois dos itens, para que a falha de um limiar suspenda só ele. Nenhum package existente alterado.
