@@ -2,7 +2,7 @@
 
 - **Especificação:** [m6-ai-design](m6-ai-design.md) v2 (WOR `f606142`, ajustes autorizados em `f0595be`); ADRs
   0026–0032.
-- **Unity:** 6000.6.5f1 · **Package:** `com.ramirestechgames.ai` 0.1.0 (sem tag), repositório privado
+- **Unity:** 6000.6.5f1 · **Package:** `com.ramirestechgames.ai` 0.1.0 candidata (sem tag), repositório privado
   `GuiJR777/com.ramirestechgames.ai`, submodule do host.
 - **Packages existentes:** nenhum alterado (Core 0.4.0, Stats 0.1.1, HFSM 0.1.0, Character 0.2.0, Combat 0.1.0,
   Abilities 0.1.0 nos commits fixados no WOR).
@@ -156,3 +156,119 @@ Pré-condição: abrir uma `BehaviourTreeDefinition` (duplo clique no asset).
 13. Inspector do `BlackboardDefinition`: chaves herdadas e **Find Usage In Behaviour Trees**.
 14. Validator do Core (`Tools/RamiresTech Games/Validator`) numa cena com ids duplicados e um bridge com outra fonte
     habilitada: erros e avisos listados.
+
+## Entrega 6 — samples e fechamento (AI `8d4e1b1`, `ce901a3`)
+
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings (host com todos os packages) |
+| EditMode (AI) | 98/98 — novo: guarda de serialização (`SerializationGuardTests`) |
+| PlayMode (AI, só Core) | 42/42 — novos: determinismo e escala (`ScaleAndDeterminismPlayModeTests`) |
+| PlayMode (AI, integrações com packages reais) | 25/25 — novo: com todas as vagas de rastreio ocupadas a ação espera e executa quando uma vaga é liberada |
+| Sandbox (HFSM real) | 2/2 — `AiStateMachinePatternPlayModeTests` (BT → buffers → HFSM e troca jogador ↔ IA) |
+| Regressão completa do WOR | EditMode 841/841 (13 assemblies: Core 62, Stats 126, HFSM 118, Character 164 + 17 + 4 + 5, Combat 164 + 9 + 2, Abilities 70 + 2, AI 98) · PlayMode 437/437 (11 assemblies + Sandbox: Stats 4, HFSM 5, Character 85, Combat 105 + 20 + 3, Abilities 108 + 38, AI 42 + 25, Sandbox 2) |
+| QG12 (só Core) | 140 testes (98 + 42), 0 ignorados, 0 mensagens do compilador; integration assemblies excluídas pelas `defineConstraints` |
+| `check_dependencies` | OK |
+| AC10 (nomes de jogo) | nenhuma ocorrência de nomes do WOR em `Runtime`, `Editor` e `Samples~` |
+
+### Determinismo e escala (AC4, AC9)
+- **Criação embaralhada:** `ShuffledCreation_ProducesTheSameLogicalTrace` cria agentes e percebíveis em três ordens
+  (sementes 0, 3 e 11) e compara, a cada passo fixo, o traço lógico gravado em `DECISION + 90`: alvo, nós ativos,
+  estado e vaga de engajamento e comando de movimento arredondado — traços idênticos.
+- **Tempo variável:** `timeScale` 0,5 com `captureFramerate` 24 produz as mesmas decisões por passo fixo que a
+  referência (equivalência lógica, não bit a bit da PhysX).
+- **Zero GC com 50 agentes:** `FiftyAgents_WarmedFullSteps_DoNotAllocate` — 50 agentes e 30 alvos com sensores,
+  seleção, engajamento e movimento; passos completos aquecidos sem alocação; **0,421 ms por passo** (média registrada
+  pelo teste; Editor, máquina de desenvolvimento).
+- **Fonte de tempo:** com `IAITimeSource` pausada o agente não avalia nem avança o relógio; na retomada o Δt conta só
+  os passos não pausados (sem salto); os bridges continuam amostrando. `CombatHitstopTimeSource` liga o hitstop do
+  Combat a essa fonte (opt-in, por componente).
+
+### Samples (QG4, AC1, AC2)
+Ambos validados por execuções roteirizadas em Play Mode (itens de menu e sondas temporários, não versionados) e por um
+teste de importação (cópia de `Samples~` para `Assets/`, cenas em Play Mode sem nenhuma mensagem no console). Capturas:
+`d6_basics_game.png`, `d6_arena_game.png`, `d6_graph_live.png` (sobreposição ao vivo do Graph Editor),
+`d6_debugger_live.png` (AI Debugger em Play Mode), `import_AIBasics.png`, `import_AICombatArena.png`.
+
+**AI Basics** (AI + Character, só assets — guarda e batedor):
+- 0,5 s: o guarda patrulha (`Return And Patrol`); o batedor vagueia (`Wander`).
+- 3,0 s: o guarda vê o intruso pelo cone com paredes e persegue (`Chase (seen) › Run To Intruder`).
+- 3,1–6,5 s: o intruso se esconde atrás de uma cobertura; o guarda vai até a última posição e procura
+  (`Search Last Position › Look Around`, memória `old`); 8,0 s: reencontra e volta a perseguir.
+- 13,1 s: intruso colocado 4 m atrás do guarda (fora do cone): busca; 13,7 s: barulho atrás do guarda → audição, vira e
+  persegue (`Chase`).
+- 14,6 s: intruso a 2 m do batedor → `Flee`; acima de 6 m volta a `Wander`.
+
+**AI Combat Arena** (AI + Stats + Character + Combat + Abilities + HFSM; mesmo prefab `ArenaFighter` e mesma
+`StateMachineDefinition` para jogador e IA):
+- Tab troca o herói para IA (0,5 s) e de volta para o teclado (9,0 s): árvore parada sem escritas, rastreios
+  `Cancelled` (AC2, também coberto na Sandbox).
+- Tokens de engajamento no herói: no máximo **3 detentores** (2 corpo a corpo + 1 à distância) durante toda a
+  execução.
+- Brawler em combos, Skirmisher em *hit and run* (`Retreat` depois do golpe), Bruiser alterna guarda (`Guard Up`) e
+  pesado; Champion em fase 1 com combos e, com a vida em 40% (6,5 s), **fase 2** (`StatCondition`, abort Both) com
+  `Bolt` e `Smash`.
+- Caster: sonda de 20 s (1000 passos) com **14 ativações de `Bolt`** pelo `ActivateAbilityAction` (turno à distância →
+  distância 5–7 m → face → bolt → recuperação). O contador "attacks" do roteiro conta só ataques do Combat; o bolt é
+  uma habilidade, por isso o Caster aparecia com 0.
+
+### Correção encontrada pelos samples
+Campos privados de runtime sem `[NonSerialized]` são serializados pela Unity através do domain reload de entrar em Play
+Mode: o array nulo do registro do `AIWorld` voltava **vazio** e o mundo criado na cena ficava com capacidade 0
+("registry is full"). Os testes nunca pegaram porque criam o mundo em runtime. Todo estado de runtime de `AIWorld`,
+`AIEngagementTarget` e dos bridges foi marcado `[NonSerialized]`; `SerializationGuardTests` exige que todo campo privado
+dos componentes do package seja `[SerializeField]` ou `[NonSerialized]`.
+
+Desvios e precisões: (1) `IAITimeSource` (previsto na §3/§17) entra nesta entrega com `CombatHitstopTimeSource`;
+(2) com todas as vagas de rastreio do bridge ocupadas, as ações rastreadas ficam `Running` e tentam de novo até
+`MaxWait` (antes falhavam no ato); `JumpOrDash` espera enquanto a locomoção pode se mover; (3) o sample
+`Getting Started` do template foi removido; (4) `ITargetSelector` (listado na §3/§17) não foi criado: a seleção de alvo
+é configurada por `TargetSelectionDefinition` com `ITargetConsideration` (extensível), e um seletor plugável é mudança
+aditiva futura; (5) as árvores dos samples usam `Wait And Rethink` (`WaitAction` 0,25 s) como último ramo — um
+`IdleAction` ali prendia o agente que não tinha alvo no primeiro tick; (6) os samples não têm testes automatizados no
+package (vivem em `Samples~`); os roteiros de validação ficaram fora do repositório. Nenhum package existente foi
+alterado.
+
+## Release candidate — AI 0.1.0 (sem tag)
+
+| Entrega | Commit do AI | Commit do WOR |
+|---|---|---|
+| 1 — fundação da BT e do Blackboard | `94bf5f432187d819e59d58f0410a4dc5f4c5a744` | `f13daf1` |
+| 2 — percepção e alvo | `eabad508ee9f99790365a531a5c57233894b0a09` | `ca1490f` |
+| 3 — movimento e engajamento | `d4eb1897767b594025d6a3929f58bc42a4249129` | `bbdc985` |
+| 4 — integrações e rastreamento | `4223e414ae04156244d9a006b18dc751255568ac` | `50dfc6d` |
+| 5 — ferramentas | `3aad7f2fdd3e118fcd06e6f45593cf9cd69ecdf6` | `842c2e7` |
+| 6 — samples e fechamento | `8d4e1b19da05f0b16cb44baf4553206637a64f02` + `ce901a3920d2f0b9f6f5cb8642afac5fd1b526a2` (doc) | commit que fixa `ce901a3` |
+
+Critérios de aceite atendidos por testes: AC1 (samples só com assets; domínio sem referências a motor, combat ou ASC),
+AC2 (Sandbox e arena), AC3 (entrega 1), AC4 (entregas 2, 3 e 6), AC5–AC6 (entrega 2), AC7 (entrega 3), AC8 (entrega
+4), AC9 (entrega 6), AC10 (sem nomes de jogo) e AC12 (QG12 só com Core). **AC11 parcial:** modelo do grafo, debugger,
+gizmos e validators validados por automação; a validação com mouse físico continua pendente do owner.
+
+Riscos e limitações abertos:
+- **R41** — uma borda abandonada em `HfsmOwner`/`PackageOwner` pode executar dentro da janela do consumidor; mitigada
+  por janelas curtas, `ClearChannel` e `AgentOwner`; `Retract` nos buffers exige ADR e minor de três packages (§20.2).
+- **R37** — `PackageOwner` correlaciona sem token (regra de borda única; ambiguidades viram `Unconfirmed`, contadas).
+- **R42** — a ordem `AttackStarted` → `ActionResolved` do Combat é coberta por teste de contrato, mas ainda não está
+  registrada no CONTRACTS do Combat.
+- **R38** — sem NavMesh: navegação direta com desvio; travamento → `Failure`.
+- Ferramentas e automação: portas do Graph Editor na linha padrão do `Node` do GraphView (cosmético);
+  `unity command eval` estoura 5 s nesta máquina (validações por itens de menu temporários); em Play Mode por CLI com
+  o Editor sem foco, o player loop só avança com `Application.runInBackground` ligado em runtime.
+- Os packages do M4/M5 continuam sem tag e sem validação manual do owner; o AI 0.1.0 depende deles só nas integration
+  assemblies.
+
+### Checklist de validação manual do owner (samples)
+Pré-condição: Package Manager › RamiresTech Games - AI › Samples › importar **AI Basics** e **AI Combat Arena**.
+1. **AI Basics:** WASD move o intruso; o guarda patrulha, vê pelo cone (não através das paredes), persegue, procura a
+   última posição quando o intruso se esconde e volta à patrulha depois de esquecê-lo (4 s).
+2. N faz barulho: o guarda que não vê o intruso vira e investiga.
+3. Aproximar-se do batedor: ele foge e, acima de 6 m, volta a vaguear.
+4. Tab troca o agente do painel; o painel mostra nós em execução, alvo, Blackboard, caixa de estímulos e memória.
+5. **AI Combat Arena:** Tab troca o herói entre teclado e IA sem travar ataques pela metade; o mesmo prefab luta nos
+   dois modos.
+6. Nunca mais de 3 atacantes no herói (painel "attackers"); o Caster dispara bolts à distância; o Bruiser defende.
+7. Com a vida do Champion abaixo de 50%, ele muda para a fase 2 (bolts e pesados).
+8. R recarrega a arena; um lutador nocauteado sai e libera os tokens.
+9. Com um agente selecionado: AI Debugger, sobreposição ao vivo no Graph Editor e gizmos (itens 10–12 do checklist das
+   ferramentas, acima).
