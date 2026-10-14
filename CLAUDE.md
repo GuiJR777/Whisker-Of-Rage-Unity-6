@@ -22,7 +22,7 @@ Projeto Unity **6000.6.5f1** (URP) com dois papéis:
 aguardando a validação manual do owner (sem tags). **M5 — Abilities**: **tecnicamente aprovado** (auditoria final, 2026-10-13),
 aguardando a validação manual do owner e o release formal (Abilities 0.1.0 e Stats 0.1.1 candidatas, sem tags).
 **M6 — AI / Behaviour Trees**: design v2 aprovado ([especificação](Docs/Framework/docs/design/m6-ai-design.md),
-ADRs 0026–0032 aceitas); as 6 entregas foram implementadas: **AI 0.1.0 release candidate** (AI `ce901a3`, sem tag), aguardando a auditoria final e a validação manual do owner. Não publicar tags do M4/M5/M6 nem declarar releases antes da validação manual.
+ADRs 0026–0032 aceitas); as 6 entregas foram implementadas: **AI 0.1.0 release candidate** (AI `1c8f6f8`, sem tag); ajustes da auditoria final concluídos, aguardando só a validação manual do owner. Não publicar tags do M4/M5/M6 nem declarar releases antes da validação manual.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras

@@ -205,7 +205,8 @@ teste de importação (cópia de `Samples~` para `Assets/`, cenas em Play Mode s
   `Cancelled` (AC2, também coberto na Sandbox).
 - Tokens de engajamento no herói: no máximo **3 detentores** (2 corpo a corpo + 1 à distância) durante toda a
   execução.
-- Brawler em combos, Skirmisher em *hit and run* (`Retreat` depois do golpe), Bruiser alterna guarda (`Guard Up`) e
+- Brawler em combos, Skirmisher em *hit and run* (`Retreat` depois do golpe), Bruiser alterna guarda (`Guard Up`;
+  removida nos ajustes da auditoria final, abaixo) e
   pesado; Champion em fase 1 com combos e, com a vida em 40% (6,5 s), **fase 2** (`StatCondition`, abort Both) com
   `Bolt` e `Smash`.
 - Caster: sonda de 20 s (1000 passos) com **14 ativações de `Bolt`** pelo `ActivateAbilityAction` (turno à distância →
@@ -267,8 +268,120 @@ Pré-condição: Package Manager › RamiresTech Games - AI › Samples › impo
 4. Tab troca o agente do painel; o painel mostra nós em execução, alvo, Blackboard, caixa de estímulos e memória.
 5. **AI Combat Arena:** Tab troca o herói entre teclado e IA sem travar ataques pela metade; o mesmo prefab luta nos
    dois modos.
-6. Nunca mais de 3 atacantes no herói (painel "attackers"); o Caster dispara bolts à distância; o Bruiser defende.
+6. Nunca mais de 3 atacantes no herói (painel "attackers"); o Caster dispara bolts à distância; o Bruiser anda mais
+   devagar, não defende e não é interrompido por golpes leves durante o pesado (armadura).
 7. Com a vida do Champion abaixo de 50%, ele muda para a fase 2 (bolts e pesados).
 8. R recarrega a arena; um lutador nocauteado sai e libera os tokens.
 9. Com um agente selecionado: AI Debugger, sobreposição ao vivo no Graph Editor e gizmos (itens 10–12 do checklist das
    ferramentas, acima).
+
+## Ajustes da auditoria final (AI `934afe8`, `d88f75d`, `1c8f6f8`)
+
+Parecer recebido sobre `ce901a3` / WOR `7f10c3a`: M6 implementado, arquitetura aprovada, três ajustes para o
+fechamento técnico. Nenhum package existente alterado; R37, R38, R41 e R42 seguem aceitos para a versão inicial.
+
+### 1. `ITargetSelector`
+- `Selection.ITargetSelector` (`Select`, `Validate`) é o ponto de extensão previsto na §3/§17;
+  `ScoredTargetSelector` contém a estratégia anterior **sem mudança de lógica** (mesmos filtros, média ponderada,
+  desempate por id, histerese) e `ScoredTargetSelector.Default` é usado quando o campo `Selector` da
+  `TargetSelectionDefinition` está vazio — caso de todos os assets existentes, inclusive os dos samples, que não foram
+  regravados.
+- `TargetSelector.Select` continua sendo a entrada (zera as pontuações do debugger e chama a estratégia);
+  `TryBuildCandidate` e `Score` ficaram públicos para estratégias customizadas sem tocar no package.
+- Testes: `TargetSelectorTests` (padrão compartilhado; serialização de uma estratégia customizada com campo e da padrão
+  explícita; validação da estratégia pela definição), `SelectionPlayModeTests` (estratégia customizada escolhe o alvo
+  mais distante e preenche as pontuações; estratégia padrão explícita = vazia passo a passo numa sequência com troca de
+  alvo), `PerceptionAllocationPlayModeTests` (zero GC com a estratégia customizada, além da padrão). Os testes
+  existentes de histerese, desempate e criação embaralhada passam inalterados.
+
+### 2. Bruiser (sample AI Combat Arena)
+Alinhado à §19 ("perfil lento, armadura dos ataques, BT sem guarda, prioridade alta no pool"), só com assets do sample:
+- árvore `Bruiser` sem o ramo `Guard Up` (removido pelo modelo do Graph Editor, com auto layout); `EngagementScope`
+  com prioridade 2 no pool corpo a corpo;
+- `ArmoredSmash` (cópia do `Smash` com janela de armadura de poise de 0 a 0,5 s, cobrindo preparação e frames ativos)
+  e `BruiserMovement` (velocidade máxima 3,5 m/s, aceleração 0,25 s) aplicados por **override da instância Bruiser na
+  cena** — o prefab `ArenaFighter`, o `Smash` e os outros arquétipos não mudam;
+- README do sample atualizado.
+
+Revalidação em Play Mode (sonda temporária de 2000 passos; herói conduzido pela sonda, que dá um `Light` logo após o
+início de cada ataque do Bruiser):
+
+| Cenário | Ataques | Interrompidos | Golpes durante o ataque | Guarda | Velocidade máx. |
+|---|---|---|---|---|---|
+| `ArmoredSmash`, poise cheio (o `Smash` também não seria interrompido: poise intacto) | 3 | 0 | 2 (sem interrupção) | 0 passos | 3,50 m/s (Brawler 6,00) |
+| `ArmoredSmash`, poise esgotado antes de cada golpe | 3 | 0 | 2 absorvidos pela armadura | 0 passos | 3,50 m/s |
+| Controle: `Smash` sem armadura, poise esgotado | 8 | **5** | interrompido no golpe | 0 passos | — |
+
+Com poise o Combat só interrompe um ataque sem armadura quando o poise já está no mínimo; a armadura de poise ignora os
+golpes depois da quebra e só interrompe no golpe que quebra — o controle com poise esgotado mostra a diferença.
+Evidências: `probe_bruiser_armored.txt`, `probe_bruiser_control_unarmored.txt`.
+
+### 3. Smoke tests versionados dos samples
+`Assets/_FrameworkSandbox/Tests/Samples/AI/Editor/AISampleSmokeTests.cs` (assembly
+`RamiresTechGames.Sandbox.Tests.Samples.AI.Editor`, EditMode; AI Basics compila com Character e AI Combat Arena com
+Stats, Character, Combat, Abilities e HFSM, pelos mesmos `versionDefines` dos samples). Para cada sample:
+1. importa pelo Package Manager (`Sample.Import`) quando ainda não importado e espera a compilação;
+2. carrega todos os assets importados: referências quebradas, tipos de `[SerializeReference]` ausentes, scripts ausentes
+   em prefabs e erros de validação (`IValidatable`);
+3. abre a cena salva: scripts ausentes, referências, erros de validação, um `AIWorld` com capacidade ≥ percebíveis,
+   contagem de agentes e percebíveis;
+4. força um **domain reload com a cena aberta** (`RequestScriptReload`) — a condição que esvaziava o registro — e
+   repete a verificação da cena;
+5. entra em Play Mode, roda 150 passos (pede o player loop a cada update; o Editor sem foco não roda sozinho) e
+   verifica: todos os percebíveis registrados no mundo (sem saturação, duplicata ou id inválido), número de agentes e
+   avaliação de todos os agentes com controle; qualquer erro no console falha o teste;
+6. sai do Play Mode e apaga só o que importou (o estado sobrevive aos reloads em `SessionState`).
+
+Resultado: 2/2 — AI Basics: 150 passos, registro 3/256, Guard e Scout com 75 avaliações (intervalo 2); AI Combat
+Arena: 150 passos, registro 6/256, cinco lutadores com 150 avaliações, herói no teclado sem avaliação.
+
+**Prova de detecção:** com `[NonSerialized]` retirado temporariamente dos arrays do registro do `AIWorld`, os dois
+testes falham com "the AI world registry is full (0); registration refused" — o bug da entrega 6. Restaurado em
+seguida (sem commit).
+
+Achado pelos smoke tests: `AIAgent.Validate` reportava "there is no AIWorld in the scene" ao validar o prefab
+`ArenaFighter` (e qualquer agente no Prefab Mode). Corrigido no package: a falta de mundo só é reportada para agentes
+numa cena aberta (garantia 42, teste em `EditorToolsTests`).
+
+Também corrigido: o analisador UAC0005 apontava `AppDomain.GetAssemblies()` no `SerializationGuardTests` da entrega 6
+(warning de compilação); o teste usa `TypeCache`.
+
+### Gates
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings (host com todos os packages; o warning UAC0005 do guarda de serialização foi corrigido) |
+| EditMode (AI) | 102/102 — novos: `TargetSelectorTests` (3) e mundo ausente fora de cena (`EditorToolsTests`) |
+| PlayMode (AI, só Core) | 45/45 — novos: estratégia customizada, padrão explícito = vazio, zero GC com estratégia customizada |
+| PlayMode (AI, integrações com packages reais) | 25/25 |
+| Sandbox — padrão BT → buffers → HFSM | 2/2 (`AiStateMachinePatternPlayModeTests`) |
+| Sandbox — smoke tests dos samples | 2/2 (`AISampleSmokeTests`) |
+| Determinismo com criação embaralhada | `ShuffledCreation_ProducesTheSameLogicalTrace` e `ShuffledCreationOrder_GivesIdenticalMemoriesAndTargets_StepByStep` verdes (sementes 0, 3, 11 e três ordens) |
+| Zero GC com 50 agentes | `FiftyAgents_WarmedFullSteps_DoNotAllocate` verde |
+| Regressão completa do WOR | EditMode 847/847 (13 assemblies dos packages: Core 62, Stats 126, HFSM 118, Character 164 + 17 + 4 + 5, Combat 164 + 9 + 2, Abilities 70 + 2, AI 102; + smoke tests 2) · PlayMode 440/440 (Stats 4, HFSM 5, Character 85, Combat 105 + 20 + 3, Abilities 108 + 38, AI 45 + 25, Sandbox 2) |
+| QG12 (só Core) | 147 testes (102 + 45), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+| AC10 (nomes de jogo) | nenhuma ocorrência em `Runtime`, `Editor` e `Samples~` |
+| Clone limpo com submodules | `git clone --recurse-submodules` do WOR em `dad631b` (caminho curto): 7 submodules nos commits fixados (AI `1c8f6f8`), arquivos novos presentes, `git fsck` sem erros, `check_dependencies` OK |
+
+### Desvios e riscos residuais
+- Uma falha de teste por mensagem de erro no console aborta o enumerador antes da limpeza; a importação fica em
+  `Assets/Samples` e é apagada pela execução seguinte na mesma sessão do Editor (marca em `SessionState`). Fora da
+  sessão, apagar à mão.
+- Burst (ambiente): em alguns domain reloads o Burst não conseguiu gravar um arquivo de `Library/BurstCache/JIT`
+  ("being used by another process"); numa execução isso marcou o teste com "Errors occurred during domain reload". O
+  mesmo erro aparece no log em recompilações comuns desta sessão, sem relação com o AI; as execuções seguintes passaram.
+- A revalidação de gameplay do Bruiser usou uma sonda temporária (não versionada), como os roteiros da entrega 6; os
+  smoke tests versionados cobrem importação, referências, cena e inicialização, não o gameplay.
+- A validação com mouse físico continua pendente do owner (único gate de release restante).
+
+### Release candidate — AI 0.1.0 após os ajustes (sem tag)
+
+| Commit | AI | WOR |
+|---|---|---|
+| Runtime (`ITargetSelector`, validação do agente) | `934afe8a707fdb9b202c0b5f88cb9ad367c02c68` | — |
+| Assets dos samples (Bruiser) | `d88f75df7202f829c5221a96b6f2845240829af3` | — |
+| Testes e documentação | `1c8f6f889512741ab2d3f781128491d52aa995cb` | `dad631b` (smoke tests + ponteiro) |
+| Documentação do host | — | commit que registra esta seção |
+
+Com os três ajustes, o AI 0.1.0 fica tecnicamente pronto para a aprovação final; o único gate de release restante é a
+validação manual do owner (checklists acima). Nenhuma tag criada; M4, M5 e M6 não foram declarados encerrados.
