@@ -1,6 +1,7 @@
 # M6 — AI / Behaviour Trees · Especificação técnica
 
-- **Status:** **v2 — aprovada para implementação** (arquitetura geral aprovada na auditoria do v1; ajustes 1–5 e
+- **Status:** **implementada e tecnicamente aprovada** (auditoria técnica final, 2026-10-14; AI 0.1.0 candidata em
+  `1c8f6f8`; aguardando validação manual do owner e release formal, sem tags) · design: **v2 — aprovada para implementação** (arquitetura geral aprovada na auditoria do v1; ajustes 1–5 e
   refinamentos incorporados como contratos normativos nas seções indicadas na §25; ADRs 0026–0032 aceitas) ·
   **Data:** 2026-10-13
 - **Histórico:** v1 (proposta, WOR `5a0ffee`) → v2 (revisão parcial formal dos ADRs 0003/0004, BT com ramos

@@ -385,3 +385,13 @@ Também corrigido: o analisador UAC0005 apontava `AppDomain.GetAssemblies()` no 
 
 Com os três ajustes, o AI 0.1.0 fica tecnicamente pronto para a aprovação final; o único gate de release restante é a
 validação manual do owner (checklists acima). Nenhuma tag criada; M4, M5 e M6 não foram declarados encerrados.
+
+## Resultado da auditoria técnica final (2026-10-14)
+
+**M6 tecnicamente aprovado** sobre AI `1c8f6f889512741ab2d3f781128491d52aa995cb` e WOR
+`ea8c3471611d9ff9398f102ea06390679af59ee2`: as seis entregas, os três ajustes finais e os testes foram aprovados;
+nenhuma correção de código adicional foi pedida. Pendentes: a validação manual do owner (checklists acima) e o release
+formal — sem tags do AI (nem do M4/M5). Riscos aceitos e documentados para a versão inicial: R37 (correlação no
+`PackageOwner`), R38 (navegação sem NavMesh), R41 (borda abandonada dentro da janela do consumidor) e R42 (ordem
+`AttackStarted` → `ActionResolved` fora do CONTRACTS do Combat), além de R33–R36, R39, R40 e R43
+([riscos](../08-architectural-risks.md)).
