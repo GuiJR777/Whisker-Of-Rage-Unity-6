@@ -66,7 +66,7 @@ configuração da árvore (ex.: `Cooldown` no escopo), não regra do package.
 | PlayMode (AI, só Core) | 38/38 |
 | PlayMode (AI, integrações com packages reais) | 23/23 — Combat (9), Abilities (8), Character (4) e Stats (1), montados pelos campos serializados, sem internals de outros packages |
 | Sandbox (HFSM real) | 2/2 — `AiStateMachinePatternPlayModeTests` |
-| Regressão completa do WOR | EditMode 1555/1555 (13 assemblies) · PlayMode 431/431 (11 assemblies + Sandbox) |
+| Regressão completa do WOR | EditMode 828/828 (13 assemblies) · PlayMode 431/431 (11 assemblies + Sandbox) — corrigido na entrega 5: o total EditMode publicado antes (1555) leu um arquivo de resultados antigo para o Core (789 em vez de 62) |
 | QG12 (só Core) | 123 testes (85 + 38), 0 ignorados, 0 mensagens do compilador; integration assemblies excluídas pelas `defineConstraints` |
 | `check_dependencies` | OK (após declarar Stats nas asmdefs de Combat/Abilities — achado do gate) |
 
@@ -100,3 +100,59 @@ para inícios de outra tag de entrada (Abilities) ou de outro tipo de borda (pul
 bridge no mesmo objeto (achado pelos testes); (5) com `takeControlOnEnable` desligado, o agente com bridges começa sem
 controle e não avalia; (6) os testes de integração do package usam um "claimer" que imita um estado `External`; o
 padrão com a HFSM real fica na Sandbox, como previsto. Nenhum package existente foi alterado.
+
+## Entrega 5 — ferramentas (AI `3aad7f2`)
+
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings (achado e corrigido: CS0108 em `BehaviourNodeView.Children`, renomeado `ChildrenPort`) |
+| EditMode (AI) | 97/97 — 12 novos de ferramentas (`EditorToolsTests`) |
+| PlayMode (AI + integrações) | 38/38 + 24/24 (novo: outra fonte habilitada do buffer e caminho × posse) |
+| Sandbox | 2/2 |
+| Regressão completa do WOR | EditMode 840/840 (13 assemblies) · PlayMode 432/432 (11 assemblies + Sandbox) |
+| QG12 (só Core) | 135 testes (97 + 38), 0 ignorados, 0 mensagens do compilador (inclui a assembly de Editor) |
+| `check_dependencies` | OK |
+
+Validação automatizada (sintética) das ferramentas:
+- **Graph Editor:** modelo com um passo de Undo por operação (inclusive várias no mesmo frame), raiz e filhos, ordem
+  explícita, recusa de ciclo/filho em folha/segundo filho de escopo, remoção com descendentes, decorators (ordem =
+  aninhamento) e services (só composites), troca de tipo, auto layout de cima para baixo, problemas da validação no nó;
+  janela com nós e arestas, reconstrução após edição e Undo, subárvore por duplo clique e Voltar, sobreposição de status
+  de uma instância em execução (Running/Success, nó fora da árvore compilada sem status, limpeza ao parar de depurar).
+- **Captura do Editor:** `d5_graph_editor.png` (janela real via `GUIView.GrabPixels`, árvore de demonstração com
+  serviço, decorators com abort, escopo de engajamento, `Parallel`, canais e problemas de validação em vermelho no nó e
+  no painel). Capturas em Play Mode (debugger, sobreposição ao vivo e gizmos) serão feitas com os samples da entrega 6.
+- **Busca:** só tipos públicos e instanciáveis (sondas internas dos testes ficam de fora).
+- **Inspector do Blackboard:** uso das chaves encontrado em árvores do próprio Blackboard ou de descendentes (outros
+  Blackboards ignorados).
+- **Validação de cena:** dois mundos, id duplicado (erro com os dois objetos), mais percebíveis que a capacidade;
+  bridge com outra fonte habilitada do mesmo buffer (aviso) e caminho incompatível com a posse (erro).
+
+Desvios e precisões: (1) as portas seguem a linha padrão do `Node` do GraphView (pai à esquerda, filhos à direita do
+cabeçalho, ambas verticais) — tentar centralizá-las acima/abaixo do nó não teve efeito com a folha de estilo padrão; o
+fluxo continua de cima para baixo; (2) o glifo de services foi trocado por texto ("Service:") porque a fonte do Editor
+não o tem; (3) a avaliação via `unity command eval` voltou a estourar o limite de 5 s do thread principal nesta sessão;
+as capturas usam um item de menu temporário (não versionado) executado por `unity command menu`.
+
+### Checklist de validação manual (owner, mouse físico)
+Pré-condição: abrir uma `BehaviourTreeDefinition` (duplo clique no asset).
+1. Botão direito no fundo → **Create Node…** abre a busca; escolher `Sequence` cria a raiz no ponto clicado.
+2. Arrastar da porta de filhos de um composite até a porta de pai de outro nó cria a aresta; o título ganha `#n`.
+3. Tentar ligar um nó a um descendente seu, a uma folha ou um segundo filho a um `Engagement Scope`: a aresta não fica.
+4. Menu do nó → **Move Left/Right** troca a ordem (`#1`/`#2`); **Sort Children By Position** reordena pela posição.
+5. Menu do nó → **Add Decorator ▸ Cooldown** e **Add Service ▸ Select Target**: faixas aparecem no nó; o painel lateral
+   edita os campos com o seletor de implementação do Core.
+6. Selecionar nós e **Delete**: o nó some com seus descendentes; **Ctrl+Z** restaura; **Ctrl+Y** refaz.
+7. Arrastar nós e **Ctrl+Z**: as posições voltam; **Auto Layout** organiza de cima para baixo.
+8. Nó com problema fica com borda vermelha e tooltip; o painel "Tree" lista a validação completa.
+9. Duplo clique num `Subtree` abre a árvore incluída; **Back** volta.
+10. Em Play Mode, selecionar um agente que roda a árvore: nós ativos em azul, sucesso verde, falha vermelha, abortado
+    âmbar, com "n steps ago"; o rótulo do topo mostra "Debugging <agente>".
+11. **AI Debugger:** lista de agentes; selecionar um mostra árvore (ativos, trabalho/orçamento), Blackboard (editar um
+    Bool/Int/Float aplica na avaliação seguinte), memória com pontuações, engajamento, bridges e rastreios, mundo e
+    histórico (64).
+12. **Gizmos:** agente selecionado mostra cone de visão e proximidade; em Play Mode linhas para percebidos, último ponto
+    dos lembrados, alvo em vermelho, vaga de engajamento e velocidade; alvo de engajamento mostra o anel de vagas.
+13. Inspector do `BlackboardDefinition`: chaves herdadas e **Find Usage In Behaviour Trees**.
+14. Validator do Core (`Tools/RamiresTech Games/Validator`) numa cena com ids duplicados e um bridge com outra fonte
+    habilitada: erros e avisos listados.
