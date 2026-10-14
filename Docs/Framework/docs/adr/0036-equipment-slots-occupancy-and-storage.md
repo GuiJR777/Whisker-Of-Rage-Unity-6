@@ -1,34 +1,40 @@
-# ADR-0036 — Slots, ocupação, unicidade e o limite com inventário
+# ADR-0036 — Slots, ocupação, unicidade e armazenamento transacional
 
-- **Status:** Proposta (design v1 do M7, 2026-10-14) · **Milestone:** M7
+- **Status:** Proposta — decisão aprovada na auditoria do v1; contrato de armazenamento detalhado na v2 do design do M7
+  (2026-10-14) · **Milestone:** M7
 - **Relacionada:** [ADR-0018](0018-gameplay-tags-in-core.md), [ADR-0034](0034-equipment-transactions-and-timing.md),
-  [especificação do M7](../design/m7-equipment-design.md) §4, §6, §10
+  [ADR-0037](0037-equipment-item-instances-and-loadout-state.md), [especificação do M7](../design/m7-equipment-design.md)
+  §4, §6, §10
 
 ## Contexto
-Jogos diferentes modelam equipamento de formas diferentes: slots fixos (arma, armadura), grupos de slots iguais
-(10 cartas, 2 anéis), itens que ocupam mais de um slot (arma de duas mãos), itens únicos. O M0 definiu que o Equipment
-"não faz inventário", mas desequipar precisa de um destino para o item e samples precisam de um armazenamento simples.
+Jogos modelam equipamento com slots fixos (arma, armadura), grupos de slots iguais (anéis, acessórios), itens que
+ocupam mais de um slot (arma de duas mãos) e itens únicos. O M0 definiu que o Equipment "não faz inventário", mas
+desequipar precisa de um destino, loadouts precisam buscar itens não equipados, e a transação (ADR-0034) só pode
+remover o antigo quando nada mais puder falhar — inclusive o armazenamento.
 
 ## Decisão
-1. **Slots por definição** (`EquipmentSlotDefinition`: categorias aceitas/recusadas por `GameplayTag` hierárquica) e
-   **layout** (`EquipmentSlotLayoutDefinition`: entradas slot × quantidade, herança opcional) expandido numa lista com
-   índice total, usado em loadouts, eventos e ferramentas.
-2. **Ocupação múltipla** por `AlsoOccupies` (primeira instância livre de cada definição), com política `Fail` (padrão)
-   ou `DisplaceToStorage` dentro da mesma transação.
-3. **Unicidade** por `UniqueGroup`/`UniqueLimit`.
-4. **Requisitos** SR (`IEquipRequirement`) avaliados uma vez, na validação, antes das contribuições do item;
-   reavaliação contínua fora da 0.1.0 (R48).
-5. **Armazenamento** é um contrato (`IEquipmentStorage`); o package traz só `EquipmentStash` (lista com capacidade e
-   ids únicos). Inventário completo (grade, peso, empilhamento, economia, UI) continua fora do package.
+1. **Slots por definição** (categorias aceitas/recusadas por `GameplayTag` hierárquica) e **layout** expandido com índice
+   total. Slots repetidos são genéricos; nenhum mecanismo de um jogo específico é assumido.
+2. **Ocupação múltipla** resolvida **no plano final**; slots a bloquear ocupados por itens que permanecem: `Fail`
+   (padrão) ou `DisplaceToStorage` (os ocupantes saem na mesma transação, sob as mesmas regras).
+3. **Unicidade** por `UniqueGroup`/`UniqueLimit` no estado final.
+4. **Requisitos** SR avaliados uma vez, na validação, contra o estado antes da transação (D8).
+5. **Armazenamento transacional** `IEquipmentStorage`: leitura (`TryFind`, `Contains`, `Count`, `Capacity`);
+   validação sem efeitos (`CanRelease`, `CanAccept`, capacidade líquida do plano); commit **infalível por contrato**
+   (`CommitRemove` antes de `CommitAdd` no mesmo armazenamento), sem eventos do armazenamento antes do commit da
+   transação. Falha antes/na validação → `StorageRejected`/`StorageFull` sem efeitos; violação depois → item `Detached`
+   e violação reportada (ADR-0034).
+6. `EquipmentStash` é a implementação mínima. Inventário completo (grade, peso, empilhamento, economia, UI) fica fora.
 
 ## Alternativas consideradas
-- **Slots como enum ou strings:** sem validação, sem herança de layout e com nomes de jogo no código.
-- **Inventário completo no package:** cada jogo tem regras próprias; ampliaria o escopo e conflitaria com o M0.
-- **Nenhum armazenamento:** samples e jogos simples repetiriam a mesma lista; desequipar sem destino perderia o item.
+- **Slots como enum ou strings:** sem validação nem herança, com nomes de jogo no código.
+- **Inventário completo no package:** regras próprias de cada jogo; conflita com o M0.
+- **Armazenamento sem fases (`Store`/`Remove` que podem falhar):** a falha viria depois da remoção do item antigo e
+  quebraria a atomicidade.
 
 ## Consequências
-- Positivas: cobre armas, armaduras, cartas e acessórios só com assets; jogos com inventário próprio plugam pelo
-  contrato.
-- Negativas / custos: ocupação resolvida por "primeira instância livre" pode não servir a layouts exóticos (o jogo
-  escolhe o slot explicitamente); a nota "não faz inventário" do M0 passa a "não faz inventário completo".
-- `02-package-boundaries-and-contracts.md`: atualizar a seção do Equipment depois da aprovação.
+- Positivas: armas, armaduras e acessórios só com assets; inventários do jogo plugam pelo contrato; falhas de
+  armazenamento detectadas antes do ponto sem rejeição.
+- Negativas / custos: implementações do jogo precisam honrar o commit infalível (R53); "primeira instância livre" pode
+  não servir a layouts exóticos (o jogo escolhe o slot).
+- `02-package-boundaries-and-contracts.md`: seção do Equipment atualizada com os contratos aprovados.

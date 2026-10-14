@@ -216,10 +216,34 @@ percepção, engajamento, rastreios), gizmos, validators.
 
 ## equipment — `RamiresTechGames.Equipment` (L5) · M7
 
-**Responsabilidade:** equipar itens em slots e aplicar seus efeitos.
+> Contratos do design do M7 (arquitetura aprovada na auditoria do v1; v2 com os ajustes obrigatórios, aguardando
+> revisão — [especificação](design/m7-equipment-design.md), ADRs 0033–0037). Sem código ainda.
+
+**Responsabilidade:** equipar instâncias de itens em slots de um ator e aplicar suas contribuições com
+**reversibilidade exata** (só o que o item aplicou, por handle) e **transações atômicas** (sem reconceder o item
+antigo).
 
 | Contrato | Tipo | Descrição |
 |---|---|---|
+| `EquipmentSlotDefinition`, `EquipmentSlotLayoutDefinition` | SO | Slot com categorias aceitas/recusadas (`GameplayTag`); layout com slots × quantidade, herança e índice total. |
+| `EquipmentDefinition` | SO | Categoria, ocupação adicional, unicidade, nível máximo, modificadores por nível, efeitos (SR `IEquipmentEffect`), requisitos (SR `IEquipRequirement`), conjunto. |
+| `EquipmentSetDefinition` | SO | Limiares cumulativos por peças (definições distintas). |
+| `EquipmentLoadoutDefinition` | SO | Loadout inicial/predefinido. |
+| `EquipmentItem` | Pure | Instância: `ItemId` do jogo, nível, modificadores de instância, localização única; fonte das próprias contribuições. |
+| `EquipmentComponent` | MB | `TryEquip`, `Unequip`, `TrySwap`, `TryMove`, `TryApplyLoadout`, `CaptureLoadout`, `TrySetContributionsEnabled`, `Enqueue`; transação em sete etapas; livros de recibos; `Rebuild` do Stats; sem tick. |
+| `IEquipmentStorage`, `EquipmentStash` | interface / MB | Armazenamento transacional (validação sem efeitos, commit infalível); implementação mínima. |
+| `EquipmentLoadoutState` | dados | Estado exportável (ids, `StableId`, nível, modificadores, habilitado); persistência no jogo. |
+| `IEquipmentEffect` | interface (extension point) | `Apply`/`Revert` só de contribuições reversíveis, tudo-ou-nada, por token. |
+| Eventos | `Equipped`, `Unequipped`, `Moved`, `SetBonusChanged`, `ContributionsStateChanged`, `Changed`, `EquipFailed` | Só depois do commit; em falha, apenas `EquipFailed`. |
+| Integração opcional | `Integration/Abilities` | `GrantAbilityEffect`, `GrantPassiveAbilityEffect`, `GrantOwnedTagsEffect`, `OwnedTagsRequirement` (sem `ApplyEffect` direto). |
+
+**Não faz:** inventário completo (grade, peso, empilhamento, UI), loot, crafting, economia, persistência em disco,
+troca de moveset/combo do Combat, editor gráfico; não depende de Character nem de Combat (efeitos por Stats e por
+habilidades concedidas).
+**Editor:** inspectors de definição, layout, loadout e componente; Equipment Debugger (planos, recibos, violações);
+validators.
+
+---|---|---|
 | `EquipmentSlotDefinition` | SO | Slot e restrições (categorias/tags aceitas). |
 | `EquipmentDefinition` | SO | Slot alvo, modificadores de Stats, efeitos (SR `IEquipmentEffect`). |
 | `EquipmentLoadoutDefinition` | SO | Conjunto inicial/predefinido. |
