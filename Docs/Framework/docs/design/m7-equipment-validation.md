@@ -80,3 +80,35 @@ resolvidos (`ItemNotFound`) — mover entre atores continua sendo uma decisão d
 estado é informativo (o nível da instância vence); (4) `EquipmentController` foi dividido em arquivos parciais
 (núcleo, conjuntos, loadouts) sem mudança de comportamento; (5) a reativação dos limiares no `Activate` é uma transação
 por limiar, depois dos itens, para que a falha de um limiar suspenda só ele. Nenhum package existente alterado.
+
+## Entrega 4 — integração Abilities (Equipment `677e6641f174a53ca11f9de98dc401f93dcbddba`)
+
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings (com e sem o Abilities) |
+| EditMode | 50/50 (inalterado) |
+| PlayMode do package | 3/3 (`Tests.Runtime`) + **20/20** (`Tests.Runtime.Integration`, ASC real no `FixedUpdate`, configurado só por API pública e campos serializados) |
+| Sandbox do host | 2/2 (`Assets/_FrameworkSandbox/Tests/Integration/Equipment`); Sandbox do AI 2/2 (regressão) |
+| Concessões | no nível do item (2) com tag de input do item; revogação só pelo handle — concessão de script da mesma habilidade intacta; desequipar com a habilidade em execução → `Ended Slash Revoked` (R44) |
+| Passivas | efeito na fase de aplicação seguinte (Strength 15 → 20 só depois do passo) e removido com o item; instância de outra fonte intacta com empilhamento independente **e** com o padrão do Abilities (agregado por alvo, 1 pilha) |
+| Tags | contagem por fonte (`GetTagCount` 2 → 1); `OwnedTagsRequirement` lê o estado antes da transação, aceita tag de outro item equipado e recusa com tag ignorada |
+| **Troca recusada (obrigatório)** | 5 causas — efeito do item novo, **limiar de conjunto completado pelo item novo**, capacidade de concessões (1 vaga), capacidade de tags soltas (16), requisito — com a arma antiga executando `Cleave` (cooldown 2 s, 3 cargas, 1 usada): stats bit a bit, contagens de tags, concessões (handle, execução, cooldown, cargas), recibos e handle do slot idênticos; uma sonda confirma que a concessão `Thrust` do item novo **existia** quando a recusa ocorreu (efeito e limiar); depois, `Cleave` termina `Completed`, nunca `Revoked`, e mantém 2 cargas |
+| Resíduo R52 | passiva provisória revogada pela recusa → eventos do ASC depois da recusa: exatamente `EffectBlocked Might SourceEnded`; stats, concessões e tags restaurados |
+| Modelo de referência (integração) | 3 sementes × 500 operações (equipar, trocar, desequipar, mover, habilitar/desabilitar, itens que recusam, concessões e tags de script da mesma habilidade/tag) — **1503 verificações** de concessões por habilidade, contagem de cada tag e Strength; 0 violações, 0 alvos ausentes |
+| `Rebuild` e ciclo de vida | `StatsComponent.Rebuild` mantém concessões (mesmos handles), passiva e modificadores; `enabled = false` revoga tudo, `enabled = true` reconcede em ordem de slot e deixa `ReapplyFailed` o item cuja concessão não cabe mais (stats dele também fora) |
+| Alvo destruído | ASC destruído antes de desequipar → `Succeeded`, `IsClean = false`, 2 violações `RevertTargetMissing` (concessão e tag), contador 2 |
+| Kit de contrato | `EquipmentEffectContract` aceita os três efeitos; recusas (passiva com habilidade de comando, tags sem vaga) sem resíduo |
+| Zero GC | ciclos aquecidos com concessão, tags, passiva, troca recusada, mover, desabilitar/habilitar |
+| Sandbox | botas +3 Speed → velocidade real do `CharacterMotor` 6 → 9 m/s (×1,5) e volta a 6, multiplicador exatamente 1; espada (+5 `AttackPower`) concede `Strike` (`PerformAttackAction`) executado pela HFSM (`HasAbilityCommandCondition` + `AbilityBehaviour`) → dano 15; troca para machado (+15) → dano 25; desequipar remove o golpe (nenhum ataque) e o stat volta a 10 |
+| QG12 (Core + Stats) | 53 testes (50 + 3), 0 ignorados, 0 mensagens do compilador — a integração e seus testes não compilam sem o Abilities |
+| `check_dependencies` | OK |
+
+Desvios e precisões: (1) `EquipmentEffectContext.ReportRevertTargetMissing` foi acrescentado: a §7.4 exige que
+`RevokeAbility`/`RemoveLooseTag` falsos sejam contados e, depois do commit, reportados, mas `Revert` não tem retorno —
+o efeito informa pelo contexto e o controlador registra com a transação e o recibo corretos; (2) correção no
+`EquipmentComponent.TryGetTarget` (devolvia componente destruído e não via componente adicionado depois), achada ao
+testar o ASC destruído; (3) as capacidades do ASC continuam sem consulta pública (§19.2): a aplicação provisória detecta
+e desfaz, como projetado; (4) passivas cujo efeito usa o empilhamento padrão do Abilities (agregado por alvo, 1 pilha)
+não somam a mesma passiva de duas fontes — comportamento do Abilities, documentado para os autores de conteúdo; a
+remoção continua só pela concessão do item; (5) Character e Combat continuam sem assembly de integração: velocidade e
+dano passam pelo Stats e o golpe por concessão. Nenhum package existente alterado.

@@ -1,0 +1,31 @@
+{
+  "name": "RamiresTechGames.Sandbox.Tests.Integration.Equipment",
+  "rootNamespace": "RamiresTechGames.Sandbox.Tests.Integration.Equipment",
+  "references": [
+    "UnityEngine.TestRunner",
+    "RamiresTechGames.Core",
+    "RamiresTechGames.Stats",
+    "RamiresTechGames.Character",
+    "RamiresTechGames.Character.Integration.Stats",
+    "RamiresTechGames.Combat",
+    "RamiresTechGames.HierarchicalStateMachine",
+    "RamiresTechGames.Abilities",
+    "RamiresTechGames.Abilities.Integration.Combat",
+    "RamiresTechGames.Abilities.Integration.HierarchicalStateMachine",
+    "RamiresTechGames.Equipment",
+    "RamiresTechGames.Equipment.Integration.Abilities"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
