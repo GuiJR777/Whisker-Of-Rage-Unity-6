@@ -261,3 +261,67 @@ Editor; validação de ocupação refinada (dois anéis válido); samples substi
 2. **Samples:** importar os dois samples pelo Package Manager e seguir o roteiro do README de cada um (teclas, troca
    recusada com cooldown, outra fonte, loadouts, duas mãos, único, requisito, conjunto, desabilitar).
 3. Abrir o Equipment Debugger durante os roteiros e conferir transações e ausência de violações.
+
+## Correções da auditoria técnica final (2026-10-15)
+
+Auditoria sobre Equipment `83cec35` / WOR `976a9ce`: arquitetura e mecanismos centrais aprovados; dois ajustes
+pontuais. Commits do package separados: runtime `1bedf406f791b1a8b2bb1d15f8674529ac00bd92`, testes
+`4cc9edf0ee2bc28ba75542de8ea3385899c0f465`, documentação `42d8767e448cda28d8843385631b698bc4862020`.
+
+### Correção 1 — modificadores de instância no `EquipmentLoadoutState`
+- Cada entrada exporta uma cópia independente dos modificadores da instância (`EquipmentLoadoutModifierState`): stat
+  pelo `StableId` (sem referência de objeto), operação, valor, valor por nível e curva de nível copiada;
+  `ToModifierEntry(stat)` permite ao jogo recriar a instância depois de resolver o stat. Nada de sistema de save.
+- Formato do estado: **versão 2** (antes da primeira tag); estados da versão 1 continuam aplicáveis (os modificadores
+  do estado são informativos).
+- `TryApplyLoadout(state)` continua resolvendo instâncias existentes (controlador, depois fontes autorizadas) e usa os
+  modificadores do **item** resolvido.
+- Testes (`LoadoutTests`, 3 novos): duas instâncias da mesma definição com modificadores próprios (linear com valor
+  por nível e curva); cópia independente (alterar a curva do item ou o array exposto não muda o estado);
+  `JsonUtility` ida e volta (versão 2); o jogo recria as instâncias a partir dos dados (definição e stats por
+  `StableId`), coloca-as num armazenamento e aplica o estado em outro ator: stats **bit a bit iguais** ao original,
+  ids e slots preservados, armazenamento vazio (sem duplicação), reaplicar é no-op (0 recibos provisórios e 0
+  revertidos); um estado com modificadores exportados diferentes move as instâncias existentes sem reaplicar e os
+  stats seguem os modificadores dos itens.
+- Achado durante a correção: o analisador do Unity (UAC1010) avisou que `Keyframe[]` não é serializado; a curva é
+  guardada como `AnimationCurve` própria do estado (cópia), e o teste de ida e volta comprova a serialização.
+
+### Correção 2 — violação em `CommitRemove`
+- **Reprodução antes da correção** (sonda no Editor com `TestStorage.SkipRemove = true`, código de `83cec35`):
+  `Succeeded`, `IsClean = false`, 1 violação, item com localização `Slot` e no slot, armazenamento ainda com o item,
+  **e o item listado em `DetachedByViolation`** — exatamente o apontado pela auditoria.
+- **Política fechada:** a localização segue a pós-condição real do armazenamento (`Contains`), não a exceção. Origem
+  que mantém o item → item fica no slot (estado do Equipment é a verdade), `StorageCommit`, `IsClean = false`,
+  `StorageInconsistency(StillInSource)` com o armazenamento, **sem** `Detached`; a entrada obsoleta é inerte (nenhuma
+  transação aceita o item a partir de armazenamento enquanto ele estiver num slot). Exceção depois de remover →
+  violação sem inconsistência. Destino que não recebe o item → `Detached`, `MissingFromDestination`,
+  `DetachedByViolation`; exceção depois de adicionar → item no destino, violação sem inconsistência. Sem nova
+  tentativa contra o armazenamento, sem recibos novos, sem tocar outras fontes. `StorageInconsistencies` exposto e
+  mostrado pelo Debugger. O que é e o que não é garantido: garantia 34 do `CONTRACTS.md`.
+- Testes (`StorageCommitPolicyTests`, 6): `SkipRemove` (estado real, diagnósticos, log de transações, inconsistência,
+  inércia em outro ator, em outro slot e num loadout de estado, recibos idênticos depois das recusas, desequipar
+  reverte exato, armazenamento não é tocado de novo), `ThrowOnRemove`, `ThrowAfterRemove`, `SkipAdd`, `ThrowOnAdd`,
+  `ThrowAfterAdd`, troca com origem quebrada e destino íntegro; outra fonte de modificador intacta em todos; teste
+  antigo (`SkipAdd`/`ThrowOnAdd`) mantido.
+
+### Gates finais
+| Gate | Resultado |
+|---|---|
+| Equipment EditMode | **67/67** (58 + 6 da política de commit + 3 do estado com modificadores) |
+| Equipment PlayMode | 3/3 + integração Abilities **22/22** (trocas recusadas por 5 causas, modelo da integração, zero GC com 50 atores) |
+| Modelos de reversibilidade (3 sementes) | núcleo **1803** verificações bit a bit; integração **1503** verificações; 0 violações |
+| Smoke tests dos samples | Equipment Basics e Equipment Abilities (importação real, assets, cena, domain reload, Play Mode) + prova de detecção: **3/3**; AI 2/2 |
+| Zero GC com 50 atores | sem Abilities: 50 000 transações em 376,3 ms (**7,53 µs**/transação, medido dentro da rodada completa do Editor; 3,13 µs na medição isolada da entrega 6); com ASC real: 7 000 transações em 13,9 ms (**1,99 µs**/transação); nenhuma alocação |
+| Regressão completa do WOR (contagem única) | EditMode **878/878** (16 assemblies: Core 62, Stats 126, HFSM 118, Character 138 + 17 + 4 + 5, Combat 153 + 9 + 2, Abilities 68 + 2, AI 102, Equipment 67, smoke AI 2, smoke Equipment 3) · PlayMode **406/406** (14 assemblies: Stats 4, HFSM 5, Character 85, Combat 85 + 17 + 3, Abilities 70 + 38, AI 45 + 25, Equipment 3 + 22, Sandbox AI 2, Sandbox Equipment 2); 0 erros e 0 warnings de compilação |
+| QG12 (Core + Stats) | **70** testes (67 + 3), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+| Clone limpo com submodules | conferido (abaixo) |
+
+**Execução da regressão (registrado, não mascarado):** duas rodadas EditMode completas falharam antes da final, ambas
+por interação minha com o Editor durante a rodada, sem relação com o código: (1) um comando para religar o Burst,
+que tinha dado timeout, foi executado no meio da rodada e trouxe de volta o lock do cache JIT do Burst (a causa
+diagnosticada na entrega 6) no reload do smoke do AI Combat Arena; (2) uma consulta de status pela CLI enquanto a
+thread principal estava ocupada fez o servidor da CLI registrar "Main thread operation timed out" como erro durante o
+reload do smoke do Equipment Basics, e o Test Framework falha testes que veem erros no reload. Em ambos o teste já
+tinha passado pela parte verificada (o Basics chegou ao Play Mode com o estado esperado). A rodada final foi feita
+sem nenhum comando ao Editor até o resultado e passou 878/878; nenhum teste foi alterado ou ignorado.
