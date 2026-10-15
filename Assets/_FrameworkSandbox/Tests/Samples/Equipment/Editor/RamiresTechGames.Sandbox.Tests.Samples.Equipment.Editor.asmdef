@@ -1,0 +1,33 @@
+{
+  "name": "RamiresTechGames.Sandbox.Tests.Samples.Equipment.Editor",
+  "rootNamespace": "RamiresTechGames.Sandbox.Tests.Samples.Equipment",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "RamiresTechGames.Core",
+    "RamiresTechGames.Stats",
+    "RamiresTechGames.Equipment",
+    "RamiresTechGames.Abilities"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.ramirestechgames.abilities",
+      "expression": "0.1.0",
+      "define": "RAMIRESTECHGAMES_ABILITIES"
+    }
+  ],
+  "noEngineReferences": false
+}

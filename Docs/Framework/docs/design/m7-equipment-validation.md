@@ -140,3 +140,124 @@ pública no Abilities 0.1.0, §19.2) e as tags usam a capacidade fixa 16; (3) "`
 foi refinado: ocupar outras instâncias do próprio slot (dois anéis) é válido; o erro é precisar de mais instâncias do
 que o layout tem; (4) "ids duplicados" já são cobertos pelo `StableId` = GUID do asset (validator do asset). Nenhum
 package existente alterado.
+
+## Entrega 6 — samples e fechamento (Equipment `83cec35`)
+
+| Gate | Resultado |
+|---|---|
+| Samples | **Equipment Basics** (Stats) e **Equipment Abilities** (Stats + Abilities) em `Samples~`, substituindo o Getting Started do template; assets e cenas validados sem nenhum problema (0 erros, 0 avisos) |
+| Smoke tests versionados | `Assets/_FrameworkSandbox/Tests/Samples/Equipment/Editor` (`EquipmentSampleSmokeTests`, 3): importação real pelo Package Manager → assets (referências, tipos SR, validação) → cena → domain reload com a cena aberta → Play Mode → estado do herói → remoção do que foi importado; **prova de detecção**: o verificador acusa referência quebrada e erro de validação montados para isso |
+| Equipment Basics em Play Mode | loadout A no início: Strength 17, Defense 7 (4 recibos); loadout B: Strength 22, Defense 8, **3 recibos aplicados e 2 revertidos** (Guardian Plate fica, Ring of Might se move sem reaplicar); segunda cópia do anel único → `UniqueLimit`; montante sem o anel → `RequirementNotMet` (Strength 14 < 15); montante com o anel → escudo deslocado ao stash na mesma transação, mão secundária bloqueada; desabilitar → stats na base, reabilitar → reaplicado; 0 violações. Captura: [`d6_basics_game.png`](m7-equipment-validation/d6_basics_game.png) |
+| Equipment Abilities em Play Mode | início: `FlameSlash` + `VigorAura`, Strength 12, MaxHealth 125 (passiva na fase de aplicação seguinte); golpe usado, troca para a Heavy Blade sem a tag Warrior → `RequirementNotMet` e **cooldown do golpe 5,38 → 5,38**; com a tag, troca feita (`FlameSlash` revogado, `CrushingBlow` concedido, Strength 16) e de volta; bênção do santuário + amuleto → MaxHealth 150, desequipar o amuleto → 125 (a bênção de outra fonte fica); Arcane Ring + Belt → `ArcaneSurge` (+5 Strength) e remoção ao desequipar; 0 violações. Captura: [`d6_abilities_game.png`](m7-equipment-validation/d6_abilities_game.png) |
+| Escala, zero GC e custo | 50 atores sem Abilities: **50 000 transações em 156,4 ms (3,13 µs/transação)**, zero GC (conjunto, troca recusada, mover, habilitar/desabilitar); 50 atores com ASC real: **7 000 transações em 16,9 ms (2,41 µs/transação)**, zero GC (concessão, 2 tags, passiva, troca recusada, mover, desabilitar). Sem custo por frame (sem tick) |
+| Regressão completa do WOR | EditMode **869/869** (16 assemblies, contagem única: Core 62, Stats 126, HFSM 118, Character 138 + 17 + 4 + 5, Combat 153 + 9 + 2, Abilities 68 + 2, AI 102, Equipment 58, smoke AI 2, smoke Equipment 3) · PlayMode **406/406** (14 assemblies: Stats 4, HFSM 5, Character 85, Combat 85 + 17 + 3, Abilities 70 + 38, AI 45 + 25, Equipment 3 + 22, Sandbox AI 2, Sandbox Equipment 2); 0 erros e 0 warnings de compilação |
+| QG12 (Core + Stats) | 61 testes (58 + 3), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+
+Contagem: as rodadas por assembly usam filtro por prefixo (assemblies aninhadas aparecem também na rodada da mãe; por
+isso o M6 registrou 847/440); os números acima são de uma rodada única com o filtro `RamiresTechGames` (cada teste
+uma vez).
+
+**Incidentes de ambiente durante a regressão (registrados, não mascarados):** (1) a primeira rodada dos smoke tests de
+samples falhou com "Errors occurred during domain reload": o Editor.log mostra o compilador JIT do Burst sem conseguir
+gravar `Library/BurstCache/JIT/Hashes/*.bhc` ("being used by another process") durante o reload que segue a importação;
+nada do Equipment participa. Remoção da causa: as suítes que importam samples rodam com a compilação Burst do Editor
+desligada (opção por usuário, restaurada ao fim; nenhuma alteração de projeto); (2) depois de recompilações seguidas
+(importar/apagar samples), o smoke do AI Combat Arena falhou com "Internal build system error": `bee_backend` não
+conseguiu renomear `Library/Bee/TundraBuildState.state` (o Restart Manager mostrou o mapa preso pelo `bee_backend` da
+compilação anterior, ainda em andamento). Recuperação: esperar a compilação terminar, apagar a importação deixada pela
+falha e recompilar limpo; o smoke do AI passou 2/2 em seguida e a rodada final completa passou sem falhas. Nenhum teste
+foi alterado, ignorado ou repetido sem a causa resolvida.
+
+## Relatório final do M7 — Equipment 0.1.0 release candidate (sem tag)
+
+Estado: **seis entregas implementadas; Equipment 0.1.0 é release candidate** em
+`83cec3589a3abda5d723af2b648e63668e778844`, aguardando a auditoria final e a validação manual do owner. Nenhuma tag;
+M7 não está encerrado; M8 não iniciado. Nenhum package existente alterado (Core, Stats, HFSM, Character, Combat,
+Abilities e AI nos mesmos commits fixados antes do M7).
+
+### Commits
+| Entrega | Equipment (package) | WOR (host) |
+|---|---|---|
+| Design v2 aprovado, ADRs 0033–0037 aceitas | — | `dbd8b67b8b2291743c725e4f431f2719e69cb999` |
+| 1 Fundação | `bccaecb78458ebffd943c8f97755343a2171be36` | `c9616d1fa992ee99f25933e92d2f6d0432398d4c` |
+| 2 Restrições e armazenamento | `dcc84e3e31df59a89a078a3bf742ddf55ab008ab` | `98a508178538941ec5f7bc329fbd3befabc49536` |
+| 3 Conjuntos, loadouts e efeitos | `4c53faf0d6f87648c9c1376d27d6c6ec60cfe004` | `a74be93b74d1ecd2d53ac0bed44e22632f3c707a` |
+| 4 Integração Abilities e Sandbox | `677e6641f174a53ca11f9de98dc401f93dcbddba` | `72e97ee29a0d8f2a779e6b6e0a1a3acd440d3c29` |
+| 5 Ferramentas | `939b49e2904271a2185b7a81a0ca00de70556f6e` | `db98703b9e07e21a52fa2492b186b2b6b6f85fd8` |
+| 6 Samples e fechamento (**RC**) | `83cec3589a3abda5d723af2b648e63668e778844` | commit que registra esta seção (fixa `83cec35`) |
+
+### Matriz de contratos obrigatórios
+| Contrato | Onde está | Evidência |
+|---|---|---|
+| Transação em sete etapas (plano → validação sem efeitos → provisório → desfazer → ponto sem rejeição → reverter o antigo → commit/eventos) | `EquipmentController` (`RunSteps`) | `TransactionTests`, log de transações (provisórios/desfeitos/revertidos por etapa) |
+| Troca recusada nunca revoga/reconcede o antigo, nem muda cooldown, cargas ou execução | etapa 5 só depois do ponto sem rejeição | `RefusedSwapPreservationPlayModeTests` (5 causas, sonda prova a concessão nova existente na recusa), `SetsAndEffectsTests` (limiar), sample Abilities (cooldown 5,38 → 5,38) |
+| Recibo por contribuição, reversão por handle, nunca remove outras fontes | `EquipmentLedger`/`EquipmentReceipt` | modelos de referência (1803 e 1503 verificações), concessões/tags/passivas de script da mesma habilidade/tag intactas |
+| `IEquipmentEffect` tudo-ou-nada, reversão exata por token, sem apresentação, exceções tratadas, zero GC | contrato + `EquipmentEffectContract` | efeitos que recusam/lançam em cada posição, `RefuseWithResidue` detectado, kit aplicado aos três efeitos da integração, zero GC |
+| Localização única, `ItemId` estável | `ItemLocation`, transações | `RestrictionsAndStorageTests`, `LoadoutTests` |
+| `IEquipmentStorage` transacional | validação sem efeitos, commit infalível, pós-condições | stash cheio/recusa/violação de commit (`DetachedByViolation`) |
+| `TryApplyLoadout(state)` sem recriar itens; itens que ficam mantêm concessões | `EquipmentController.Loadouts` | capturar → aplicar é no-op; `ReplaceAll`/`FillEmpty`; sample Basics (3 aplicados, 2 revertidos, item que fica e item que se move sem reaplicar) |
+| `ReplaceAll`, `FillEmpty`, `TryMove`, ocupação múltipla, deslocamento | plano | `LoadoutTests`, `RestrictionsAndStorageTests`, sample Basics (escudo deslocado) |
+| `Rebuild` com substituição de handles e recibos dormentes | `RebindStats` | `TransactionTests`, PlayMode do componente, integração (concessões e passivas mantidas) |
+| `OnDisable`/`OnEnable` item a item; `OnDestroy` só recibos próprios | `Deactivate`/`Activate`/`ReleaseAll` | PlayMode do componente, integração (`ReapplyFailed` por capacidade), sample Basics (D) |
+| Abilities só por `GrantAbility`/`RevokeAbility`, `AddLooseTag`/`RemoveLooseTag` e passivas (nunca `ApplyEffect`) | `Equipment.Integration.Abilities` | código (nenhuma chamada a `ApplyEffect`/`RevokeAbilitiesFromSource`), testes da integração |
+| Precisão 1: operações enfileiradas no provisório de transação recusada são descartadas; `EquipFailed` pode enfileirar recuperação; FIFO; sem reentrância; ciclos contidos | `EquipmentTransactionGuard` | `EnqueueTests` (descartadas, recuperação, FIFO, `Reentrant`, limite de 64 por drenagem) |
+| Precisão 2: sucesso íntegro ≠ `Succeeded` com `ContractViolations > 0`; itens `Detached` expostos; Debugger mostra problemas | `EquipResult.IsClean`, `DetachedByViolation`, Equipment Debugger | violações injetadas (exceção em `Revert`, handle ausente, commit de armazenamento, ASC destruído), captura do Debugger |
+
+### Matriz de integrações
+| Package | Como | Evidência |
+|---|---|---|
+| Core | hard (validação, tags, SR) | QG12 |
+| Stats | hard (modificadores, requisitos, lote, `Rebuild`) | todas as suítes; QG12 só com Core + Stats (61 testes) |
+| Abilities | opcional, `Equipment.Integration.Abilities` (`RAMIRESTECHGAMES_ABILITIES`) | 22 testes com ASC real; validator de capacidades; sample Abilities |
+| Character | sem assembly: velocidade pelo stat (`StatMovementModifierSource`) | Sandbox: 6 → 9 m/s e volta exata |
+| Combat | sem assembly: `AttackPower` pelo stat; golpe de arma = habilidade concedida com `PerformAttackAction` | Sandbox: dano 15/25 conforme a arma; desequipar remove o golpe |
+| HFSM | sem assembly: o golpe concedido roda por `HasAbilityCommandCondition` + `AbilityBehaviour` | Sandbox |
+| AI | nenhuma | — |
+
+### Testes de falha por etapa (I4)
+| Etapa | Falhas injetadas | Resultado |
+|---|---|---|
+| 1 Plano | item/handle inválido, slot inexistente ou ocupado, ids duplicados/ausentes/de fonte não autorizada/definição divergente no loadout | `EquipFailed` com o motivo, nada muda |
+| 2 Validação | categoria, ocupação (`Fail`), unicidade, requisitos (stat e tags), armazenamento cheio/recusado, livro cheio, stat ausente, modificador inválido, componente inativo | idem, antes de qualquer efeito |
+| 3 Provisório | efeito que recusa/lança no 1º, 2º e 3º lugar; último item de um loadout; **limiar de conjunto que recusa depois de o item novo estar aplicado**; capacidade de concessões e de tags soltas do ASC | etapa 4 desfaz só o provisório; stats bit a bit, concessões, tags, recibos e slots idênticos; nenhum `StatChanged` |
+| 5–6 Depois do ponto sem rejeição | exceção em `Revert`, handle já removido, ASC destruído, commit de armazenamento violado | consolidado com `IsClean = false`, violação registrada, item solto listado |
+| Fila | operação enfileirada no provisório de transação recusada; ciclo de recuperações | `Discarded`; parada em 64 (`QueueOverflow`) |
+
+### Preservação de concessões na troca recusada
+Arma antiga executando `Cleave` (cooldown 2 s, 3 cargas, 1 usada) e troca recusada por 5 causas (efeito do item novo,
+limiar de conjunto completado pelo item novo, 1 vaga de concessão, 16 tags soltas, requisito por tag): `AbilityHandle`,
+execução em andamento, cooldown, cargas, contagens de tags, stats e recibos idênticos; a concessão provisória do item
+novo existia na hora da recusa (sonda) e foi revogada; depois, `Cleave` termina `Completed` com as 2 cargas. Sample:
+cooldown 5,38 → 5,38. Desequipar com a habilidade em execução encerra com `Revoked` (R44, documentado).
+
+### Modelos de referência
+- **Núcleo:** 3 sementes × 600 operações (equipar, desequipar, trocar, mover, habilitar/desabilitar, recusas, outras
+  fontes, `Rebuild`, stash, peças de conjunto, capturar/aplicar loadout) → **1803 verificações** bit a bit contra uma
+  `StatCollection` real reconstruída; 0 violações.
+- **Integração:** 3 sementes × 500 operações com concessões e tags de script da mesma habilidade/tag → **1503
+  verificações** de concessões por habilidade, contagem de cada tag e Strength; 0 violações, 0 alvos ausentes.
+
+### Riscos (estado no RC)
+R44 (desequipar durante habilidade encerra com `Revoked`) documentado e testado; R45 (`Current` de recurso) política do
+Stats; R46 (make-before-break exige capacidade para novo + antigo) — recusa atômica testada e **validator de cena do
+pior caso** entregue; R47 (moveset do Combat) — golpes por concessão; R48/R54 (requisitos só no ato; satisfeitos pelo
+item que sai) documentados e testados; R49 (ids globais) do jogo; R50 (tipos SR) — tipos `sealed`, smoke tests dos
+samples; R51 (efeito que viola o contrato) — kit e contadores; R52 (resíduo `EffectBlocked(SourceEnded)` da passiva
+provisória) **conferido: exatamente essa notificação**; R53 (armazenamento que viola o commit) testado. Lacunas que
+dependem de outros packages continuam na §19.2 do design (consulta de capacidade do ASC, tags soltas configuráveis,
+cancelamento silencioso de passiva, moveset do Combat).
+
+### Desvios acumulados (todos registrados nas seções das entregas)
+`IEquipmentEffect` antecipado para a entrega 1; `EquipmentTokenStorage<T>`; motivos `InvalidModifier`/`InvalidHandle`;
+`IEquipmentStorageNotifications`; violação em `CommitRemove` mantém o item equipado; `DisplaceToStorage` sem destino
+solta os itens; registro de limiares como cache; ids de estado só neste controlador e nas fontes autorizadas;
+controlador em arquivos parciais; `EquipmentEffectContext.ReportRevertTargetMissing`; correção do `TryGetTarget`;
+`EquipmentTransactionRecord`/log; `IEquipmentActorValidator`; capacidade de concessões lida do campo serializado no
+Editor; validação de ocupação refinada (dois anéis válido); samples substituem o Getting Started.
+
+### Checklist manual (owner)
+1. **Ferramentas:** os 8 itens de `TESTING.md` do package ("Checklist manual das ferramentas").
+2. **Samples:** importar os dois samples pelo Package Manager e seguir o roteiro do README de cada um (teclas, troca
+   recusada com cooldown, outra fonte, loadouts, duas mãos, único, requisito, conjunto, desabilitar).
+3. Abrir o Equipment Debugger durante os roteiros e conferir transações e ausência de violações.

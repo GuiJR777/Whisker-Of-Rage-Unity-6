@@ -23,7 +23,7 @@ aguardando a validação manual do owner (sem tags). **M5 — Abilities**: **tec
 aguardando a validação manual do owner e o release formal (Abilities 0.1.0 e Stats 0.1.1 candidatas, sem tags).
 **M6 — AI / Behaviour Trees**: **tecnicamente aprovado** (auditoria final, 2026-10-14; [especificação](Docs/Framework/docs/design/m6-ai-design.md),
 ADRs 0026–0032), aguardando a validação manual do owner e o release formal (AI 0.1.0 candidata em `1c8f6f8`, sem tag). **M7 — Equipment**: design v2 aprovado ([especificação](Docs/Framework/docs/design/m7-equipment-design.md), ADRs
-0033–0037 aceitas); implementação autorizada em seis entregas (sem tags): entrega 1 ✅ (`bccaecb`), entrega 2 ✅ (`dcc84e3`), entrega 3 ✅ (`4c53faf`), entrega 4 ✅ (`677e664`), entrega 5 ✅ (`939b49e`). Não publicar tags do M4/M5/M6 nem declarar releases antes da validação manual.
+0033–0037 aceitas); implementação autorizada em seis entregas (sem tags): entrega 1 ✅ (`bccaecb`), entrega 2 ✅ (`dcc84e3`), entrega 3 ✅ (`4c53faf`), entrega 4 ✅ (`677e664`), entrega 5 ✅ (`939b49e`), entrega 6 ✅ (`83cec35`) — Equipment 0.1.0 release candidate, aguardando auditoria final e validação manual. Não publicar tags do M4/M5/M6/M7 nem declarar releases antes da validação manual.
 Roadmap e Quality Gates: `Docs/Framework/docs/07-roadmap.md`.
 
 ## Regras
