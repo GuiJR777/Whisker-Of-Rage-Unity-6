@@ -112,3 +112,31 @@ e desfaz, como projetado; (4) passivas cujo efeito usa o empilhamento padrão do
 não somam a mesma passiva de duas fontes — comportamento do Abilities, documentado para os autores de conteúdo; a
 remoção continua só pela concessão do item; (5) Character e Combat continuam sem assembly de integração: velocidade e
 dano passam pelo Stats e o golpe por concessão. Nenhum package existente alterado.
+
+## Entrega 5 — ferramentas (Equipment `939b49e2904271a2185b7a81a0ca00de70556f6e`)
+
+| Gate | Resultado |
+|---|---|
+| Compilação | 0 erros, 0 warnings |
+| EditMode | **57/57** — novos: `EditorToolsTests` (7) |
+| PlayMode | 3/3 + integração **21/21** (novo: validator de capacidades do ASC); Sandbox 2/2 |
+| Log de transações | registro por transação (tipo, resultado/motivo, item, plano, recibos provisórios/desfeitos/revertidos, violações) escrito **antes** dos eventos (listeners de `Changed`/`EquipFailed` leem o próprio registro); troca recusada: 1 recibo provisório, 1 desfeito, **0 revertidos** (o antigo nunca tocado); 64 mais recentes |
+| Debugger e inspectors | modelos de texto testados (slots com bloqueio, limiares, contadores, transações, violações; prévia por nível, slots compatíveis, layout expandido com índice, tabela de compatibilidade do loadout); janela abre e seleciona; em Play Mode, capturas reais via `GUIView.GrabPixels`: [`d5_equipment_debugger.png`](m7-equipment-validation/d5_equipment_debugger.png) (8 transações: troca recusada `RequirementNotMet [0]` sem recibo revertido, `SetEnabled` desativando/reativando o limiar `Guardian`, violação `RevertTargetMissing` com o item) e [`d5_equipment_inspector.png`](m7-equipment-validation/d5_equipment_inspector.png) (slots ao vivo com `Disable`/`Unequip`, mão secundária bloqueada pela arma de duas mãos); 0 erros/exceções no Console |
+| Validators (sem falso negativo) | cena: `StatsComponent` ausente, stats ausentes no loadout inicial (item e limiar de conjunto), slot fora do layout, validators registrados chamados; Abilities: sem ASC (erro), estouro de concessões (erro) e de tags (erro), folga de troca (aviso), sem falso positivo sem conteúdo do Abilities; assets: ocupação além do layout (dois anéis válido, três não), item que nenhum slot aceita |
+| Zero GC | `AllocationTests` e o teste de integração continuam verdes com o log de transações |
+| QG12 (Core + Stats) | 60 testes (57 + 3), 0 ignorados, 0 mensagens do compilador |
+| `check_dependencies` | OK |
+
+Checklist manual das ferramentas para o owner: `TESTING.md` do package, seção "Checklist manual das ferramentas"
+(8 itens: inspectors de equipamento, layout, loadout e conjunto; `EquipmentComponent` em Edit e Play Mode; Equipment
+Debugger; validação do projeto e Validator do Core). **Pendente do owner** (com mouse).
+
+Desvios e precisões: (1) acrescentados `EquipmentTransactionRecord`/`GetTransactionRecord` — a §14 pede o histórico das
+últimas 64 transações com recibos provisórios e removidos, que os eventos públicos não carregam; o log é um anel fixo de
+structs (sem alocação) e não guarda os recibos um a um, só as contagens por etapa (os recibos atuais ficam nos livros);
+(2) `IEquipmentActorValidator` acrescentado para a integração Abilities contribuir com a validação de cena sem que o
+Equipment dependa do Abilities; a capacidade de concessões do ASC é lida do campo serializado no Editor (não há consulta
+pública no Abilities 0.1.0, §19.2) e as tags usam a capacidade fixa 16; (3) "`AlsoOccupies` com o próprio slot" da §14
+foi refinado: ocupar outras instâncias do próprio slot (dois anéis) é válido; o erro é precisar de mais instâncias do
+que o layout tem; (4) "ids duplicados" já são cobertos pelo `StableId` = GUID do asset (validator do asset). Nenhum
+package existente alterado.
